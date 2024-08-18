@@ -1,0 +1,22 @@
+# git
+.git
+.gitignore
+
+# node
+node_modules
+yarn-error.log
+
+# next
+.next
+
+# Docker
+Dockerfile
+.dockerignore
+
+# env
+.env.local
+.vscode
+
+# others
+README.md
+.DS_Store
