@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useContractsStore } from "@/stores/contractsStore";
 import LayoutConfigureNavigation from "@/components/layouts/configure/LayoutConfigureNavigation";
-// import LayoutConfigureHeader from "@/components/layouts/configure/LayoutConfigureHeader";
+import LayoutConfigureHeader from "@/components/layouts/configure/LayoutConfigureHeader";
 import AtomsCoreSnackbar from "@/components/atoms/core/AtomsCoreSnackbar";
 
 type Menu = {
@@ -47,9 +47,9 @@ export default function ConfigureLayout({
       <LayoutConfigureNavigation
         ref={(el: { menus: Menu[] } | null) => setNav(el)}
       />
-      {/* <LayoutConfigureHeader title={pageTitle} /> */}
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
-      <AtomsCoreSnackbar />
+      <LayoutConfigureHeader title={pageTitle} />
+      <main className="flex-row p-8 overflow-y-auto">{children}</main>
+      {/* <AtomsCoreSnackbar /> */}
     </div>
   );
 }
