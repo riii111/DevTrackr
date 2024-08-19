@@ -32,7 +32,7 @@ const LayoutConfigureNavigation = () => {
   const organization = [
     {
       name: "案件プロジェクト一覧",
-      path: "/configure/organization/project",
+      path: "/configure/organization/project-list",
       icon: <FaTasks />,
     },
     {
