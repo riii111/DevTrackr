@@ -16,11 +16,11 @@ const NavigationBar = ({ menus }: NavigationBarProps) => {
             {
                 Object.entries(menus).map(([category, items], index) => (
                     <div key={category} className={`p-2 rounded-[17px] shadow`}>
-                        <h3 className="text-gray-500 mb-2">{category}</h3>
-                        <ul>
+                        <h3 className="text-gray-500 mb-4 gap-4">{category}</h3>
+                        <ul className="flex flex-col gap-4">
                             {items.map((menu) => (
-                                <li key={menu.path}>
-                                    <Link href={menu.path} className="flex items-center gap-2 hover:bg-gray-300 my-2 rounded-md group">
+                                <li key={menu.path} className="gap-4">
+                                    <Link href={menu.path} className="flex items-center gap-4 hover:bg-gray-300 rounded-md group">
                                         <span className="group-hover:text-[#E65F2B] transition-colors">{menu.icon}</span>
                                         <span className="group-hover:text-[#E65F2B] transition-colors">{menu.name}</span>
                                     </Link>
