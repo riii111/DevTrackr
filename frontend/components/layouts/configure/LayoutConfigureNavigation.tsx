@@ -14,17 +14,17 @@ const LayoutConfigureNavigation = () => {
   const individual = [
     {
       name: "プロフィール",
-      path: "/setting/individual/profile",
+      path: "/configure/individual/profile",
       icon: <MdAccountCircle />,
     },
     {
       name: "パスワード",
-      path: "/setting/individual/password",
+      path: "/configure/individual/password",
       icon: <RiLockPasswordFill />,
     },
     {
       name: "通知",
-      path: "/setting/individual/notification",
+      path: "/configure/individual/notification",
       icon: <VscBellDot />,
     },
   ];
@@ -32,17 +32,17 @@ const LayoutConfigureNavigation = () => {
   const organization = [
     {
       name: "案件プロジェクト一覧",
-      path: "/settings/organization/project",
+      path: "/configure/organization/project",
       icon: <FaTasks />,
     },
     {
       name: "ユーザー管理",
-      path: "/settings/organization/user",
+      path: "/configure/organization/user",
       icon: <CiUser />,
     },
     {
       name: "プロジェクトカテゴリー",
-      path: "/settings/organization/project-category",
+      path: "/configure/organization/project-category",
       icon: <MdLabelImportant />,
     },
   ];
