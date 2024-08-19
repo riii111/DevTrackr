@@ -23,7 +23,7 @@ const NavigationBar = ({ menus }: NavigationBarProps) => {
             </h2>
             {
                 Object.entries(menus).map(([category, items], index) => (
-                    <div key={category} className={`p-2 rounded-[17px] shadow`}>
+                    <div key={category} className={`p-2 rounded-[26px] shadow`}>
                         <h3 className="text-gray-500 mb-4 gap-4">{category}</h3>
                         <ul className="flex flex-col gap-4 ">
                             {items.map((menu) => {
@@ -32,11 +32,11 @@ const NavigationBar = ({ menus }: NavigationBarProps) => {
                                     <li key={menu.path} className="gap-4">
                                         <Link
                                             href={menu.path}
-                                            className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-[#E65F2B] text-white' : 'hover:bg-gray-300'
+                                            className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-white text-[#E65F2B]' : 'hover:bg-gray-300'
                                                 }`}
                                         >
-                                            <span className={`${isActive ? 'text-white' : 'group-hover:text-[#E65F2B]'} transition-colors`}>{menu.icon}</span>
-                                            <span className={`${isActive ? 'text-white' : 'group-hover:text-[#E65F2B]'} transition-colors`}>{menu.name}</span>
+                                            <span className={`${isActive ? 'text-[#E65F2B]' : 'text-white group-hover:text-[#E65F2B]'} transition-colors`}>{menu.icon}</span>
+                                            <span className={`${isActive ? 'text-[#E65F2B]' : 'text-white group-hover:text-[#E65F2B]'} transition-colors`}>{menu.name}</span>
                                         </Link>
                                     </li>
                                 );
