@@ -43,13 +43,15 @@ export default function ConfigureLayout({
   }, [router.asPath, nav]);
 
   return (
-    <div className="flex h-screen bg-backgroundGray">
+    <div className="flex h-screen bg-[#EBDFD7]">
       <LayoutConfigureNavigation
         ref={(el: { menus: Menu[] } | null) => setNav(el)}
       />
-      <LayoutConfigureHeader title={pageTitle} />
-      <main className="flex-row p-8 overflow-y-auto">{children}</main>
-      {/* <AtomsCoreSnackbar /> */}
+      <div className="flex flex-col flex-grow overflow-hidden">
+        <LayoutConfigureHeader title={pageTitle} />
+        <main className="flex-row p-8 overflow-y-auto">{children}</main>
+        {/* <AtomsCoreSnackbar /> */}
+      </div>
     </div>
   );
 }
