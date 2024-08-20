@@ -6,11 +6,8 @@ import AccountMenu from '@/components/molecules/core/AccountMenu';
 
 
 const getPageTitle = (pathname: string) => {
-  console.log("pathname", pathname);
   const pathSegments = pathname.split("/").filter(Boolean);
-  console.log("pathSegments", pathSegments);
   const lastSegment = pathSegments[pathSegments.length - 1];
-  console.log("lastSegment", lastSegment);
 
   const titleMap: { [key: string]: string } = {
     "profile": "プロフィール",
