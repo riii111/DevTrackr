@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { IoIosSettings } from "react-icons/io";
 import { usePathname } from 'next/navigation';
@@ -9,18 +11,19 @@ interface NavigationBarProps {
             path: string;
             icon: React.ReactNode;
         }>;
-    }
+    },
+    title: string;
 };
 
-const NavigationBar = ({ menus }: NavigationBarProps) => {
+const NavigationBar = ({ menus, title }: NavigationBarProps) => {
     const pathname = usePathname();
 
     return (
-        <nav className="h-full w-1/4 bg-[#060606] shadow flex flex-col border-gray-50">
-            <h2 className="text-gray-500 mb-4 gap-2 text-lg flex items-center py-6">
+        <nav className="h-full w-1/5 bg-[#060606] shadow flex flex-col border-gray-50">
+            <div className="text-gray-500 mb-4 gap-2 text-lg flex items-center py-6">
                 <IoIosSettings className="text-2xl text-[#E65F2B]" />
-                <span className="text-[#FFFFFF]">設定</span>
-            </h2>
+                <span className="text-[#FFFFFF]">{title}</span>
+            </div>
             {
                 Object.entries(menus).map(([category, items], index) => (
                     <div key={category} className={`p-2 rounded-[26px] shadow`}>

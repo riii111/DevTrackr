@@ -9,6 +9,7 @@ import { MdLabelImportant } from "react-icons/md";
 import NavigationBar from "@/components/atoms/core/NavigationBar";
 
 
+// const LayoutConfigureNavigation = ({organization}) => {
 const LayoutConfigureNavigation = () => {
 
   const individual = [
@@ -53,7 +54,7 @@ const LayoutConfigureNavigation = () => {
   }
 
   return (
-    <NavigationBar menus={menus} />
+    <NavigationBar menus={menus} title="設定" />
   );
 };
 
