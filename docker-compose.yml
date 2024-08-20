@@ -21,7 +21,25 @@ services:
       timeout: 10s
       retries: 3
 
-# 後々、プロキシ、DB、app各コンテナを追加予定
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/target
+    environment:
+      - RUST_LOG=debug
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   app-network:
     driver: bridge
