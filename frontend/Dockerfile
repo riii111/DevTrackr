@@ -1,17 +1,14 @@
-FROM node:18.17.0
-
-# 作業ディレクトリを設定
+FROM node:18.17.0-alpine AS base
 WORKDIR /app
 
-# ソースコードをコピー
+FROM base AS dependencies
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+FROM base AS development
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-# アプリケーションをインストール&ビルド
-RUN yarn install
-RUN yarn build
-
-# ポート3000を開放
 EXPOSE 3000
 
-# アプリケーションを起動
-CMD ["yarn", "start"]
+CMD ["yarn", "dev"]
