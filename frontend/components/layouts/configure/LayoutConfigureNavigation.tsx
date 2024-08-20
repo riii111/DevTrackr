@@ -6,7 +6,7 @@ import { FaTasks } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
 import { MdLabelImportant } from "react-icons/md";
 
-import NavigationBar from "@/components/atoms/core/NavigationBar";
+import NavigationBar from "@/components/molecules/NavigationBar";
 
 
 // const LayoutConfigureNavigation = ({organization}) => {
