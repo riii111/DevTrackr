@@ -1,4 +1,5 @@
-import { Fragment } from 'react';
+"use client";
+import React, { Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { MdAccountCircle } from 'react-icons/md';
 
@@ -41,7 +42,7 @@ const AccountMenu: React.FC = () => {
                     </div>
                 </Menu.Items>
             </Transition>
-        </Menu>
+        </Menu >
     );
 };
 

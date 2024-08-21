@@ -1,42 +1,22 @@
-"use client";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import dynamic from 'next/dynamic';
 
-import AccountMenu from '@/components/molecules/core/AccountMenu';
+const DynamicAccountMenu = dynamic(() => import('@/components/molecules/core/AccountMenu'), {
+  ssr: false,
+  loading: () => <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+});
 
-
-const getPageTitle = (pathname: string) => {
-  const pathSegments = pathname.split("/").filter(Boolean);
-  const lastSegment = pathSegments[pathSegments.length - 1];
-
-  const titleMap: { [key: string]: string } = {
-    "profile": "プロフィール",
-    "password": "パスワード",
-    "notifications": "通知",
-    "project-list": "案件プロジェクト一覧",
-    "user": "ユーザー管理",
-    "project-category": "プロジェクトカテゴリー",
-  };
-
-  return titleMap[lastSegment] || '設定';
-};
+const DynamicPageTitle = dynamic(() => import('@/components/molecules/PageTitle'), {
+  ssr: false,
+  loading: () => <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
+});
 
 const LayoutConfigureHeader = () => {
-
-
-  const pathname = usePathname();
-  const [pageTitle, setPageTitle] = useState<string | undefined>();
-
-  useEffect(() => {
-    setPageTitle(getPageTitle(pathname));
-  }, [pathname]);
-
   return (
     <header className="bg-[#EBDFD7] w-full h-16 border-b border-gray-400">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-full">
-        <h1 className="text-xl font-semibold">{pageTitle}</h1>
+        <DynamicPageTitle />
         <div className="ml-auto">
-          <AccountMenu />
+          <DynamicAccountMenu />
         </div>
       </nav>
     </header>
