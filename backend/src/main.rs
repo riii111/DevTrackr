@@ -1,23 +1,35 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello, Actix-web!")
-}
+use actix_web::cookie::Key;
+use actix_web::{middleware::Logger, App, HttpServer};
+use env_logger::Env;
+use std::io::Result;
 
-#[get("/health")]
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("Healthy")
-}
+mod common;
+mod controllers;
+mod middleware;
+mod models;
+mod query_params;
+mod repositories;
+mod routes;
+mod services;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+
+#[actix_rt::main]
+async fn main() -> Result<()> {
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    let key = Key::generate();
+    let message_framework = middleware::session::build_flash_messages_framework();
+
+    HttpServer::new(move || {
         App::new()
-            .service(hello)
-            .service(health_check)
+            .configure(routes::app)
+            .wrap(Logger::default())
+            .wrap(message_framework.clone())
+            .wrap(middleware::session::build_cookie_session_middleware(
+                key.clone(),
+            ))
     })
-    .bind("0.0.0.0:8080")?
+    .bind("127.0.0.1:8000")?
     .run()
     .await
 }
