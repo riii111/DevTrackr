@@ -18,7 +18,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
                 // .route("", web::put().to(posts::update)),
             ),
         )
-        .default_service(web::to(crate::controllers::posts::not_found))
+        .default_service(web::to(crate::controllers::posts::not_found));
 }
 
 #[get("/")]
