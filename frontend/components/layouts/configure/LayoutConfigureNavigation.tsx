@@ -5,11 +5,11 @@ import { VscBellDot } from "react-icons/vsc";
 import { FaTasks } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
 import { MdLabelImportant } from "react-icons/md";
+import { IoIosSettings } from "react-icons/io";
 
 import NavigationBar from "@/components/molecules/NavigationBar";
 
 
-// const LayoutConfigureNavigation = ({organization}) => {
 const LayoutConfigureNavigation = () => {
 
   const individual = [
@@ -54,7 +54,7 @@ const LayoutConfigureNavigation = () => {
   }
 
   return (
-    <NavigationBar menus={menus} title="設定" />
+    <NavigationBar menus={menus} title={{ name: "設定", icon: <IoIosSettings /> }} />
   );
 };
 
