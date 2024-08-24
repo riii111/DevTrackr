@@ -19,27 +19,27 @@ const LayoutDashboardNavigation = () => {
         },
         {
             name: "勤怠",
-            path: "/time-tracking",
+            path: "/dashboard/time-tracking",
             icon: <FaTasks />,
         },
         {
             name: "カレンダー",
-            path: "/calendar",
+            path: "/dashboard/calendar",
             icon: <FaRegCalendarAlt />,
         },
         {
             name: "スキル分析",
-            path: "/skill-analysis",
+            path: "/dashboard/skill-analysis",
             icon: <BiAnalyse />,
         },
         {
             name: "収益・時給管理",
-            path: "/revenue",
+            path: "/dashboard/revenue",
             icon: <FaMoneyBillTrendUp />,
         },
         {
             name: "振り返り",
-            path: "/retrospective",
+            path: "/dashboard/retrospective",
             icon: <MdRateReview />,
         },
     ];
