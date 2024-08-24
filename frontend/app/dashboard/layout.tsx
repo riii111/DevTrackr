@@ -1,7 +1,7 @@
 import LayoutDashboardNavigation from "@/components/layouts/dashboard/LayoutDashboardNavigation";
 import LayoutDashboardHeader from "@/components/layouts/dashboard/LayoutDashboardHeader";
 
-export default async function ConfigureLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -13,9 +13,7 @@ export default async function ConfigureLayout({
       <div className="flex flex-col flex-grow overflow-hidden">
         <LayoutDashboardHeader />
         <main className="flex-row p-8 overflow-y-auto">
-          <div className="p-6 rounded-lg">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>
