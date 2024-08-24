@@ -13,6 +13,14 @@ const config: Config = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      theme: {
+        extend: {
+          backgroundColor: {
+            // ダッシュボードで表示するコンポーネント背景色
+            "white-34": "rgba(255, 255, 255, 0.34)",
+          },
+        },
+      },
     },
   },
   plugins: [],

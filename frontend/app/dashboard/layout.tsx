@@ -12,7 +12,11 @@ export default async function ConfigureLayout({
       <LayoutDashboardNavigation />
       <div className="flex flex-col flex-grow overflow-hidden">
         <LayoutDashboardHeader />
-        <main className="flex-row p-8 overflow-y-auto">{children}</main>
+        <main className="flex-row p-8 overflow-y-auto">
+          <div className="bg-white bg-opacity-30 backdrop-filter backdrop-blur-sm p-6 rounded-lg">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
