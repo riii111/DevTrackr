@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import MoleculesDialog from '@/components/molecules/dialog/MoleculesDialog';
-import { Menu } from '@headlessui/react'
+import { Menu, Button } from '@headlessui/react'
 import { tv } from 'tailwind-variants'
 // import { ChevronDownIcon } from '@heroicons/react/20/solid'
 // import { useOrganizationStore } from '@/stores/organizationStore';
@@ -99,16 +99,16 @@ export default function ProjectSelectDialog({
             <div className="p-4 bg-background">
                 <div className="flex space-x-2 pb-2">
                     {categoryGroupPreset.map((categoryPresets, key) => (
-                        <button
+                        <Button
                             key={key}
                             className={categoryButton({ selected: selectedPresetGroup === categoryPresets.company })}
                             onClick={() => setSelectedPresetGroup(categoryPresets.company)}
                         >
                             {categoryPresets.company}
-                        </button>
+                        </Button>
                     ))}
                 </div>
-                <hr className="my-2 border-secondary" />
+                <hr className="my-2 border-secondary-dark" />
                 {categoryGroupPreset.map((categoryPresets, presetsKey) => (
                     categoryPresets.company === selectedPresetGroup && (
                         <ul key={presetsKey} className="space-y-1">
@@ -150,6 +150,7 @@ export default function ProjectSelectDialog({
                     )
                 ))}
             </div>
+
         </MoleculesDialog>
     );
 }
