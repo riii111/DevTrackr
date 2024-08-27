@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import MoleculesDialog from '@/components/molecules/dialog/MoleculesDialog';
-import { Menu, Button } from '@headlessui/react'
+import { Button } from '@headlessui/react'
 import { tv } from 'tailwind-variants'
 // import { ChevronDownIcon } from '@heroicons/react/20/solid'
 // import { useOrganizationStore } from '@/stores/organizationStore';
@@ -25,7 +25,6 @@ interface Props {
     onOpenChange: (isOpen: boolean) => void;
     onClose: () => void;
 }
-
 
 const categoryButton = tv({
     base: 'px-4 py-1 text-sm rounded-full',
@@ -55,8 +54,8 @@ export default function ProjectSelectDialog({
     onOpenChange,
     onClose
 }: Props) {
-    const [hoverIndex, setHoverIndex] = useState<number>();
     const [selectedPresetGroup, setSelectedPresetGroup] = useState<string>();
+    const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
 
     // TODO: ダミーの処理. 会社ごとに案件を表示させるように修正する.
     const categoryGroupPreset = useMemo(() => {
@@ -73,11 +72,26 @@ export default function ProjectSelectDialog({
         }));
     }, [companies]);
 
-    function handleSetPreset(value: string) {
-        onChange(value);
-        onOpenChange(false);
-        onClose();
+    function handleProjectSelect(projectId: string) {
+        setSelectedProjectId(projectId);
     }
+
+    function handleConfirm() {
+        if (selectedProjectId) {
+            onChange(selectedProjectId);
+            onOpenChange(false);
+            onClose();
+            // ダイアログが閉じられた時に選択状態をクリア
+            setSelectedProjectId(undefined);
+        }
+    }
+
+    // ダイアログが開かれた時に選択状態をクリア
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedProjectId(undefined);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (categoryGroupPreset.length > 0) {
@@ -112,35 +126,15 @@ export default function ProjectSelectDialog({
                 {categoryGroupPreset.map((categoryPresets, presetsKey) => (
                     categoryPresets.company === selectedPresetGroup && (
                         <ul key={presetsKey} className="space-y-1">
-                            {categoryPresets.items.map((item, itemsKey) => (
+                            {categoryPresets.items.map((item) => (
                                 <li
-                                    key={itemsKey}
-                                    className={listItem({ selected: item.id === value })}
-                                    onMouseEnter={() => setHoverIndex(itemsKey)}
-                                    onMouseLeave={() => setHoverIndex(undefined)}
-                                    onClick={() => handleSetPreset(item.id)}
+                                    key={item.id}
+                                    className={listItem({ selected: item.id === selectedProjectId })}
+                                    onClick={() => handleProjectSelect(item.id)}
                                 >
-                                    <div className="flex justify-between items-center">
-                                        <Menu as="div" className="relative inline-block text-left">
-                                            <Menu.Button className="inline-flex w-full justify-center items-center text-text-primary">
-                                                {item.name}
-                                            </Menu.Button>
-                                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left divide-y divide-secondary rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                <div className="px-1 py-1">
-                                                    <Menu.Item>
-                                                        {({ active }) => (
-                                                            <button
-                                                                className={`${active ? 'bg-primary text-white' : 'text-text-primary'
-                                                                    } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                                            >
-                                                                {item.name}
-                                                            </button>
-                                                        )}
-                                                    </Menu.Item>
-                                                </div>
-                                            </Menu.Items>
-                                        </Menu>
-                                        {hoverIndex === itemsKey && (
+                                    <div className="flex justify-between items-center w-full">
+                                        <span className="text-text-primary">{item.name}</span>
+                                        {selectedProjectId === item.id && (
                                             <span className="text-accent">選択</span>
                                         )}
                                     </div>
@@ -149,8 +143,16 @@ export default function ProjectSelectDialog({
                         </ul>
                     )
                 ))}
+                <div className='flex w-full justify-end mt-4'>
+                    <Button
+                        className="text-text-primary hover:bg-gray-200"
+                        onClick={handleConfirm}
+                        disabled={!selectedProjectId}
+                    >
+                        <span className='text-primary hover:text-accent'>プロジェクトを追加→</span>
+                    </Button>
+                </div>
             </div>
-
         </MoleculesDialog>
     );
 }
