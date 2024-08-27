@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import MoleculesDialog from '@/components/molecules/dialog/MoleculesDialog';
-import { Menu, MenuItem, MenuItems } from '@headlessui/react'
+import { Menu } from '@headlessui/react'
+import { tv } from 'tailwind-variants'
 // import { ChevronDownIcon } from '@heroicons/react/20/solid'
 // import { useOrganizationStore } from '@/stores/organizationStore';
 
@@ -24,6 +25,28 @@ interface Props {
     onOpenChange: (isOpen: boolean) => void;
     onClose: () => void;
 }
+
+
+const categoryButton = tv({
+    base: 'px-4 py-1 text-sm rounded-full',
+    variants: {
+        selected: {
+            true: 'bg-primary text-white',
+            false: 'bg-secondary text-text-secondary',
+        },
+    },
+});
+
+const listItem = tv({
+    base: 'py-2 px-3 cursor-pointer hover:bg-secondary',
+    variants: {
+        selected: {
+            true: 'bg-secondary',
+            false: '',
+        },
+    },
+});
+
 
 export default function ProjectSelectDialog({
     value,
@@ -64,6 +87,7 @@ export default function ProjectSelectDialog({
     }, [categoryGroupPreset]);
 
 
+
     return (
         <MoleculesDialog
             isOpen={isOpen}
@@ -75,30 +99,26 @@ export default function ProjectSelectDialog({
             noGutters
             width={640}
         >
-            <div className="p-4">
+            <div className="p-4 bg-background">
                 <div className="flex space-x-2 pb-2">
                     {categoryGroupPreset.map((categoryPresets, key) => (
                         <button
                             key={key}
-                            className={`px-4 py-1 text-sm rounded-full ${selectedPresetGroup === categoryPresets.company
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200 text-gray-700'
-                                }`}
+                            className={categoryButton({ selected: selectedPresetGroup === categoryPresets.company })}
                             onClick={() => setSelectedPresetGroup(categoryPresets.company)}
                         >
                             {categoryPresets.company}
                         </button>
                     ))}
                 </div>
-                <hr className="my-2" />
+                <hr className="my-2 border-secondary" />
                 {categoryGroupPreset.map((categoryPresets, presetsKey) => (
                     categoryPresets.company === selectedPresetGroup && (
                         <ul key={presetsKey} className="space-y-1">
                             {categoryPresets.items.map((item, itemsKey) => (
                                 <li
                                     key={itemsKey}
-                                    className={`py-2 px-3 cursor-pointer ${item.id === value ? 'bg-gray-100' : ''
-                                        } hover:bg-gray-50`}
+                                    className={listItem({ selected: item.id === value })}
                                     onMouseEnter={() => setHoverIndex(itemsKey)}
                                     onMouseLeave={() => setHoverIndex(undefined)}
                                     onClick={() => handleSetPreset(item.id)}
@@ -108,12 +128,12 @@ export default function ProjectSelectDialog({
                                             <Menu.Button className="inline-flex w-full justify-center items-center">
                                                 {item.name}
                                             </Menu.Button>
-                                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left divide-y divide-secondary rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                                 <div className="px-1 py-1">
                                                     <Menu.Item>
                                                         {({ active }) => (
                                                             <button
-                                                                className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                                className={`${active ? 'bg-primary text-white' : 'text-text-primary'
                                                                     } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                                                             >
                                                                 {item.name}
@@ -124,7 +144,7 @@ export default function ProjectSelectDialog({
                                             </Menu.Items>
                                         </Menu>
                                         {hoverIndex === itemsKey && (
-                                            <span className="text-blue-500">選択</span>
+                                            <span className="text-accent">選択</span>
                                         )}
                                     </div>
                                 </li>
