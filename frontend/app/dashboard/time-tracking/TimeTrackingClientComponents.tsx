@@ -17,7 +17,7 @@ export default function TimeTrackingClientComponents() {
     const project_list = [
         {
             companyId: 1,
-            companyName: "会社D",
+            companyName: "会社A",
             projects: [
                 { id: "proj_1", name: "案件1" },
                 { id: "proj_2", name: "案件2" },
@@ -25,11 +25,23 @@ export default function TimeTrackingClientComponents() {
         },
         {
             companyId: 2,
-            companyName: "会社E",
+            companyName: "会社B",
             projects: [
                 { id: "proj_3", name: "案件3" },
                 { id: "proj_4", name: "案件4" },
                 { id: "proj_5", name: "案件5" },
+            ]
+        },
+        {
+            companyId: 3,
+            companyName: "会社C",
+            projects: [
+                { id: "proj_6", name: "案件6" },
+                { id: "proj_7", name: "案件7" },
+                { id: "proj_8", name: "案件8" },
+                { id: "proj_9", name: "案件9" },
+                { id: "proj_10", name: "案件10" },
+                { id: "proj_11", name: "案件11" },
             ]
         }
     ];
