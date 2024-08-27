@@ -19,9 +19,9 @@ const ActiveLink = ({ href, name, icon }: ActiveLinkProps) => {
             className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-white text-[#E65F2B]' : 'hover:bg-gray-300'
                 }`}
         >
-            <span className={`${isActive ? 'text-[#E65F2B]' : 'text-white group-hover:text-[#E65F2B]'
+            <span className={`${isActive ? 'text-accent' : 'text-white group-hover:text-accent'
                 } transition-colors`}>{icon}</span>
-            <span className={`${isActive ? 'text-[#E65F2B]' : 'text-white group-hover:text-[#E65F2B]'
+            <span className={`${isActive ? 'text-accent' : 'text-white group-hover:text-accent'
                 } transition-colors`}>{name}</span>
         </Link>
     );

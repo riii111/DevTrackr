@@ -35,7 +35,7 @@ export default function AtomsButtonWithIcon({
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${loading ? 'cursor-wait' : ''}
         transition-colors duration-200
-        group bg-white text-primary hover:bg-secondary
+        group bg-white text-primary hover:bg-secondary hover:text-accent
     `;
 
     const textClasses = `

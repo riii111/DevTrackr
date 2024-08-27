@@ -38,7 +38,7 @@ const categoryButton = tv({
 });
 
 const listItem = tv({
-    base: 'py-2 px-3 cursor-pointer hover:bg-secondary',
+    base: 'py-2 px-3 cursor-pointer hover:bg-secondary text-text-primary',
     variants: {
         selected: {
             true: 'bg-secondary',
@@ -46,7 +46,6 @@ const listItem = tv({
         },
     },
 });
-
 
 export default function ProjectSelectDialog({
     value,
@@ -86,8 +85,6 @@ export default function ProjectSelectDialog({
         }
     }, [categoryGroupPreset]);
 
-
-
     return (
         <MoleculesDialog
             isOpen={isOpen}
@@ -125,7 +122,7 @@ export default function ProjectSelectDialog({
                                 >
                                     <div className="flex justify-between items-center">
                                         <Menu as="div" className="relative inline-block text-left">
-                                            <Menu.Button className="inline-flex w-full justify-center items-center">
+                                            <Menu.Button className="inline-flex w-full justify-center items-center text-text-primary">
                                                 {item.name}
                                             </Menu.Button>
                                             <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left divide-y divide-secondary rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
