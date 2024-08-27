@@ -45,7 +45,8 @@ const LayoutDashboardNavigation = () => {
     ];
 
     const menus = {
-        "ダッシュボード": dashboard,
+        // ダッシュボードでは、カテゴリタイトルは不要.
+        "": dashboard,
     }
 
     return (
