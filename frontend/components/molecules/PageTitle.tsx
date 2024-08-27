@@ -8,10 +8,10 @@ const getPageTitle = (pathname: string) => {
 
   const dashboardTitleMap: { [key: string]: string } = {
     "dashboard": "ダッシュボード",
-    "tasks": "タスク",
-    "analytics": "分析",
     "time-tracking": "勤怠",
+    "calendar": "カレンダー",
     "skill-analysis": "スキル分析",
+    "revenue": "収益・時給管理",
     "retrospective": "振り返り",
   };
 
