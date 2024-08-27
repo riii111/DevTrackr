@@ -26,12 +26,12 @@ export default function MoleculesDialog({
         <Dialog open={isOpen} onClose={onClose} className="relative z-50">
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
-                <DialogPanel className={`w-full rounded bg-white ${noGutters ? '' : 'p-6'}`} style={{ maxWidth: `${width}px` }}>
-                    {title && <DialogTitle className="text-lg font-medium leading-6 text-gray-900 p-4">{title}</DialogTitle>}
-                    {description && <p className="mt-2 text-sm text-gray-500 px-4">{description}</p>}
+                <DialogPanel className={`w-full rounded bg-background ${noGutters ? '' : 'p-6'}`} style={{ maxWidth: `${width}px` }}>
+                    {title && <DialogTitle className="text-lg font-semibold leading-6 text-text-primary p-4">{title}</DialogTitle>}
+                    {description && <p className="mt-2 text-sm text-text-secondary px-4">{description}</p>}
                     {loading ? (
                         <div className="flex justify-center items-center h-32">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
                     ) : (
                         <div className={noGutters ? '' : 'mt-4'}>

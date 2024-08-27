@@ -19,8 +19,8 @@ export default function AtomsButtonWithIcon({
     icon: Icon,
     text,
     btnColor = 'bg-white',
-    iconColor = 'text-gray-500',
-    textColor = 'text-gray-700',
+    iconColor = 'text-text-secondary',
+    textColor = 'text-text-primary',
     iconSize = 20,
     textBold = false,
     rounded = 8,
@@ -35,7 +35,7 @@ export default function AtomsButtonWithIcon({
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${loading ? 'cursor-wait' : ''}
         transition-colors duration-200
-        group bg-white text-[#E65F2B] hover:bg-gray-100
+        group bg-white text-primary hover:bg-secondary
     `;
 
     const textClasses = `
@@ -52,7 +52,7 @@ export default function AtomsButtonWithIcon({
         >
             {Icon && <Icon className={`${iconColor} mr-2`} size={iconSize} />}
             <span className={textClasses}>{text}</span>
-            {loading && <span className="ml-2">Loading...</span>}
+            {loading && <span className="ml-2 text-text-secondary">Loading...</span>}
         </Button>
     );
 }

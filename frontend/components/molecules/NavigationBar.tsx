@@ -16,10 +16,10 @@ interface NavigationBarProps {
 
 const NavigationBar = ({ menus, title }: NavigationBarProps) => {
     return (
-        <nav className="h-full w-1/5 bg-[#060606] shadow flex flex-col border-gray-50">
-            <h2 className="text-gray-500 mb-4 gap-4 text-2xl flex items-center py-6">
-                <span className="text-[#E65F2B]">{title.icon}</span>
-                <span className="text-[#FFFFFF]">{title.name}</span>
+        <nav className="h-full w-1/5 bg-text-primary shadow flex flex-col border-secondary">
+            <h2 className="text-secondary mb-4 gap-4 text-2xl flex items-center py-6">
+                <span className="text-accent">{title.icon}</span>
+                <span className="text-white">{title.name}</span>
             </h2>
             {Object.entries(menus).map(([category, items], index) => (
                 <div key={category} className="p-2 text-lg rounded-[26px] shadow">

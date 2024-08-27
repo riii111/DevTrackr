@@ -52,8 +52,6 @@ export default function TimeTrackingClientComponents() {
                 <AtomsButtonWithIcon
                     icon={GoPlus}
                     text="勤怠を追加"
-                    iconColor="text-black group-hover:text-[#E65F2B]"
-                    textColor="text-black group-hover:text-[#E65F2B]"
                     rounded={6}
                     loading={false}
                     disabled={false}

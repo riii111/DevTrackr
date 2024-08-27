@@ -37,7 +37,7 @@ const PageTitle = () => {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
 
-  return <h1 className="text-xl font-semibold">{pageTitle}</h1>;
+  return <h1 className="text-xl font-semibold text-text-primary">{pageTitle}</h1>;
 };
 
 export default PageTitle;
