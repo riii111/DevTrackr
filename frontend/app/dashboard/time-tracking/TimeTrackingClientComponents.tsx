@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
+import { useRouter } from "next/navigation";
+// import { useToast } from "@/components/ui/use-toast";
 
 const ProjectSelectDialog = dynamic(() => import("@/components/organisms/ProjectSelectDialog"), {
     ssr: false,
@@ -12,6 +14,9 @@ const ProjectSelectDialog = dynamic(() => import("@/components/organisms/Project
 export default function TimeTrackingClientComponents() {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<string>();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const router = useRouter();
+
     // TODO: プロジェクト一覧を取得するAPIが完成後、useMemoを適用して実装する?
     // const project_list = useProjectList();
     const project_list = [
@@ -45,6 +50,44 @@ export default function TimeTrackingClientComponents() {
             ]
         }
     ];
+
+    const handleSave = async () => {
+        if (!selectedProject) {
+            return;
+        }
+
+        try {
+            setIsProcessing(true);
+
+            // APIを呼び出して勤怠データを作成
+            // const res = await projectStore.createTimeTracking({
+            // projectId: selectedProject,
+            // 他の必要なデータをここに追加
+            // });
+
+            // 成功通知
+            // toast({
+            //     title: "勤怠を追加しました",
+            //     description: `プロジェクト: ${selectedProject}`,
+            // });
+
+            // ダイアログを閉じる
+            setIsOpen(false);
+
+            // 次の画面に遷移（プロジェクトの詳細画面）
+            // router.push(`/dashboard/time-tracking/${res.id}`);
+
+        } catch (error) {
+            console.error(error);
+            // toast({
+            //     title: "エラー",
+            //     description: "勤怠の作成に失敗しました",
+            //     variant: "destructive",
+            // });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     return (
         <>
