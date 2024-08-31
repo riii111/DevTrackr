@@ -1,5 +1,6 @@
-import { createContext, useContext, useCallback, useState } from "react";
-import { useRouter } from "next/router";
+"use client";
+import { createContext, useCallback, useState, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
 type DrawerType = "main" | "sub";
@@ -8,7 +9,7 @@ type EventDataVariant = "event" | "task" | "todo";
 interface DrawerState {
   isOpen: boolean;
   id?: string;
-  type?: Event;
+  type?: EventDataVariant;
   drawerClosePromise?: Promise<void>;
   resolve?: (value: void | PromiseLike<void>) => void;
 }
@@ -28,7 +29,14 @@ const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
 export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const [drawerState, setDrawerState] = useState<
     Record<DrawerType, DrawerState>
   >({
@@ -62,20 +70,8 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("mainドロワーが開いていません");
       }
 
-      if (drawer === "main") {
-        await router.push(
-          {
-            query: {
-              ...router.query,
-              [type + "Id"]: id,
-            },
-          },
-          undefined,
-          { shallow: true }
-        );
-      }
-
       const { promisify, resolve } = createExternalPromise();
+
       setDrawerState((prev) => ({
         ...prev,
         [drawer]: {
@@ -87,10 +83,15 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
           resolve,
         },
       }));
-    },
-    [drawerState, router]
-  );
 
+      if (drawer === "main" && router) {
+        const params = new URLSearchParams(searchParams);
+        params.set(type + "Id", id);
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    },
+    [drawerState, router, searchParams, pathname]
+  );
 
   const handleClose = useCallback(
     async (drawerType: DrawerType) => {
@@ -100,21 +101,14 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
       }));
 
       if (drawerType === "main") {
-        await router.push(
-          {
-            query: {
-              ...router.query,
-              eventId: undefined,
-              taskId: undefined,
-              todoId: undefined,
-            },
-          },
-          undefined,
-          { shallow: true }
-        );
+        const params = new URLSearchParams(searchParams);
+        params.delete("eventId");
+        params.delete("taskId");
+        params.delete("todoId");
+        router.push(`${pathname}?${params.toString()}`);
       }
     },
-    [router]
+    [router, searchParams, pathname]
   );
 
   const onClosed = useCallback(
@@ -122,18 +116,19 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
       setDrawerState((prev) => ({
         ...prev,
         [drawer]: {
-          ...prev,
-          [drawer]: {
-            ...prev[drawer],
-            id: undefined,
-            type: undefined,
-          },
+          ...prev[drawer],
+          id: undefined,
+          type: undefined,
         },
       }));
       drawerState[drawer].resolve?.();
     },
     [drawerState]
   );
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <DrawerContext.Provider
