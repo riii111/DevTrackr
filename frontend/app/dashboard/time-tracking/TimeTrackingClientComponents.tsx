@@ -1,10 +1,11 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { useState } from "react";
+import { useState, useContext } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useRouter } from "next/navigation";
+import { useDrawerStore } from "@/lib/store/useDrawerStore";
 // import { useToast } from "@/components/ui/use-toast";
 
 const ProjectSelectDialog = dynamic(() => import("@/components/organisms/ProjectSelectDialog"), {
@@ -16,7 +17,7 @@ export default function TimeTrackingClientComponents() {
     const [selectedProject, setSelectedProject] = useState<string>();
     const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
-
+    const { handleOpen } = useDrawerStore();
     // TODO: プロジェクト一覧を取得するAPIが完成後、useMemoを適用して実装する?
     // const project_list = useProjectList();
     const project_list = [
@@ -71,6 +72,7 @@ export default function TimeTrackingClientComponents() {
             //     description: `プロジェクト: ${selectedProject}`,
             // });
 
+            await handleOpen("main", { id: "event", type: "event" });
             // ダイアログを閉じる
             setIsOpen(false);
 

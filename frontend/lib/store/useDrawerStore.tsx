@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useState, useEffect } from "react";
+import { createContext, useCallback, useState, useEffect, useContext } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
@@ -25,6 +25,14 @@ interface DrawerContextType {
 }
 
 const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
+
+export const useDrawerStore = () => {
+  const context = useContext(DrawerContext);
+  if (context === undefined) {
+    throw new Error('useDrawerStoreはDrawerProvider内で使用する必要があります');
+  }
+  return context;
+};
 
 export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -87,13 +95,15 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (drawer === "main" && router) {
         const params = new URLSearchParams(searchParams);
         params.set(type + "Id", id);
-        router.push(`${pathname}?${params.toString()}`);
+        await router.push(`${pathname}?${params.toString()}`);
+        // TODO:何かスナックバーを表示させる？しないなら非同期は不要.
       }
     },
     [drawerState, router, searchParams, pathname]
   );
 
   const handleClose = useCallback(
+    // TODO: useCallbackの依存配列にdrawerState全体を含めているが、必要な部分だけを指定し不要な再レンダリングを抑える
     async (drawerType: DrawerType) => {
       setDrawerState((prev) => ({
         ...prev,
