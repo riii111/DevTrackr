@@ -1,6 +1,4 @@
 "use client";
-import React, { Fragment } from 'react';
-import { Menu, Transition } from '@headlessui/react';
 import { MdAccountCircle } from 'react-icons/md';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
