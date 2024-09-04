@@ -17,7 +17,7 @@ export default function TimeTrackingClientComponents() {
     const [selectedProject, setSelectedProject] = useState<string>();
     const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
-    const { handleOpen } = useDrawerStore();
+    const drawerStore = useDrawerStore();
     // TODO: プロジェクト一覧を取得するAPIが完成後、useMemoを適用して実装する?
     // const project_list = useProjectList();
     const project_list = [
@@ -72,7 +72,7 @@ export default function TimeTrackingClientComponents() {
             //     description: `プロジェクト: ${selectedProject}`,
             // });
 
-            await handleOpen("main", { id: "event", type: "event" });
+            await drawerStore.handleOpen("main", { id: "event", type: "event" });
             // ダイアログを閉じる
             setIsOpen(false);
 
