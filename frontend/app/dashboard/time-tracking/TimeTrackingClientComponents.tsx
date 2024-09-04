@@ -5,8 +5,8 @@ import { useState, useContext } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useRouter } from "next/navigation";
+// import { useSnackbar } from "@/lib/store/useSnackbarStore";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
-// import { useToast } from "@/components/ui/use-toast";
 
 const ProjectSelectDialog = dynamic(() => import("@/components/organisms/ProjectSelectDialog"), {
     ssr: false,
@@ -67,7 +67,7 @@ export default function TimeTrackingClientComponents() {
             // });
 
             // 成功通知
-            // toast({
+            // useSnackbar({
             //     title: "勤怠を追加しました",
             //     description: `プロジェクト: ${selectedProject}`,
             // });
@@ -81,7 +81,7 @@ export default function TimeTrackingClientComponents() {
 
         } catch (error) {
             console.error(error);
-            // toast({
+            // useSnackbar({
             //     title: "エラー",
             //     description: "勤怠の作成に失敗しました",
             //     variant: "destructive",
