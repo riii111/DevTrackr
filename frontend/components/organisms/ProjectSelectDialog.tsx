@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import MoleculesDialog from '@/components/molecules/dialog/MoleculesDialog';
-import { Button } from '@headlessui/react'
+import { Button } from '@/components/ui/button'
 import { tv } from 'tailwind-variants'
 // import { ChevronDownIcon } from '@heroicons/react/20/solid'
 // import { useOrganizationStore } from '@/stores/organizationStore';
@@ -145,7 +145,7 @@ export default function ProjectSelectDialog({
                 ))}
                 <div className='flex w-full justify-end mt-4'>
                     <Button
-                        className="text-text-primary hover:bg-gray-200"
+                        className="text-text-primary hover:bg-gray-200 bg-secondary"
                         onClick={handleConfirm}
                         disabled={!selectedProjectId}
                     >
