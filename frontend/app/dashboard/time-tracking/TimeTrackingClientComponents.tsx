@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { useState, useContext } from "react";
+import { useState } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useRouter } from "next/navigation";
