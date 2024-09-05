@@ -70,6 +70,7 @@ const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm:
         </Button>
     </DialogFooter>
 ));
+MemoizedDialogFooter.displayName = 'MemoizedDialogFooter';
 
 const CategoryButton = ({ company, isSelected, onClick }: { company: string; isSelected: boolean; onClick: () => void }) => (
     <Button
