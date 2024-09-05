@@ -10,6 +10,8 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog'
+import { useRouter } from "next/navigation";
+import { useDrawerStore } from "@/lib/store/useDrawerStore";
 
 interface Project {
     id: string;
@@ -23,12 +25,11 @@ interface Company {
 }
 
 interface Props {
-    value: string | undefined;
     isOpen: boolean;
     companies: Company[];
-    onChange: (value: string | undefined) => void;
     onOpenChange: (isOpen: boolean) => void;
     onClose: () => void;
+    setIsDrawerOpen: (isOpen: boolean) => void;
 }
 
 const categoryButton = tv({
@@ -51,7 +52,6 @@ const listItem = tv({
     },
 });
 
-// メモ化されたDialogHeader
 const MemoizedDialogHeader = React.memo(() => (
     <DialogHeader>
         <DialogTitle>開発プロジェクトの選択</DialogTitle>
@@ -62,7 +62,6 @@ const MemoizedDialogHeader = React.memo(() => (
 ));
 MemoizedDialogHeader.displayName = 'MemoizedDialogHeader';
 
-// メモ化されたDialogFooter
 const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm: () => void; isDisabled: boolean }) => (
     <DialogFooter>
         <Button onClick={onConfirm} disabled={isDisabled} className="text-text-primary hover:bg-gray-200 bg-white shadow-none">
@@ -142,12 +141,15 @@ const ProjectSelector = ({
 export default function ProjectSelectDialog({
     isOpen,
     companies = [],
-    onChange,
     onOpenChange,
-    onClose
+    onClose,
+    setIsDrawerOpen,
 }: Props) {
     const [selectedPresetGroup, setSelectedPresetGroup] = useState<string>();
     const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const router = useRouter();
+    const drawerStore = useDrawerStore();
 
     const handleProjectSelect = useCallback((projectId: string) => {
         setSelectedProjectId(projectId);
@@ -155,12 +157,36 @@ export default function ProjectSelectDialog({
 
     const handleConfirm = useCallback(() => {
         if (selectedProjectId) {
-            onChange(selectedProjectId);
-            onOpenChange(false);
-            onClose();
-            setSelectedProjectId(undefined);
+            handleSave();
         }
-    }, [selectedProjectId, onChange, onOpenChange, onClose]);
+    }, [selectedProjectId]);
+
+    const handleSave = async () => {
+        if (!selectedProjectId) {
+            return;
+        }
+
+        try {
+            setIsProcessing(true);
+
+            await drawerStore.handleOpen("main", { id: "event", type: "event" });
+
+            const projectDetails = companies
+                .flatMap(company => company.projects)
+                .find(project => project.id === selectedProjectId);
+
+            if (projectDetails) {
+                router.push(`/dashboard/time-tracking${projectDetails.id}`);
+                setIsDrawerOpen(true);
+            }
+
+            onOpenChange(false);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     // TODO: ダミーの処理. 会社ごとに案件を表示させるように修正する.
     const categoryGroupPreset = useMemo(() => {
@@ -184,6 +210,7 @@ export default function ProjectSelectDialog({
         }
     }, [isOpen]);
 
+    // カテゴリーグループのプリセットが変更されたときに、最初の会社を選択状態にする
     useEffect(() => {
         if (categoryGroupPreset.length > 0) {
             setSelectedPresetGroup(categoryGroupPreset[0].company);
@@ -193,7 +220,10 @@ export default function ProjectSelectDialog({
     return (
         <Dialog open={isOpen} onOpenChange={(open) => {
             onOpenChange(open);
-            if (!open) onClose();
+            if (!open) {
+                onClose();
+                // onSave(undefined);
+            }
         }}>
             <DialogContent className="sm:max-w-[640px]">
                 <MemoizedDialogHeader />
@@ -204,7 +234,7 @@ export default function ProjectSelectDialog({
                     onSelectProject={handleProjectSelect}
                     selectedProjectId={selectedProjectId}
                 />
-                <MemoizedDialogFooter onConfirm={handleConfirm} isDisabled={!selectedProjectId} />
+                <MemoizedDialogFooter onConfirm={handleConfirm} isDisabled={!selectedProjectId || isProcessing} />
             </DialogContent>
         </Dialog>
     );
