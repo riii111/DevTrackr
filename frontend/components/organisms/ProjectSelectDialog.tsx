@@ -73,6 +73,18 @@ const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm:
 
 MemoizedDialogFooter.displayName = 'MemoizedDialogFooter';
 
+const CategoryButton = React.memo(({ company, isSelected, onClick }: { company: string; isSelected: boolean; onClick: () => void }) => (
+    <Button
+        variant="outline"
+        className={categoryButton({ selected: isSelected })}
+        onClick={onClick}
+    >
+        {company}
+    </Button>
+));
+
+CategoryButton.displayName = 'CategoryButton';
+
 // プロジェクト選択部分を別コンポーネントに分離
 const ProjectSelector = ({
     categoryGroupPreset,
@@ -91,14 +103,12 @@ const ProjectSelector = ({
         <div className="p-4 bg-background">
             <div className="flex space-x-2 pb-2">
                 {categoryGroupPreset.map((categoryPresets, key) => (
-                    <Button
+                    <CategoryButton
                         key={key}
-                        variant="outline"
-                        className={categoryButton({ selected: selectedPresetGroup === categoryPresets.company })}
+                        company={categoryPresets.company}
+                        isSelected={selectedPresetGroup === categoryPresets.company}
                         onClick={() => onSelectPresetGroup(categoryPresets.company)}
-                    >
-                        {categoryPresets.company}
-                    </Button>
+                    />
                 ))}
             </div>
             <hr className="my-2 border-secondary-dark" />
