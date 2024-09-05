@@ -7,17 +7,25 @@ import { GoPlus } from "react-icons/go";
 import { useRouter } from "next/navigation";
 // import { useSnackbar } from "@/lib/store/useSnackbarStore";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
+import { ProjectDrawer } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer";
 
-const ProjectSelectDialog = dynamic(() => import("@/components/organisms/ProjectSelectDialog"), {
+const ProjectSelectDialog = dynamic(() => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog"), {
     ssr: false,
 });
 
+// const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer"), {
+//     ssr: false,
+// });
+
+interface Project {
+    id: string;
+    name: string;
+    // 他のプロジェクト関連のプロパティを追加
+}
+
 export default function TimeTrackingClientComponents() {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedProject, setSelectedProject] = useState<string>();
-    const [isProcessing, setIsProcessing] = useState(false);
-    const router = useRouter();
-    const drawerStore = useDrawerStore();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     // TODO: プロジェクト一覧を取得するAPIが完成後、useMemoを適用して実装する?
     // const project_list = useProjectList();
     const project_list = [
@@ -25,71 +33,33 @@ export default function TimeTrackingClientComponents() {
             companyId: 1,
             companyName: "会社A",
             projects: [
-                { id: "proj_1", name: "案件1" },
-                { id: "proj_2", name: "案件2" },
+                { id: "1", name: "案件1" },
+                { id: "2", name: "案件2" },
             ]
         },
         {
             companyId: 2,
             companyName: "会社B",
             projects: [
-                { id: "proj_3", name: "案件3" },
-                { id: "proj_4", name: "案件4" },
-                { id: "proj_5", name: "案件5" },
+                { id: "3", name: "案件3" },
+                { id: "4", name: "案件4" },
+                { id: "5", name: "案件5" },
             ]
         },
         {
             companyId: 3,
             companyName: "会社C",
             projects: [
-                { id: "proj_6", name: "案件6" },
-                { id: "proj_7", name: "案件7" },
-                { id: "proj_8", name: "案件8" },
-                { id: "proj_9", name: "案件9" },
-                { id: "proj_10", name: "案件10" },
-                { id: "proj_11", name: "案件11" },
+                { id: "6", name: "案件6" },
+                { id: "7", name: "案件7" },
+                { id: "8", name: "案件8" },
+                { id: "9", name: "案件9" },
+                { id: "10", name: "案件10" },
+                { id: "11", name: "案件11" },
             ]
         }
     ];
 
-    const handleSave = async () => {
-        if (!selectedProject) {
-            return;
-        }
-
-        try {
-            setIsProcessing(true);
-
-            // APIを呼び出して勤怠データを作成
-            // const res = await projectStore.createTimeTracking({
-            // projectId: selectedProject,
-            // 他の必要なデータをここに追加
-            // });
-
-            // 成功通知
-            // useSnackbar({
-            //     title: "勤怠を追加しました",
-            //     description: `プロジェクト: ${selectedProject}`,
-            // });
-
-            await drawerStore.handleOpen("main", { id: "event", type: "event" });
-            // ダイアログを閉じる
-            setIsOpen(false);
-
-            // 次の画面に遷移（プロジェクトの詳細画面）
-            // router.push(`/dashboard/time-tracking/${res.id}`);
-
-        } catch (error) {
-            console.error(error);
-            // useSnackbar({
-            //     title: "エラー",
-            //     description: "勤怠の作成に失敗しました",
-            //     variant: "destructive",
-            // });
-        } finally {
-            setIsProcessing(false);
-        }
-    };
 
     return (
         <>
@@ -107,10 +77,13 @@ export default function TimeTrackingClientComponents() {
                 isOpen={isOpen}
                 onOpenChange={setIsOpen}
                 onClose={() => setIsOpen(false)}
-                value={selectedProject}
                 companies={project_list}
-                onChange={setSelectedProject}
+                setIsDrawerOpen={setIsDrawerOpen}
             />
+            {isDrawerOpen && <ProjectDrawer
+                isOpen={isDrawerOpen}
+                onOpenChange={setIsDrawerOpen}
+            />}
         </>
     );
 }
