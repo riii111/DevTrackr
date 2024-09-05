@@ -1,4 +1,4 @@
-import { ProjectList } from "@/components/organisms/ProjectList";
+import { ProjectList } from "@/components/organisms/projects/ProjectList/ProjectList";
 
 export default function TimeTrackingContent({ bgColor }: { bgColor: string }) {
     return (
