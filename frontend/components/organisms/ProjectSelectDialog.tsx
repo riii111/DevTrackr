@@ -66,7 +66,7 @@ MemoizedDialogHeader.displayName = 'MemoizedDialogHeader';
 const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm: () => void; isDisabled: boolean }) => (
     <DialogFooter>
         <Button onClick={onConfirm} disabled={isDisabled} className="text-text-primary hover:bg-gray-200 bg-white shadow-none">
-            <span className='text-primary hover:text-accent'>プロジェクトを追加→</span>
+            <span className='text-primary hover:text-accent'>開発プロジェクトを追加→</span>
         </Button>
     </DialogFooter>
 ));
