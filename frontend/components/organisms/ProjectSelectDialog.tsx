@@ -71,9 +71,7 @@ const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm:
     </DialogFooter>
 ));
 
-MemoizedDialogFooter.displayName = 'MemoizedDialogFooter';
-
-const CategoryButton = React.memo(({ company, isSelected, onClick }: { company: string; isSelected: boolean; onClick: () => void }) => (
+const CategoryButton = ({ company, isSelected, onClick }: { company: string; isSelected: boolean; onClick: () => void }) => (
     <Button
         variant="outline"
         className={categoryButton({ selected: isSelected })}
@@ -81,9 +79,26 @@ const CategoryButton = React.memo(({ company, isSelected, onClick }: { company: 
     >
         {company}
     </Button>
-));
+);
 
-CategoryButton.displayName = 'CategoryButton';
+const ProjectList = ({ projects, selectedProjectId, onSelectProject }: { projects: Project[]; selectedProjectId: string | undefined; onSelectProject: (projectId: string) => void }) => (
+    <ul className="space-y-1">
+        {projects.map((project) => (
+            <li
+                key={project.id}
+                className={listItem({ selected: project.id === selectedProjectId })}
+                onClick={() => onSelectProject(project.id)}
+            >
+                <div className="flex justify-between items-center w-full">
+                    <span className="text-text-primary">{project.name}</span>
+                    {project.id === selectedProjectId && (
+                        <span className="text-accent">選択</span>
+                    )}
+                </div>
+            </li>
+        ))}
+    </ul>
+);
 
 // プロジェクト選択部分を別コンポーネントに分離
 const ProjectSelector = ({
@@ -112,26 +127,13 @@ const ProjectSelector = ({
                 ))}
             </div>
             <hr className="my-2 border-secondary-dark" />
-            {categoryGroupPreset.map((categoryPresets, presetsKey) => (
-                categoryPresets.company === selectedPresetGroup && (
-                    <ul key={presetsKey} className="space-y-1">
-                        {categoryPresets.items.map((item) => (
-                            <li
-                                key={item.id}
-                                className={listItem({ selected: item.id === selectedProjectId })}
-                                onClick={() => onSelectProject(item.id)}
-                            >
-                                <div className="flex justify-between items-center w-full">
-                                    <span className="text-text-primary">{item.name}</span>
-                                    {selectedProjectId === item.id && (
-                                        <span className="text-accent">選択</span>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )
-            ))}
+            {categoryGroupPreset.find(categoryPreset => categoryPreset.company === selectedPresetGroup)?.items && (
+                <ProjectList
+                    projects={categoryGroupPreset.find(categoryPreset => categoryPreset.company === selectedPresetGroup)!.items}
+                    selectedProjectId={selectedProjectId}
+                    onSelectProject={onSelectProject}
+                />
+            )}
         </div>
     );
 };
