@@ -1,7 +1,7 @@
 "use client";
 
 import { BaseDrawer } from "@/components/organisms/projects/ProjectDrawer/BaseDrawer";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 
@@ -15,6 +15,7 @@ export function ProjectDrawer() {
     const searchParams = useSearchParams();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const drawerStore = useDrawerStore();
+    const router = useRouter();
     useEffect(() => {
         const projectId = searchParams.get("projectId");
         if (projectId) {
@@ -40,6 +41,7 @@ export function ProjectDrawer() {
                         onOpenChange={(open) => {
                             if (!open) {
                                 drawerStore.handleClose("main");
+                                router.push("/dashboard/time-tracking");
                             }
                         }}
                         title="プロジェクト詳細"
