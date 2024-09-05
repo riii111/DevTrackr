@@ -54,9 +54,9 @@ const listItem = tv({
 // メモ化されたDialogHeader
 const MemoizedDialogHeader = React.memo(() => (
     <DialogHeader>
-        <DialogTitle>プロジェクト・開発案件の選択</DialogTitle>
+        <DialogTitle>開発プロジェクトの選択</DialogTitle>
         <DialogDescription>
-            以下のリストからプロジェクトまたは開発案件を選択してください。
+            以下のリストから開発プロジェクトを選択してください。
         </DialogDescription>
     </DialogHeader>
 ));
