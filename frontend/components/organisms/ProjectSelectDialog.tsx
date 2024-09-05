@@ -1,10 +1,15 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
-import MoleculesDialog from '@/components/molecules/dialog/MoleculesDialog';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button'
 import { tv } from 'tailwind-variants'
-// import { ChevronDownIcon } from '@heroicons/react/20/solid'
-// import { useOrganizationStore } from '@/stores/organizationStore';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog'
 
 interface Project {
     id: string;
@@ -46,8 +51,82 @@ const listItem = tv({
     },
 });
 
+// メモ化されたDialogHeader
+const MemoizedDialogHeader = React.memo(() => (
+    <DialogHeader>
+        <DialogTitle>プロジェクト・開発案件の選択</DialogTitle>
+        <DialogDescription>
+            以下のリストからプロジェクトまたは開発案件を選択してください。
+        </DialogDescription>
+    </DialogHeader>
+));
+MemoizedDialogHeader.displayName = 'MemoizedDialogHeader';
+
+// メモ化されたDialogFooter
+const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm: () => void; isDisabled: boolean }) => (
+    <DialogFooter>
+        <Button onClick={onConfirm} disabled={isDisabled} className="text-text-primary hover:bg-gray-200 bg-white shadow-none">
+            <span className='text-primary hover:text-accent'>プロジェクトを追加→</span>
+        </Button>
+    </DialogFooter>
+));
+
+MemoizedDialogFooter.displayName = 'MemoizedDialogFooter';
+
+// プロジェクト選択部分を別コンポーネントに分離
+const ProjectSelector = ({
+    categoryGroupPreset,
+    selectedPresetGroup,
+    selectedProjectId,
+    onSelectPresetGroup,
+    onSelectProject
+}: {
+    categoryGroupPreset: { company: string; items: Project[] }[];
+    selectedPresetGroup: string | undefined;
+    selectedProjectId: string | undefined;
+    onSelectPresetGroup: (company: string) => void;
+    onSelectProject: (projectId: string) => void;
+}) => {
+    return (
+        <div className="p-4 bg-background">
+            <div className="flex space-x-2 pb-2">
+                {categoryGroupPreset.map((categoryPresets, key) => (
+                    <Button
+                        key={key}
+                        variant="outline"
+                        className={categoryButton({ selected: selectedPresetGroup === categoryPresets.company })}
+                        onClick={() => onSelectPresetGroup(categoryPresets.company)}
+                    >
+                        {categoryPresets.company}
+                    </Button>
+                ))}
+            </div>
+            <hr className="my-2 border-secondary-dark" />
+            {categoryGroupPreset.map((categoryPresets, presetsKey) => (
+                categoryPresets.company === selectedPresetGroup && (
+                    <ul key={presetsKey} className="space-y-1">
+                        {categoryPresets.items.map((item) => (
+                            <li
+                                key={item.id}
+                                className={listItem({ selected: item.id === selectedProjectId })}
+                                onClick={() => onSelectProject(item.id)}
+                            >
+                                <div className="flex justify-between items-center w-full">
+                                    <span className="text-text-primary">{item.name}</span>
+                                    {selectedProjectId === item.id && (
+                                        <span className="text-accent">選択</span>
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )
+            ))}
+        </div>
+    );
+};
+
 export default function ProjectSelectDialog({
-    value,
     isOpen,
     companies = [],
     onChange,
@@ -56,6 +135,19 @@ export default function ProjectSelectDialog({
 }: Props) {
     const [selectedPresetGroup, setSelectedPresetGroup] = useState<string>();
     const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
+
+    const handleProjectSelect = useCallback((projectId: string) => {
+        setSelectedProjectId(projectId);
+    }, []);
+
+    const handleConfirm = useCallback(() => {
+        if (selectedProjectId) {
+            onChange(selectedProjectId);
+            onOpenChange(false);
+            onClose();
+            setSelectedProjectId(undefined);
+        }
+    }, [selectedProjectId, onChange, onOpenChange, onClose]);
 
     // TODO: ダミーの処理. 会社ごとに案件を表示させるように修正する.
     const categoryGroupPreset = useMemo(() => {
@@ -72,20 +164,6 @@ export default function ProjectSelectDialog({
         }));
     }, [companies]);
 
-    function handleProjectSelect(projectId: string) {
-        setSelectedProjectId(projectId);
-    }
-
-    function handleConfirm() {
-        if (selectedProjectId) {
-            onChange(selectedProjectId);
-            onOpenChange(false);
-            onClose();
-            // ダイアログが閉じられた時に選択状態をクリア
-            setSelectedProjectId(undefined);
-        }
-    }
-
     // ダイアログが開かれた時に選択状態をクリア
     useEffect(() => {
         if (isOpen) {
@@ -100,59 +178,21 @@ export default function ProjectSelectDialog({
     }, [categoryGroupPreset]);
 
     return (
-        <MoleculesDialog
-            isOpen={isOpen}
-            onClose={() => {
-                onOpenChange(false);
-                onClose();
-            }}
-            title="プロジェクト・開発案件の選択"
-            noGutters
-            width={640}
-        >
-            <div className="p-4 bg-background">
-                <div className="flex space-x-2 pb-2">
-                    {categoryGroupPreset.map((categoryPresets, key) => (
-                        <Button
-                            key={key}
-                            className={categoryButton({ selected: selectedPresetGroup === categoryPresets.company })}
-                            onClick={() => setSelectedPresetGroup(categoryPresets.company)}
-                        >
-                            {categoryPresets.company}
-                        </Button>
-                    ))}
-                </div>
-                <hr className="my-2 border-secondary-dark" />
-                {categoryGroupPreset.map((categoryPresets, presetsKey) => (
-                    categoryPresets.company === selectedPresetGroup && (
-                        <ul key={presetsKey} className="space-y-1">
-                            {categoryPresets.items.map((item) => (
-                                <li
-                                    key={item.id}
-                                    className={listItem({ selected: item.id === selectedProjectId })}
-                                    onClick={() => handleProjectSelect(item.id)}
-                                >
-                                    <div className="flex justify-between items-center w-full">
-                                        <span className="text-text-primary">{item.name}</span>
-                                        {selectedProjectId === item.id && (
-                                            <span className="text-accent">選択</span>
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )
-                ))}
-                <div className='flex w-full justify-end mt-4'>
-                    <Button
-                        className="text-text-primary hover:bg-gray-200 bg-secondary"
-                        onClick={handleConfirm}
-                        disabled={!selectedProjectId}
-                    >
-                        <span className='text-primary hover:text-accent'>プロジェクトを追加→</span>
-                    </Button>
-                </div>
-            </div>
-        </MoleculesDialog>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            onOpenChange(open);
+            if (!open) onClose();
+        }}>
+            <DialogContent className="sm:max-w-[640px]">
+                <MemoizedDialogHeader />
+                <ProjectSelector
+                    categoryGroupPreset={categoryGroupPreset}
+                    selectedPresetGroup={selectedPresetGroup}
+                    onSelectPresetGroup={setSelectedPresetGroup}
+                    onSelectProject={handleProjectSelect}
+                    selectedProjectId={selectedProjectId}
+                />
+                <MemoizedDialogFooter onConfirm={handleConfirm} isDisabled={!selectedProjectId} />
+            </DialogContent>
+        </Dialog>
     );
 }
