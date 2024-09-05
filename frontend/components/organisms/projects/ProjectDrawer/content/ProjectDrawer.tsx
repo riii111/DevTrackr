@@ -11,12 +11,7 @@ interface Project {
     // 他のプロジェクト関連のプロパティを追加
 }
 
-interface ProjectDrawerProps {
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-export function ProjectDrawer({ isOpen, onOpenChange }: ProjectDrawerProps) {
+export function ProjectDrawer() {
     const searchParams = useSearchParams();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const drawerStore = useDrawerStore();
@@ -41,10 +36,13 @@ export function ProjectDrawer({ isOpen, onOpenChange }: ProjectDrawerProps) {
             <div className="absolute inset-0 overflow-hidden">
                 <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
                     <BaseDrawer
-                        isOpen={isOpen}
-                        onOpenChange={onOpenChange}
+                        isOpen={drawerStore.drawerState.main.isOpen}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                drawerStore.handleClose("main");
+                            }
+                        }}
                         title="プロジェクト詳細"
-                        onClose={() => drawerStore.handleClose("main")}
                     >
                         {selectedProject ? (
                             <div className="p-4">

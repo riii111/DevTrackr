@@ -13,12 +13,11 @@ interface BaseDrawerProps {
     onOpenChange: (open: boolean) => void;
     title: string;
     children: React.ReactNode;
-    onClose: () => void;
 }
 
-export function BaseDrawer({ isOpen, onOpenChange, title, children, onClose }: BaseDrawerProps) {
+export function BaseDrawer({ isOpen, onOpenChange, title, children }: BaseDrawerProps) {
     return (
-        <Drawer open={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
+        <Drawer open={isOpen} onOpenChange={onOpenChange}>
             <DrawerContent>
                 <DrawerHeader>
                     <DrawerTitle>{title}</DrawerTitle>

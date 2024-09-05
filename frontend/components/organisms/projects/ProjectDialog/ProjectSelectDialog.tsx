@@ -29,7 +29,6 @@ interface Props {
     companies: Company[];
     onOpenChange: (isOpen: boolean) => void;
     onClose: () => void;
-    setIsDrawerOpen: (isOpen: boolean) => void;
 }
 
 const categoryButton = tv({
@@ -143,7 +142,6 @@ export default function ProjectSelectDialog({
     companies = [],
     onOpenChange,
     onClose,
-    setIsDrawerOpen,
 }: Props) {
     const [selectedPresetGroup, setSelectedPresetGroup] = useState<string>();
     const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
@@ -176,8 +174,7 @@ export default function ProjectSelectDialog({
                 .find(project => project.id === selectedProjectId);
 
             if (projectDetails) {
-                router.push(`/dashboard/time-tracking${projectDetails.id}`);
-                setIsDrawerOpen(true);
+                router.push(`/dashboard/time-tracking?projectId=${projectDetails.id}`);
             }
 
             onOpenChange(false);
@@ -222,7 +219,6 @@ export default function ProjectSelectDialog({
             onOpenChange(open);
             if (!open) {
                 onClose();
-                // onSave(undefined);
             }
         }}>
             <DialogContent className="sm:max-w-[640px]">

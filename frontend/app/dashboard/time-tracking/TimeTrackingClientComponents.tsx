@@ -4,18 +4,15 @@ import dynamic from 'next/dynamic';
 import { useState } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
-import { useRouter } from "next/navigation";
-// import { useSnackbar } from "@/lib/store/useSnackbarStore";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
-import { ProjectDrawer } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer";
 
 const ProjectSelectDialog = dynamic(() => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog"), {
     ssr: false,
 });
 
-// const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer"), {
-//     ssr: false,
-// });
+const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer").then(mod => mod.ProjectDrawer), {
+    ssr: false,
+});
 
 interface Project {
     id: string;
@@ -25,7 +22,7 @@ interface Project {
 
 export default function TimeTrackingClientComponents() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const { drawerState } = useDrawerStore();
     // TODO: プロジェクト一覧を取得するAPIが完成後、useMemoを適用して実装する?
     // const project_list = useProjectList();
     const project_list = [
@@ -78,12 +75,8 @@ export default function TimeTrackingClientComponents() {
                 onOpenChange={setIsOpen}
                 onClose={() => setIsOpen(false)}
                 companies={project_list}
-                setIsDrawerOpen={setIsDrawerOpen}
             />
-            {isDrawerOpen && <ProjectDrawer
-                isOpen={isDrawerOpen}
-                onOpenChange={setIsDrawerOpen}
-            />}
+            {drawerState.main.isOpen && <ProjectDrawer />}
         </>
     );
 }
