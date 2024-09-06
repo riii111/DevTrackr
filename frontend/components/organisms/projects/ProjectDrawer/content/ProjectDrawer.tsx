@@ -74,6 +74,8 @@ export const ProjectDrawer = React.memo(() => {
         }
     }, [drawerStore, router])
 
+    console.log("called ProjectDrawer")
+
     return (
         <div className="fixed inset-0 overflow-hidden z-50">
             <div className="absolute inset-0 overflow-hidden">

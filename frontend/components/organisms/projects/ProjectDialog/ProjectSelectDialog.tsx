@@ -213,6 +213,7 @@ export default function ProjectSelectDialog({
             setSelectedPresetGroup(categoryGroupPreset[0].company);
         }
     }, [categoryGroupPreset]);
+    console.log("called ProjectSelectDialog");
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => {

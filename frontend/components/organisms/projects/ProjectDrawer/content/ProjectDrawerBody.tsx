@@ -28,6 +28,8 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
         return undefined
     }, [isSubDrawer, state.isOpen, width])
 
+    console.log("called ProjectDrawerBody")
+
     return (
         <div
             ref={isSubDrawer ? subDrawer : undefined}
