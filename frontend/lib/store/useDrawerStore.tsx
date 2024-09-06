@@ -22,6 +22,8 @@ interface DrawerContextType {
   ) => Promise<void>;
   handleClose: (drawerType: DrawerType) => Promise<void>;
   onClosed: (drawer: DrawerType) => void;
+  isFullScreen: boolean;
+  setIsFullScreen: (value: boolean) => void;
 }
 
 const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
@@ -44,6 +46,8 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
   const searchParams = useSearchParams();
   const pathname = usePathname();
+
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false)
 
   const [drawerState, setDrawerState] = useState<
     Record<DrawerType, DrawerState>
@@ -110,6 +114,8 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
         [drawerType]: { ...prev[drawerType], isOpen: false },
       }));
 
+      setIsFullScreen(false);
+
       if (drawerType === "main") {
         const params = new URLSearchParams(searchParams);
         params.delete("eventId");
@@ -117,6 +123,7 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
         params.delete("todoId");
         router.push(`${pathname}?${params.toString()}`);
       }
+
     },
     [router, searchParams, pathname]
   );
@@ -142,7 +149,7 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <DrawerContext.Provider
-      value={{ drawerState, handleOpen, handleClose, onClosed }}
+      value={{ drawerState, handleOpen, handleClose, onClosed, isFullScreen, setIsFullScreen }}
     >
       {children}
     </DrawerContext.Provider>

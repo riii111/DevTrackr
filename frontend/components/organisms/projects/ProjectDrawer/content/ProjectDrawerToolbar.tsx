@@ -1,5 +1,5 @@
 "use client"
-import { useCallback, useState, useEffect } from "react"
+import { useCallback, useState, useRef } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -18,7 +18,7 @@ interface Props {
 export function ProjectDrawerToolbar({ drawerType }: Props) {
     const drawerStore = useDrawerStore()
     const state = drawerStore.drawerState[drawerType]
-
+    const firstFocus = useRef<HTMLDivElement>(null) // 
 
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false)
 
@@ -46,18 +46,18 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
     const computedDataTypeText = "プロジェクト"
 
     // TODO: 全画面表示対応
-    //   const handleToggleFullScreen = () = {
-    //     if (drawerType === "main") {
-    //         drawerStore.setIsFullScreen(!drawerStore.isFullScreen)
-    //         drawerStore.closeSubDrawer()
-    //     } else {
-    //         const { id: subId, type: subType } = drawerStore.drawerState.sub
-    //         drawerStore.closeSubDrawer()
-    //         drawerStore.openMainDrawer(subid, subType)
-    //     }
-    //   }
+    const handleToggleFullScreen = () => {
+        if (drawerType === "main") {
+            drawerStore.setIsFullScreen(!drawerStore.isFullScreen)
+            // drawerStore.closeSubDrawer()
+            // } else {
+            // const { id: subId, type: subType } = drawerStore.drawerState.sub
+            // drawerStore.closeSubDrawer()
+            // drawerStore.openMainDrawer(subid, subType)
+        }
+    }
     // const computedFullscreenCondition = drawerType === 'sub' || !drawerStore.isFullScreen
-    const computedFullscreenCondition = true
+    const computedFullscreenCondition = !drawerStore.isFullScreen
     const computedFullscreenLabel = computedFullscreenCondition ? '全画面で表示' : '全画面表示を折りたたむ'
 
     // TODO: 削除機能を実装
@@ -66,7 +66,7 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
     }, [drawerStore, drawerType])
 
     return (
-        <div className="flex items-center px-4 py-1 gap-4">
+        <div className="flex items-center px-4 py-1 gap-4" ref={firstFocus}>
             <span className="text-sm font-medium text-gray-700">{computedDataTypeText}</span>
             <div className="flex-grow" />
             <TooltipProvider>
@@ -75,7 +75,8 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8 rounded-full "
+                            className="w-8 h-8 rounded-full"
+                            onClick={handleToggleFullScreen}
                         >
                             {computedFullscreenCondition ? (
                                 <BsArrowsFullscreen className="w-4 h-4 text-gray-500" />
