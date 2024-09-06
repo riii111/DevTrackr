@@ -5,6 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
+import ProjectDrawerBody from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
+import ProjectDrawerToolbar from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
 
 const DRAWER_WIDTH = 640
 const MAIN_DRAWER_FULL_MIN_WIDTH = 1000
@@ -92,7 +94,7 @@ export function ProjectDrawer() {
                                     className="h-full overflow-y-auto"
                                     style={{ width: `${mainDrawerWidth}px` }}
                                 >
-                                    {/* <ProjectDrawerBody drawerType="main" /> */}
+                                    <ProjectDrawerBody drawerType="main" />
                                     {selectedProject ? (
                                         <div className="p-4">
                                             <p className="mb-2">プロジェクトID: {selectedProject.id}</p>
