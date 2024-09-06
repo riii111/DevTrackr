@@ -1,10 +1,63 @@
 "use client";
-import { createContext, useCallback, useState, useEffect, useContext } from "react";
+import { createContext, useCallback, useContext, useReducer, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
 type DrawerType = "main" | "sub";
 type EventDataVariant = "event" | "task" | "todo";
+
+type DrawerAction =
+  | { type: "OPEN_DRAWER"; drawer: DrawerType; id: string; eventType: EventDataVariant }
+  | { type: "CLOSE_DRAWER"; drawer: DrawerType }
+  | { type: "ON_CLOSED"; drawer: DrawerType }
+  | { type: "SET_FULL_SCREEN"; value: boolean }
+
+
+const drawerReducer = (state: DrawerContextType, action: DrawerAction): DrawerContextType => {
+  switch (action.type) {
+    case "OPEN_DRAWER": {
+      const { promisify, resolve } = createExternalPromise();
+      return {
+        ...state,
+        drawerState: {
+          ...state.drawerState,
+          [action.drawer]: {
+            isOpen: true,
+            id: action.id,
+            type: action.eventType,
+            drawerClosePromise: promisify,
+            resolve,
+          }
+        }
+      }
+    }
+    case "CLOSE_DRAWER":
+      return {
+        ...state,
+        drawerState: {
+          ...state.drawerState,
+          [action.drawer]: { ...state.drawerState[action.drawer], isOpen: false },
+        },
+        isFullScreen: false,
+      };
+    case "ON_CLOSED":
+      return {
+        ...state,
+        drawerState: {
+          ...state.drawerState,
+          [action.drawer]: {
+            ...state.drawerState[action.drawer],
+            id: undefined,
+            type: undefined,
+          },
+        },
+      };
+    case 'SET_FULL_SCREEN':
+      return { ...state, isFullScreen: action.value };
+    default:
+      return state;
+  }
+}
 
 interface DrawerState {
   isOpen: boolean;
@@ -39,34 +92,21 @@ export const useDrawerStore = () => {
 export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [mounted, setMounted] = useState(false);
+  const [state, dispatch] = useReducer(drawerReducer, {
+    drawerState: {
+      main: { isOpen: false },
+      sub: { isOpen: false },
+    },
+    isFullScreen: false,
+    handleOpen: () => Promise.resolve(),
+    handleClose: () => Promise.resolve(),
+    onClosed: () => { },
+    setIsFullScreen: () => { },
+  });
+
   const router = useRouter();
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   const searchParams = useSearchParams();
   const pathname = usePathname();
-
-  const [isFullScreen, setIsFullScreen] = useState<boolean>(false)
-
-  const [drawerState, setDrawerState] = useState<
-    Record<DrawerType, DrawerState>
-  >({
-    main: {
-      isOpen: false,
-      id: undefined,
-      type: undefined,
-      drawerClosePromise: undefined,
-      resolve: undefined,
-    },
-    sub: {
-      isOpen: false,
-      id: undefined,
-      type: undefined,
-      drawerClosePromise: undefined,
-      resolve: undefined,
-    },
-  });
 
   /**
    * ドロワーを開く関数
@@ -78,23 +118,13 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
       drawer: DrawerType,
       { id, type }: { id: string; type: EventDataVariant }
     ) => {
-      if (drawer === "sub" && !drawerState.main.isOpen) {
+      if (drawer === "sub" && !state.drawerState.main.isOpen) {
         throw new Error("mainドロワーが開いていません");
       }
 
       const { promisify, resolve } = createExternalPromise();
 
-      setDrawerState((prev) => ({
-        ...prev,
-        [drawer]: {
-          ...prev[drawer],
-          isOpen: true,
-          id,
-          type,
-          drawerClosePromise: promisify,
-          resolve,
-        },
-      }));
+      dispatch({ type: "OPEN_DRAWER", drawer, id, eventType: type });
 
       if (drawer === "main" && router) {
         const params = new URLSearchParams(searchParams);
@@ -103,16 +133,14 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
         // TODO:何かスナックバーを表示させる？しないなら非同期は不要.
       }
     },
-    [drawerState, router, searchParams, pathname]
+    // [drawerState, router, searchParams, pathname]
+    [state.drawerState.main.isOpen, router, searchParams, pathname]
   );
 
   const handleClose = useCallback(
     // TODO: useCallbackの依存配列にdrawerState全体を含めているが、必要な部分だけを指定し不要な再レンダリングを抑える
     async (drawerType: DrawerType) => {
-      setDrawerState((prev) => ({
-        ...prev,
-        [drawerType]: { ...prev[drawerType], isOpen: false },
-      }));
+      dispatch({ type: "CLOSE_DRAWER", drawer: drawerType });
 
       setIsFullScreen(false);
 
@@ -130,26 +158,30 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const onClosed = useCallback(
     (drawer: DrawerType) => {
-      setDrawerState((prev) => ({
-        ...prev,
-        [drawer]: {
-          ...prev[drawer],
-          id: undefined,
-          type: undefined,
-        },
-      }));
-      drawerState[drawer].resolve?.();
+      dispatch({ type: "ON_CLOSED", drawer });
+      state.drawerState[drawer].resolve?.();
     },
-    [drawerState]
+    [state.drawerState]
   );
 
-  if (!mounted) {
-    return null;
-  }
+  const setIsFullScreen = useCallback((value: boolean) => {
+    dispatch({ type: 'SET_FULL_SCREEN', value });
+  }, []);
+
+
+
+  const contextValue = useMemo(() => ({
+    drawerState: state.drawerState,
+    handleOpen,
+    handleClose,
+    onClosed,
+    isFullScreen: state.isFullScreen,
+    setIsFullScreen,
+  }), [state, handleOpen, handleClose, onClosed, setIsFullScreen])
 
   return (
     <DrawerContext.Provider
-      value={{ drawerState, handleOpen, handleClose, onClosed, isFullScreen, setIsFullScreen }}
+      value={contextValue}
     >
       {children}
     </DrawerContext.Provider>
