@@ -3,7 +3,7 @@
 // import { BaseDrawer } from "@/components/organisms/projects/ProjectDrawer/BaseDrawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 import { ProjectDrawerBody } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
 
@@ -11,13 +11,8 @@ const DRAWER_WIDTH = 640
 const MAIN_DRAWER_FULL_MIN_WIDTH = 1000
 const SUB_DRAWER_WIDTH = 520
 
-// interface Project {
-//     id: string;
-//     name: string;
-//     // 他のプロジェクト関連のプロパティを追加
-// }
-
-export function ProjectDrawer() {
+export const ProjectDrawer = React.memo(() => {
+    // export function ProjectDrawer() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const drawerStore = useDrawerStore();
@@ -27,13 +22,19 @@ export function ProjectDrawer() {
 
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-    const mainDrawerWidth = !drawerStore.isFullScreen
-        ? DRAWER_WIDTH
-        : windowWidth - SUB_DRAWER_WIDTH > MAIN_DRAWER_FULL_MIN_WIDTH
+    const mainDrawerWidth = useMemo(() => {
+        if (!drawerStore.isFullScreen) {
+            return DRAWER_WIDTH;
+        }
+        return windowWidth - SUB_DRAWER_WIDTH > MAIN_DRAWER_FULL_MIN_WIDTH
             ? windowWidth - SUB_DRAWER_WIDTH
-            : MAIN_DRAWER_FULL_MIN_WIDTH
+            : MAIN_DRAWER_FULL_MIN_WIDTH;
+    }, [drawerStore.isFullScreen, windowWidth]);
 
-    const containerWidth = subState.isOpen ? windowWidth : mainDrawerWidth
+    const containerWidth = useMemo(() => {
+        return subState.isOpen ? windowWidth : mainDrawerWidth;
+    }, [subState.isOpen, windowWidth, mainDrawerWidth]);
+
 
     const windowResizeObserver = useCallback(() => {
         setWindowWidth(window.innerWidth)
@@ -55,16 +56,16 @@ export function ProjectDrawer() {
             // ここでプロジェクトIDを使用してプロジェクト情報を取得する
             // 例: APIリクエストを送信してプロジェクト詳細を取得
             setSelectedProjectId(projectId)
-            fetchProjectDetails(projectId);
+            // fetchProjectDetails(projectId);
         }
     }, [searchParams]);
 
-    const fetchProjectDetails = async (projectId: string) => {
-        // ここでAPIリクエストを実装し、プロジェクト詳細を取得
-        // 取得したデータでsetSelectedProjectを呼び出す
-        // 例: const projectData = await api.getProjectDetails(projectId);
-        // setSelectedProject(projectData);
-    };
+    // const fetchProjectDetails = async (projectId: string) => {
+    // ここでAPIリクエストを実装し、プロジェクト詳細を取得
+    // 取得したデータでsetSelectedProjectを呼び出す
+    // 例: const projectData = await api.getProjectDetails(projectId);
+    // setSelectedProject(projectData);
+    // };
 
     const onUpdateModelValue = useCallback((isOpen: boolean) => {
         if (!isOpen) {
@@ -131,4 +132,6 @@ export function ProjectDrawer() {
             </div>
         </div>
     );
-}
+});
+
+ProjectDrawer.displayName = "ProjectDrawer"
