@@ -2,6 +2,7 @@
 
 import { useMemo, useRef } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
+import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
 
 
 
@@ -33,6 +34,10 @@ export default function ProjectDrawerBody({ width, drawerType }: Props) {
             style={drawerStyle}
             className={`d-flex flex-column min-h-100 ${isSubDrawer ? 'inner-shadow sub-drawer-transition' : ''}`}
         >
+            <ProjectDrawerToolbar
+                drawerType={drawerType}
+            //   onOpenParent={handleOpenParent}
+            />
             <hr className="border-gray-300" />
             <span> ここにProjectDrawerNameが入ります</span>
             {/* <ProjectDrawerName drawerType={drawerType} /> */}
