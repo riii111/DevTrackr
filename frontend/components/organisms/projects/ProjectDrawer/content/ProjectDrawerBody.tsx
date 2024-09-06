@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import React, { useMemo, useRef } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
 
@@ -11,7 +11,7 @@ interface Props {
     selectedProjectId?: string | null
 }
 
-export default function ProjectDrawerBody({ width, drawerType }: Props) {
+export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerType, selectedProjectId }) => {
     const drawerStore = useDrawerStore()
     // const projectStore = useProjectStore()
     const subDrawer = useRef<HTMLDivElement>(null)
@@ -71,4 +71,6 @@ export default function ProjectDrawerBody({ width, drawerType }: Props) {
             )} */}
         </div>
     )
-}
+});
+
+ProjectDrawerBody.displayName = "ProjectDrawerBody"
