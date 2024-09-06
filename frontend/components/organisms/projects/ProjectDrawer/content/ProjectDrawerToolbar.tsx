@@ -106,20 +106,21 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 rounded-full"
-                        onClick={() => drawerStore.handleClose(drawerType)}
-                        tabIndex={-1}
-                    >
-                        <RiCloseLine className="w-4 h-4 text-gray-500" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>閉じる</TooltipContent>
-            </Tooltip>
+            {/* <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full"
+                            onClick={() => drawerStore.handleClose(drawerType)}
+                        >
+                            <RiCloseLine className="w-4 h-4 text-gray-500" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>閉じる</TooltipContent>
+                </Tooltip>
+            </TooltipProvider> */}
 
             <Dialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
                 <DialogContent>
