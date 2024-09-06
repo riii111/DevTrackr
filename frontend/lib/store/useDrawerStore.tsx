@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useReducer, useMemo } from "react";
+import { createContext, useCallback, useReducer, useContext, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
@@ -137,12 +137,10 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
     [state.drawerState.main.isOpen, router, searchParams, pathname]
   );
 
-  const handleClose = useCallback(
-    // TODO: useCallbackの依存配列にdrawerState全体を含めているが、必要な部分だけを指定し不要な再レンダリングを抑える
-    async (drawerType: DrawerType) => {
-      dispatch({ type: "CLOSE_DRAWER", drawer: drawerType });
 
-      setIsFullScreen(false);
+  const handleClose = useCallback(
+    async (drawerType: DrawerType) => {
+      dispatch({ type: 'CLOSE_DRAWER', drawer: drawerType });
 
       if (drawerType === "main") {
         const params = new URLSearchParams(searchParams);
@@ -151,7 +149,6 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
         params.delete("todoId");
         router.push(`${pathname}?${params.toString()}`);
       }
-
     },
     [router, searchParams, pathname]
   );
