@@ -99,8 +99,7 @@ const ProjectList = ({ projects, selectedProjectId, onSelectProject }: { project
     </ul>
 );
 
-// プロジェクト選択部分を別コンポーネントに分離
-const ProjectSelector = ({
+const ProjectSelector = React.memo(({
     categoryGroupPreset,
     selectedPresetGroup,
     selectedProjectId,
@@ -135,14 +134,15 @@ const ProjectSelector = ({
             )}
         </div>
     );
-};
+});
+ProjectSelector.displayName = "ProjectSelector"
 
-export default function ProjectSelectDialog({
+export const ProjectSelectDialog: React.FC<Props> = React.memo(({
     isOpen,
     companies = [],
     onOpenChange,
     onClose,
-}: Props) {
+}) => {
     const [selectedPresetGroup, setSelectedPresetGroup] = useState<string>();
     const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -158,8 +158,7 @@ export default function ProjectSelectDialog({
             handleSave();
         }
     }, [selectedProjectId]);
-
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!selectedProjectId) {
             return;
         }
@@ -183,7 +182,7 @@ export default function ProjectSelectDialog({
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [selectedProjectId, companies, drawerStore, router, onOpenChange]);
 
     // TODO: ダミーの処理. 会社ごとに案件を表示させるように修正する.
     const categoryGroupPreset = useMemo(() => {
@@ -209,19 +208,22 @@ export default function ProjectSelectDialog({
 
     // カテゴリーグループのプリセットが変更されたときに、最初の会社を選択状態にする
     useEffect(() => {
-        if (categoryGroupPreset.length > 0) {
+        if (categoryGroupPreset.length > 0 && !selectedPresetGroup) {
             setSelectedPresetGroup(categoryGroupPreset[0].company);
         }
-    }, [categoryGroupPreset]);
+    }, [categoryGroupPreset, selectedPresetGroup]);
+
+    const handleDialogChange = useCallback((open: boolean) => {
+        onOpenChange(open);
+        if (!open) {
+            onClose();
+        }
+    }, [onOpenChange, onClose]);
+
     console.log("called ProjectSelectDialog");
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => {
-            onOpenChange(open);
-            if (!open) {
-                onClose();
-            }
-        }}>
+        <Dialog open={isOpen} onOpenChange={handleDialogChange}>
             <DialogContent className="sm:max-w-[640px]">
                 <MemoizedDialogHeader />
                 <ProjectSelector
@@ -235,4 +237,6 @@ export default function ProjectSelectDialog({
             </DialogContent>
         </Dialog>
     );
-}
+});
+
+ProjectSelectDialog.displayName = "ProjectSelectDialog"

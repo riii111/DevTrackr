@@ -6,9 +6,12 @@ import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 
-const ProjectSelectDialog = dynamic(() => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog"), {
-    ssr: false,
-});
+const ProjectSelectDialog = dynamic(
+    () => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog").then(mod => mod.ProjectSelectDialog),
+    {
+        ssr: false,
+    }
+);
 
 const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer").then(mod => mod.ProjectDrawer), {
     ssr: false,
