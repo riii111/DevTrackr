@@ -153,11 +153,6 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
         setSelectedProjectId(projectId);
     }, []);
 
-    const handleConfirm = useCallback(() => {
-        if (selectedProjectId) {
-            handleSave();
-        }
-    }, [selectedProjectId]);
     const handleSave = useCallback(async () => {
         if (!selectedProjectId) {
             return;
@@ -233,7 +228,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
                     onSelectProject={handleProjectSelect}
                     selectedProjectId={selectedProjectId}
                 />
-                <MemoizedDialogFooter onConfirm={handleConfirm} isDisabled={!selectedProjectId || isProcessing} />
+                <MemoizedDialogFooter onConfirm={handleSave} isDisabled={!selectedProjectId || isProcessing} />
             </DialogContent>
         </Dialog>
     );
