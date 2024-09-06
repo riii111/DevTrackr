@@ -32,16 +32,14 @@ export default function ProjectDrawerBody({ width, drawerType }: Props) {
         <div
             ref={isSubDrawer ? subDrawer : undefined}
             style={drawerStyle}
-            className={`d-flex flex-column min-h-100 ${isSubDrawer ? 'inner-shadow sub-drawer-transition' : ''}`}
-        >
+            className={`flex flex-col min-h-screen ${isSubDrawer ? 'shadow-inner transition-all duration-300' : ''}`}>
             <ProjectDrawerToolbar
                 drawerType={drawerType}
-            //   onOpenParent={handleOpenParent}
             />
             <hr className="border-gray-300" />
             <span> ここにProjectDrawerNameが入ります</span>
             {/* <ProjectDrawerName drawerType={drawerType} /> */}
-            <hr className="border-gray-300" />
+            {/* <hr className="border-gray-300" /> */}
             {/* {state.type === 'project' && (
                 <ProjectDrawerContentEvent
                     key={`event-${state.id}`}
