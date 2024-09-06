@@ -5,10 +5,10 @@ import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
 
 
-
 interface Props {
     width?: number
     drawerType: "main" | "sub"
+    selectedProjectId?: string | null
 }
 
 export default function ProjectDrawerBody({ width, drawerType }: Props) {
@@ -38,6 +38,15 @@ export default function ProjectDrawerBody({ width, drawerType }: Props) {
             />
             <hr className="border-gray-300" />
             <span> ここにProjectDrawerNameが入ります</span>
+            {selectedProjectId && (
+                <div>
+                    <p>プロジェクトID: {selectedProjectId}</p>
+                    <p>プロジェクト名: 駐車場管理システム</p>
+                    <p>技術スタック: Remix, FastAPI(MongoDB), CloudFlare</p>
+                </div>
+                // ) : (
+                //     <div className="p-4">プロジェクト情報が見つかりません。</div>
+            )}
             {/* <ProjectDrawerName drawerType={drawerType} /> */}
             {/* <hr className="border-gray-300" /> */}
             {/* {state.type === 'project' && (

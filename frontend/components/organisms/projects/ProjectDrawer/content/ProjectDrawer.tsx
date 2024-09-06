@@ -5,18 +5,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
-import ProjectDrawerBody from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
-import ProjectDrawerToolbar from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
+import { ProjectDrawerBody } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerBody"
 
 const DRAWER_WIDTH = 640
 const MAIN_DRAWER_FULL_MIN_WIDTH = 1000
 const SUB_DRAWER_WIDTH = 520
 
-interface Project {
-    id: string;
-    name: string;
-    // 他のプロジェクト関連のプロパティを追加
-}
+// interface Project {
+//     id: string;
+//     name: string;
+//     // 他のプロジェクト関連のプロパティを追加
+// }
 
 export function ProjectDrawer() {
     const router = useRouter();
@@ -26,15 +25,13 @@ export function ProjectDrawer() {
     const subState = drawerStore.drawerState.sub
     const [windowWidth, setWindowWidth] = useState(0)
 
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-
-    // const mainDrawerWidth = !drawerStore.isFullScreen
-    // ? DRAWER_WIDTH
-    // : windowWidth - SUB_DRAWER_WIDTH > MAIN_DRAWER_FULL_MIN_WIDTH
-    //   ? windowWidth - SUB_DRAWER_WIDTH
-    //   : MAIN_DRAWER_FULL_MIN_WIDTH
-    const mainDrawerWidth = DRAWER_WIDTH  // TODO: 仮で設定. FullScreen対応時に置き換え.
+    const mainDrawerWidth = !drawerStore.isFullScreen
+        ? DRAWER_WIDTH
+        : windowWidth - SUB_DRAWER_WIDTH > MAIN_DRAWER_FULL_MIN_WIDTH
+            ? windowWidth - SUB_DRAWER_WIDTH
+            : MAIN_DRAWER_FULL_MIN_WIDTH
 
     const containerWidth = subState.isOpen ? windowWidth : mainDrawerWidth
 
@@ -57,6 +54,7 @@ export function ProjectDrawer() {
         if (projectId) {
             // ここでプロジェクトIDを使用してプロジェクト情報を取得する
             // 例: APIリクエストを送信してプロジェクト詳細を取得
+            setSelectedProjectId(projectId)
             fetchProjectDetails(projectId);
         }
     }, [searchParams]);
@@ -94,16 +92,7 @@ export function ProjectDrawer() {
                                     className="h-full overflow-y-auto"
                                     style={{ width: `${mainDrawerWidth}px` }}
                                 >
-                                    <ProjectDrawerBody drawerType="main" />
-                                    {selectedProject ? (
-                                        <div className="p-4">
-                                            <p className="mb-2">プロジェクトID: {selectedProject.id}</p>
-                                            <p className="mb-2">プロジェクト名: {selectedProject.name}</p>
-                                            <p className="mb-2">技術スタック: Remix, FastAPI(MongoDB), CloudFlare</p>
-                                        </div>
-                                    ) : (
-                                        <div className="p-4">プロジェクト情報が見つかりません。</div>
-                                    )}
+                                    <ProjectDrawerBody drawerType="main" selectedProjectId={selectedProjectId} />
                                 </div>
                                 {subState.isOpen && (
                                     <div
