@@ -32,7 +32,7 @@ export function ProjectDrawer() {
     // : windowWidth - SUB_DRAWER_WIDTH > MAIN_DRAWER_FULL_MIN_WIDTH
     //   ? windowWidth - SUB_DRAWER_WIDTH
     //   : MAIN_DRAWER_FULL_MIN_WIDTH
-    const mainDrawerWidth = MAIN_DRAWER_FULL_MIN_WIDTH  // TODO: 仮で設定. FullScreen対応時に置き換え.
+    const mainDrawerWidth = DRAWER_WIDTH  // TODO: 仮で設定. FullScreen対応時に置き換え.
 
     const containerWidth = subState.isOpen ? windowWidth : mainDrawerWidth
 
