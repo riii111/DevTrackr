@@ -1,20 +1,24 @@
 "use client"
-import { useMemo, useCallback, useState } from "react"
+import { useCallback, useState, useEffect } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { RiCloseLine, RiMoreLine, RiArrowLeftLine, RiContractUpDownLine } from 'react-icons/ri'
+import { RiMoreLine, RiContractUpDownLine } from 'react-icons/ri'
+import { BsArrowsFullscreen } from "react-icons/bs";
+import { BsFullscreenExit } from "react-icons/bs";
 import { DialogTitle } from "@radix-ui/react-dialog"
+import { TooltipProvider } from "@radix-ui/react-tooltip"
 
 interface Props {
-    drawerType: DrawerType
+    drawerType: "main" | "sub"
 }
 
 export function ProjectDrawerToolbar({ drawerType }: Props) {
     const drawerStore = useDrawerStore()
     const state = drawerStore.drawerState[drawerType]
+
 
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false)
 
@@ -27,18 +31,19 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
     // }, [state.id, state.type, projectStore])
 
 
-    const computedDataTypeText = useMemo(() => {
-        switch (state.type) {
-            case 'event':
-                return 'イベント'
-            case 'task':
-                return 'タスク'
-            case 'todo':
-                return 'ToDo'
-            default:
-                return ''
-        }
-    }, [state.type])
+    // const computedDataTypeText = useMemo(() => {
+    //     switch (state.type) {
+    //         case 'project':
+    //             return 'プロジェクト'
+    //         case 'task':
+    //             return 'タスク'
+    //         case 'todo':
+    //             return 'ToDo'
+    //         default:
+    //             return ''
+    //     }
+    // }, [state.type])
+    const computedDataTypeText = "プロジェクト"
 
     // TODO: 全画面表示対応
     //   const handleToggleFullScreen = () = {
@@ -64,31 +69,30 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
         <div className="flex items-center px-4 py-1 gap-4">
             <span className="text-sm font-medium text-gray-700">{computedDataTypeText}</span>
             <div className="flex-grow" />
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 rounded-full"
-                        // onClick={handleToggleFullScreen}
-                        tabIndex={-1}
-                    >
-                        {computedFullscreenCondition ? (
-                            <RiArrowLeftLine className="w-4 h-4 text-gray-500" />
-                        ) : (
-                            <RiContractUpDownLine className="w-4 h-4 text-gray-500" />
-                        )}
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>{computedFullscreenLabel}</TooltipContent>
-            </Tooltip>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full "
+                        >
+                            {computedFullscreenCondition ? (
+                                <BsArrowsFullscreen className="w-4 h-4 text-gray-500" />
+                            ) : (
+                                <BsFullscreenExit className="w-4 h-4 text-gray-500" />
+                            )}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{computedFullscreenLabel}</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"
                         size="icon"
                         className="w-8 h-8 rounded-full"
-                        tabIndex={-1}
                     >
                         <RiMoreLine className="w-4 h-4 text-gray-500" />
                     </Button>
