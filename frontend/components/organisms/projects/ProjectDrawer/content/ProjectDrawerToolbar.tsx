@@ -65,6 +65,8 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
         drawerStore.handleClose(drawerType)
     }, [drawerStore, drawerType])
 
+    console.log("called ProjectDrawerToolBar")
+
     return (
         <div className="flex items-center px-4 py-1 gap-4" ref={firstFocus}>
             <span className="text-sm font-medium text-gray-700">{computedDataTypeText}</span>
