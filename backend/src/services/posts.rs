@@ -1,5 +1,5 @@
-use crate::common::response::{ApiResponse, ResponseContent};
-use crate::common::response_builder::ApiResponseBuilder;
+use crate::common::dto::response::{ApiResponse, ResponseContent};
+use crate::common::dto::response_builder::ApiResponseBuilder;
 use crate::models::posts::Post;
 use crate::repositories::posts as post_repository;
 use anyhow::Result;
