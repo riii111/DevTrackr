@@ -2,7 +2,7 @@
 
 use crate::common::dto::response::ResponseContent;
 use crate::common::dto::response_builder::ApiResponseBuilder;
-use crate::common::dto::response_formatter::build_response;
+use crate::middleware::response_formatter::build_response;
 use crate::models::posts::Post;
 use crate::query_params::PostQueries;
 use crate::services::posts as post_service;
