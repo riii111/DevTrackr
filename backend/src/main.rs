@@ -1,18 +1,16 @@
-
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, App, HttpServer};
 use env_logger::Env;
 use std::io::Result;
 
-mod common;
-mod controllers;
+mod dto;
+mod endpoints;
 mod middleware;
 mod models;
-mod query_params;
 mod repositories;
+mod request_params;
 mod routes;
-mod services;
-
+mod usecases;
 
 #[actix_rt::main]
 async fn main() -> Result<()> {
