@@ -1,4 +1,4 @@
-use crate::common::dto::response::ApiResponse;
+use crate::dto::response::ApiResponse;
 use actix_web::HttpResponse;
 
 pub fn build_response(format: &Option<String>, response: &ApiResponse) -> HttpResponse {

@@ -1,4 +1,4 @@
-use crate::common::dto::response::{ApiResponse, ResponseContent};
+use crate::dto::response::{ApiResponse, ResponseContent};
 
 #[derive(Default)]
 pub struct ApiResponseBuilder {
