@@ -2,7 +2,7 @@ use actix_web::web;
 use actix_web::{get, HttpResponse, Responder};
 use tera::Tera;
 
-use crate::controllers::posts;
+use crate::endpoints::posts;
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
@@ -18,7 +18,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
                 // .route("", web::put().to(posts::update)),
             ),
         )
-        .default_service(web::to(crate::controllers::posts::not_found));
+        .default_service(web::to(crate::endpoints::posts::not_found));
 }
 
 #[get("/")]

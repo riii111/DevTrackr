@@ -1,11 +1,11 @@
 /* API用のposts */
 
-use crate::common::dto::response::ResponseContent;
-use crate::common::dto::response_builder::ApiResponseBuilder;
+use crate::dto::response::ResponseContent;
+use crate::dto::response_builder::ApiResponseBuilder;
 use crate::middleware::response_formatter::build_response;
 use crate::models::posts::Post;
-use crate::query_params::PostQueries;
-use crate::services::posts as post_service;
+use crate::request_params::PostQueries;
+use crate::usecases::posts as post_service;
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::{DateTime, Local};
 use log::{error, info};
