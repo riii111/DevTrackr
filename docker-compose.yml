@@ -67,7 +67,7 @@ services:
   mongo-express:
     image: mongo-express:1.0.0-alpha.4 # 2023/09時点でのstable版
     ports:
-      - "${MONGO_EXPRESS_PORT:-8082}:8081" # 別システムと重複しているため変更
+      - "127.0.0.1:${MONGO_EXPRESS_PORT:-8082}:8081" # 別システムと重複しているため変更
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_MONGODB_PORT: 27018
@@ -77,6 +77,10 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/
+      ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
+      ME_CONFIG_REQUEST_SIZE: 100kb
+      ME_CONFIG_SITE_GRIDFS: "true" # GridFS(MongoDBのファイルStorage)を有効化. 大きなファイルを保存できる.
     depends_on:
       mongo:
         condition: service_healthy # 完全に起動し、認証の準備が出来てから接続を試みる
