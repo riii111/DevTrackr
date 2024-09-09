@@ -1,6 +1,9 @@
 down:
 	docker compose down
 
+down-v:
+	docker compose down -v
+
 build:
 	docker compose build
 
@@ -11,7 +14,7 @@ up:
 	docker compose up -d
 
 restart-all:
-	make down
+	make down -v
 	make up-d
 
 container=frontend
