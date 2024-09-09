@@ -9,6 +9,6 @@ FROM base AS development
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3003
 
 CMD ["yarn", "dev"]
