@@ -11,7 +11,7 @@ services:
       - /app/node_modules
       - /app/.next
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
     command: yarn dev
     networks:
       - app-network
@@ -26,14 +26,17 @@ services:
   #     context: ./backend
   #     dockerfile: Dockerfile.dev
   #   ports:
-  #     - "8080:8080"
+  #     - "${BACKEND_PORT:-8080}:8080"
   #   volumes:
   #     - ./backend:/usr/src/app
   #     - /usr/src/app/target
   #   environment:
-  #     - RUST_LOG=debug
+  #     - RUST_LOG=${RUST_LOG:-debug}
+  #     - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
   #   networks:
   #     - app-network
+  #   depends_on:
+  #     - mongo
   #   healthcheck:
   #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
   #     interval: 30s
