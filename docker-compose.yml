@@ -102,14 +102,14 @@ services:
     environment:
       TZ: Asia/Tokyo
     labels:
-      traefik.enable: true
       # Traefikのダッシュボード
-      traefik.http.routers.dashboard.rule: Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      traefik.http.routers.dashboard.service: api@internal # dashboardの場合の記述
-      traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
-      traefik.http.middlewares.auth.basicauth.users: traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT. # TODO: BASIC認証有効化.
-      traefik.http.routers.dashboard.middlewares: auth
-
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      # TODO: BASIC認証を有効化
+      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT."
+      - "traefik.http.routers.dashboard.middlewares=auth"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
