@@ -3,10 +3,13 @@ entryPoints:
     address: :80
 
 api:
-  insecure: false
+  insecure: true # 本番環境ではfalseにする
   dashboard: true
 
 providers:
   docker:
     exposedByDefault: false
     # trueにすると同ネットワークのコンテナ全て検知されるので、falseにして、検知するコンテナはcompose側で制御するのが一般的らしい.
+
+log:
+  level: INFO

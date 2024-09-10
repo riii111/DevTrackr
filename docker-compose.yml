@@ -93,13 +93,14 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "8080:8080" # Traefikダッシュボード用のポートを追加
     networks:
       - devtrackr-network
     environment:
       TZ: Asia/Tokyo
     labels:
       traefik.enable: true
-      traefik.http.routers.dashboard.rule: Host(`traefik.your.domain`)
+      traefik.http.routers.dashboard.rule: Host(`localhost`) && (PathPrefix(`/traefik`))
       traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
       traefik.http.routers.dashboard.service: api@internal # dashboardの場合の記述
     volumes:
@@ -108,7 +109,6 @@ services:
 
 networks:
   devtrackr-network:
-    driver: bridge
     external: true # コマンド実行してからコンテナ起動する事 → docker network create devtrackr-network
 
 volumes:
