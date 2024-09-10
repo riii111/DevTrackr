@@ -87,6 +87,8 @@ services:
     networks:
       - devtrackr-network
 
+  # https://zenn.dev/pitekusu/books/traefik-pitekusu
+  # TODO: HTTPS通信化  → https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
   traefik:
     image: traefik:v2.11.1
     restart: always

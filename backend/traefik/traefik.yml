@@ -11,5 +11,8 @@ providers:
     exposedByDefault: false
     # trueにすると同ネットワークのコンテナ全て検知されるので、falseにして、検知するコンテナはcompose側で制御するのが一般的らしい.
 
+# TODO: HTTPS化する.
+# https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
+
 log:
   level: INFO
