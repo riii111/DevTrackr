@@ -66,8 +66,6 @@ services:
 
   mongo-express:
     image: mongo-express:1.0.0-alpha.4 # 2023/09時点でのstable版
-    ports:
-      - "127.0.0.1:${MONGO_EXPRESS_PORT:-8082}:8081" # 別システムと重複しているため変更
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_MONGODB_PORT: 27018
@@ -75,8 +73,8 @@ services:
       ME_CONFIG_MONGODB_AUTH_DATABASE: admin
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+      ME_CONFIG_BASIC_AUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
+      ME_CONFIG_BASIC_AUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
       ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/
       ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
       ME_CONFIG_REQUEST_SIZE: 100kb
@@ -86,6 +84,10 @@ services:
         condition: service_healthy # 完全に起動し、認証の準備が出来てから接続を試みる
     networks:
       - devtrackr-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mongo-express.rule=Host(`mongo-express.localhost`)"
+      - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
 
   # https://zenn.dev/pitekusu/books/traefik-pitekusu
   # TODO: HTTPS通信化  → https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
@@ -101,11 +103,13 @@ services:
       TZ: Asia/Tokyo
     labels:
       traefik.enable: true
+      # Traefikのダッシュボード
       traefik.http.routers.dashboard.rule: Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
       traefik.http.routers.dashboard.service: api@internal # dashboardの場合の記述
       traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
       traefik.http.middlewares.auth.basicauth.users: traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT. # TODO: BASIC認証有効化.
       traefik.http.routers.dashboard.middlewares: auth
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
