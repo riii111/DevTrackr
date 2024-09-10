@@ -14,7 +14,7 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
     command: yarn dev
     networks:
-      - app-network
+      - devtrackr-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3003"]
       interval: 30s
@@ -34,7 +34,7 @@ services:
   #     - RUST_LOG=${RUST_LOG:-debug}
   #     - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
   #   networks:
-  #     - app-network
+  #     - devtrackr-network
   #   depends_on:
   #     - mongo
   #   healthcheck:
@@ -56,7 +56,7 @@ services:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - app-network
+      - devtrackr-network
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27018/admin --quiet
       interval: 10s
@@ -80,16 +80,36 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/
       ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
       ME_CONFIG_REQUEST_SIZE: 100kb
-      ME_CONFIG_SITE_GRIDFS: "true" # GridFS(MongoDBのファイルStorage)を有効化. 大きなファイルを保存できる.
+      ME_CONFIG_SITE_GRIDFS: "true" # GridFS(MongoDBのファイルStorage)を有効化. 大きなファイルを保存できる
     depends_on:
       mongo:
         condition: service_healthy # 完全に起動し、認証の準備が出来てから接続を試みる
     networks:
-      - app-network
+      - devtrackr-network
+
+  traefik:
+    image: traefik:v2.11.1
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - devtrackr-network
+    environment:
+      TZ: Asia/Tokyo
+    labels:
+      traefik.enable: true
+      traefik.http.routers.dashboard.rule: Host(`traefik.your.domain`)
+      traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
+      traefik.http.routers.dashboard.service: api@internal # dashboardの場合の記述
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
 
 networks:
-  app-network:
+  devtrackr-network:
     driver: bridge
+    external: true # コマンド実行してからコンテナ起動する事 → docker network create devtrackr-network
 
 volumes:
   mongodb_data:
