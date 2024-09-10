@@ -89,7 +89,6 @@ services:
 
   traefik:
     image: traefik:v2.11.1
-    container_name: traefik
     restart: always
     ports:
       - "80:80"
@@ -100,16 +99,18 @@ services:
       TZ: Asia/Tokyo
     labels:
       traefik.enable: true
-      traefik.http.routers.dashboard.rule: Host(`localhost`) && (PathPrefix(`/traefik`))
-      traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
+      traefik.http.routers.dashboard.rule: Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
       traefik.http.routers.dashboard.service: api@internal # dashboardの場合の記述
+      traefik.http.routers.dashboard.entrypoints: web # traefik.ymlで指定した内容
+      traefik.http.middlewares.auth.basicauth.users: traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT. # TODO: BASIC認証有効化.
+      traefik.http.routers.dashboard.middlewares: auth
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
 
 networks:
   devtrackr-network:
-    external: true # コマンド実行してからコンテナ起動する事 → docker network create devtrackr-network
+    external: true
 
 volumes:
   mongodb_data:
