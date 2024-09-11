@@ -1,24 +1,29 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "${FRONTEND_PORT:-3003}:3003"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-    command: yarn dev
-    networks:
-      - devtrackr-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # TODO: shadcnのissueが片付いたらコンテナ化する.
+  #   frontend:
+  #     build:
+  #       context: ./frontend
+  #       dockerfile: Dockerfile
+  #     ports:
+  #       - "${FRONTEND_PORT:-3003}:3003"
+  #     volumes:
+  #       - ./frontend:/app
+  #       - /app/node_modules
+  #       - /app/.next
+  #     environment:
+  #       - NODE_ENV=${NODE_ENV:-development}
+  #     command: yarn dev
+  #     networks:
+  #       - devtrackr-network
+  #     healthcheck:
+  #       test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
+  #       interval: 30s
+  #       timeout: 10s
+  #       retries: 3
+  #     labels:
+  #       - "traefik.enable=true"
+  #       - "traefik.http.routers.frontend.entrypoints=web"
+  #       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
 
   # backend:
   #   build:
