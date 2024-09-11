@@ -2,3 +2,6 @@
 フロントエンド技術メモ.md
 要件定義.md
 .env
+
+# log
+/logs/traefik/access.log
