@@ -114,11 +114,14 @@ services:
       - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
       # TraefikダッシュボードのBasic認証
       - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT."
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_BASIC_AUTH_USERNAME}:$$apr1$$${TRAEFIK_DASHBOARD_BASIC_AUTH_PASSWORD}"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./logs/traefik:/var/log/traefik
+
+# TODO: 他に起動中のコンテナ（SNHなど）もTraefikで拾ってしまうので設定必要
 
 networks:
   devtrackr-network:
