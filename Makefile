@@ -10,9 +10,15 @@ build-no-cache:
 up:
 	docker compose up -d
 
-restart-all:
-	make down -v
-	make up-d
+re:
+	make down
+	make build
+	make up
+
+re-n:
+	make down
+	make build-no-cache
+	make up
 
 container=frontend
 command=/bin/bash
