@@ -102,17 +102,18 @@ services:
     environment:
       TZ: Asia/Tokyo
     labels:
-      # Traefikのダッシュボード
+      # Traefikダッシュボード
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
       - "traefik.http.routers.dashboard.entrypoints=web"
-      # TODO: BASIC認証を有効化
-      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT."
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
+      # TraefikダッシュボードのBasic認証
       - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$eYIpOr/G$4H3I5A1aMZcIT3MA/VhbT."
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./logs/traefik:/var/log/traefik
 
 networks:
   devtrackr-network:
