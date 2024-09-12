@@ -91,21 +91,23 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.mongo-express.entrypoints=web"
       - "traefik.http.routers.mongo-express.rule=Host(`mongo-express.localhost`)"
-      # Mongo ExpressのBasic認証
+      # Basic認証
       - "traefik.http.routers.mongo-express.middlewares=auth"
 
   # https://zenn.dev/pitekusu/books/traefik-pitekusu
   # TODO: HTTPS通信化  → https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
   traefik:
     image: traefik:v2.11.1
-    restart: always
     ports:
       - "80:80"
-      - "8080:8080" # Traefikダッシュボード用のポートを追加
+      - "8081:8080" # Traefikダッシュボード用のポートを追加
     networks:
       - devtrackr-network
     environment:
       TZ: Asia/Tokyo
+    depends_on:
+      backend: # コンパイル待たずにヘルスチェック
+        condition: service_started
     labels:
       # Traefikダッシュボード
       - "traefik.enable=true"
@@ -115,7 +117,6 @@ services:
       # TraefikダッシュボードのBasic認証
       - "traefik.http.routers.dashboard.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_BASIC_AUTH_USERNAME}:$$apr1$$${TRAEFIK_DASHBOARD_BASIC_AUTH_PASSWORD}"
-
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
