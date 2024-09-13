@@ -222,24 +222,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "actix_posts"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-session",
- "actix-web",
- "actix-web-flash-messages",
- "anyhow",
- "chrono",
- "env_logger",
- "log",
- "serde",
- "serde_json",
- "tera",
- "tokio",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -679,6 +661,24 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn",
+]
+
+[[package]]
+name = "devtrackr_api"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-session",
+ "actix-web",
+ "actix-web-flash-messages",
+ "anyhow",
+ "chrono",
+ "env_logger",
+ "log",
+ "serde",
+ "serde_json",
+ "tera",
+ "tokio",
 ]
 
 [[package]]
