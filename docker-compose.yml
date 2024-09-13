@@ -34,13 +34,14 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/target
-      - cargo-cache:/usr/local/cargo/registry # コンテナbuildの結果をキャッシュしておく事でbuild時間を短縮
+      - cargo_cache:/usr/local/cargo/registry # コンテナbuildの結果をキャッシュしておく事でbuild時間を短縮
     networks:
       - devtrackr-network
     environment:
       - RUST_LOG=${RUST_LOG:-debug}
       - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
       - HOST=0.0.0.0
+      - CARGO_HOME=/usr/local/cargo/registry
     depends_on:
       mongo:
         condition: service_healthy
@@ -142,4 +143,4 @@ networks:
 
 volumes:
   mongodb_data:
-  cargo-cache:
+  cargo_cache:
