@@ -1,10 +1,16 @@
 down:
 	docker compose down -v
 
+network:
+	docker network create devtrackr-network
+
+prune:
+	docker system prune --force
+
 build:
 	docker compose build
 
-build-no-cache:
+build-n:
 	docker compose build --no-cache
 
 up:
@@ -18,6 +24,13 @@ re:
 re-n:
 	make down
 	make build-no-cache
+	make up
+
+re-all-force:
+	make down
+	make prune
+	make network
+	make build-n
 	make up
 
 container=frontend
