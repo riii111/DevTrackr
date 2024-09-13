@@ -2,6 +2,19 @@ FROM rust:1.80-slim-bullseye
 
 WORKDIR /usr/src/app
 
+# プロジェクトの依存関係のみをコピー
+COPY Cargo.toml Cargo.lock ./
+
+# この時点ではコードがイメージ内に存在しないため、ダミーソースコードを用いて依存関係のプリビルドを行う（最も時間がかかる部分）
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build && \
+    rm -rf src
+
+# cargo-watchをインストール
 RUN cargo install cargo-watch
 
+# ホットリロード
 CMD ["cargo", "watch", "-x", "run"]
+
+# TODO: 本番環境用ではマルチステージビルド用のファイルを作成する.
