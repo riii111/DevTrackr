@@ -9,6 +9,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
 
     cfg.app_data(tera.clone())
         .service(crate::routes::index)
+        .service(health_check)
         .service(
             web::scope("/api").service(
                 web::scope("/posts")
@@ -28,5 +29,6 @@ pub async fn index() -> impl Responder {
 
 #[get("/health")]
 async fn health_check() -> impl Responder {
+    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
     HttpResponse::Ok().body("Healthy")
 }

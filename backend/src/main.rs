@@ -1,6 +1,7 @@
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, App, HttpServer};
 use env_logger::Env;
+use std::env;
 use std::io::Result;
 
 mod dto;
@@ -27,7 +28,10 @@ async fn main() -> Result<()> {
                 key.clone(),
             ))
     })
-    .bind("127.0.0.1:8000")?
+    .bind(format!(
+        "0.0.0.0:{}",
+        env::var("BACKEND_PORT").unwrap_or("8082".to_string())
+    ))?
     .run()
     .await
 }
