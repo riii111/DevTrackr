@@ -25,27 +25,38 @@ services:
   #       - "traefik.http.routers.frontend.entrypoints=web"
   #       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
 
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile.dev
-  #   ports:
-  #     - "${BACKEND_PORT:-8080}:8080"
-  #   volumes:
-  #     - ./backend:/usr/src/app
-  #     - /usr/src/app/target
-  #   environment:
-  #     - RUST_LOG=${RUST_LOG:-debug}
-  #     - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
-  #   networks:
-  #     - devtrackr-network
-  #   depends_on:
-  #     - mongo
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${BACKEND_PORT:-8082}:8082"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/target
+    networks:
+      - devtrackr-network
+    environment:
+      - RUST_LOG=${RUST_LOG:-debug}
+      - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
+      - HOST=0.0.0.0
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5 # コンパイル待ち?
+      start_period: 1m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/back`)"
+      - "traefik.http.middlewares.strip-back-prefix.stripprefix.prefixes=/back"
+      - "traefik.http.routers.backend.middlewares=strip-back-prefix@docker"
+      - "traefik.http.services.backend.loadbalancer.server.port=8082"
+      - "traefik.docker.network=devtrackr-network"
 
   mongo:
     image: mongo:6.0.8 # 2023/09時点でのstable版
