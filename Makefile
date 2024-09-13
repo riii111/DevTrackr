@@ -23,7 +23,7 @@ re:
 
 re-n:
 	make down
-	make build-no-cache
+	make build-n
 	make up
 
 re-all-force:
