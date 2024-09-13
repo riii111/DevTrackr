@@ -34,6 +34,7 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/target
+      - cargo-cache:/usr/local/cargo/registry # コンテナbuildの結果をキャッシュしておく事でbuild時間を短縮
     networks:
       - devtrackr-network
     environment:
@@ -141,3 +142,4 @@ networks:
 
 volumes:
   mongodb_data:
+  cargo-cache:
