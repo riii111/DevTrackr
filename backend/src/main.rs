@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     })
     .bind(format!(
         "0.0.0.0:{}",
-        env::var("BACKEND_PORT").unwrap_or("8082".to_string())
+        env::var("BACKEND_PORT").unwrap_or("8088".to_string())
     ))?
     .run()
     .await
