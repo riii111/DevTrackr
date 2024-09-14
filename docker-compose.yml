@@ -125,7 +125,7 @@ services:
       - "--entryPoints.web.address=:80"
       - "--entryPoints.dashboard.address=:8081"
       - "--providers.docker.network=mynet" # 追加
-      # Traefik用ダッシュボード
+      # Traefikのダッシュボード
       - "--api.dashboard=true"
       # アクセスログ
       - "--accesslog=true"
@@ -144,15 +144,9 @@ services:
           - node.role == manager
     ports:
       - 80:80
-      - 8081:8081
-    #     mode: host
+      - 8081:8081 # Traefikのダッシュボード用
     networks:
       - mynet
-    # labels:
-    # - "traefik.enable=true"
-    # - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_HOST}`)"
-    # - "traefik.http.routers.dashboard.entrypoints=dashboard"
-    # - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
 
 networks:
   mynet:
