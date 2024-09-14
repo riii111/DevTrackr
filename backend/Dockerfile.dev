@@ -4,4 +4,7 @@ WORKDIR /usr/src/app
 
 RUN cargo install cargo-watch
 
+ # ヘルスチェック用
+RUN apt-get update && apt-get install -y curl
+
 CMD ["cargo", "watch", "-x", "run"]
