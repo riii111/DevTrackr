@@ -1,6 +1,3 @@
-# 疎通確認がうまくいかなかったので、検証用.
-# https://github.com/segler-alex/radiobrowser-api-rust/blob/master/docker-compose-traefik.yml
-
 services:
   # TODO: shadcnのissueが片付いたらコンテナ化する.
   #   frontend:
@@ -58,7 +55,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.backend-api.entrypoints=web"
         - "traefik.http.routers.backend-api.rule=Host(`api.localhost`)"
-        - "traefik.http.services.backend-api.loadbalancer.server.port=8088" # 追加.
+        - "traefik.http.services.backend-api.loadbalancer.server.port=8088"
         # - "traefik.http.routers.backend-api.middlewares=compress"
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.path=/health"
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.interval=5s"
@@ -121,7 +118,7 @@ services:
       - "--providers.docker.exposedByDefault=false"
       - "--entryPoints.web.address=:80"
       - "--entryPoints.dashboard.address=:8081"
-      - "--providers.docker.network=mynet" # 追加
+      - "--providers.docker.network=mynet"
       # Traefikのダッシュボード
       - "--api.dashboard=true"
       # アクセスログ
