@@ -1,22 +1,21 @@
-entryPoints:
-  web:
-    address: :80
+http:
+  middlewares:
+    api-middleware:
+      stripPrefix:
+        prefixes:
+          - "/api"
 
-api:
-  insecure: true # 本番環境ではfalseにする
-  dashboard: true
+  routers:
+    backend-api:
+      rule: "Host(`backend.localhost`)"
+      service: backend-api
+      middlewares:
+        - api-middleware
+      entryPoints:
+        - web
 
-providers:
-  docker:
-    exposedByDefault: false
-    # trueにすると同ネットワークのコンテナ全て検知されるので、falseにして、検知するコンテナはcompose側で制御するのが一般的らしい.
-
-# TODO: HTTPS化する.
-# https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
-
-log:
-  level: INFO
-
-accessLog:
-  filePath: "/var/log/traefik/access.log"
-  format: json
+  services:
+    backend-api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8088" # APIサービスのURL
