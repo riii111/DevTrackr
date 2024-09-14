@@ -43,10 +43,7 @@ services:
     environment:
       - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
       - RUST_LOG=${RUST_LOG:-debug}
-      - SOURCE
-      - ENABLE_CHECK
       - HOST=0.0.0.0
-      - CACHETTL=60sec
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
     #   interval: 21s
