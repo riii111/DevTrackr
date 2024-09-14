@@ -16,3 +16,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://api:8088" # APIサービスのURL
+
+# TODO: HTTPS化する.
+# https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
