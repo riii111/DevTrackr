@@ -48,7 +48,7 @@ services:
     #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
     #   interval: 21s
     #   timeout: 5s
-    #   retries: 3 # コンパイル待ち?
+    #   retries: 3
     #   start_period: 40s
     depends_on:
       - mongo
