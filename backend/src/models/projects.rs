@@ -1,7 +1,5 @@
 use bson::oid::ObjectId;
 use bson::DateTime as BsonDateTime;
-use chrono::{DateTime, Local, TimeZone};
-use chrono_tz::Asia::Tokyo; // JSTのタイムゾーン
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
