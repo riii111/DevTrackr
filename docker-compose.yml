@@ -60,7 +60,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.backend-api.entrypoints=web"
-        - "traefik.http.routers.backend-api.rule=Host(`backend.localhost`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend-api.rule=Host(`api.localhost`)"
         - "traefik.http.services.backend-api.loadbalancer.server.port=8088" # 追加.
         # - "traefik.http.routers.backend-api.middlewares=compress"
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.path=/health"
@@ -111,7 +111,7 @@ services:
       # Mongo Express
       - "traefik.enable=true"
       - "traefik.http.routers.mongo-express.entrypoints=web"
-      - "traefik.http.routers.mongo-express.rule=Host(`mongo-express.localhost`)"
+      - "traefik.http.routers.mongo-express.rule=Host(`db-admin.localhost`)"
       # Basic認証
       # - "traefik.http.routers.mongo-express.middlewares=auth"
 
