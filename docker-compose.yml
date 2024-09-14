@@ -25,38 +25,42 @@ services:
   #       - "traefik.http.routers.frontend.entrypoints=web"
   #       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
 
-  backend:
+  api:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    ports:
-      - "${BACKEND_PORT:-8082}:8082"
+    image: devtrackr-api:latest
+    expose:
+      - 8088
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/target
     networks:
-      - devtrackr-network
+      - mynet
     environment:
-      - RUST_LOG=${RUST_LOG:-debug}
       - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
+      - RUST_LOG=${RUST_LOG:-debug}
       - HOST=0.0.0.0
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+    #   interval: 21s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 40s
     depends_on:
-      mongo:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5 # コンパイル待ち?
-      start_period: 1m
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.entrypoints=web"
-      - "traefik.http.routers.backend.rule=PathPrefix(`/back`)"
-      - "traefik.http.middlewares.strip-back-prefix.stripprefix.prefixes=/back"
-      - "traefik.http.routers.backend.middlewares=strip-back-prefix@docker"
-      - "traefik.http.services.backend.loadbalancer.server.port=8082"
-      - "traefik.docker.network=devtrackr-network"
+      - mongo
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.backend-api.entrypoints=web"
+        - "traefik.http.routers.backend-api.rule=Host(`api.localhost`)"
+        - "traefik.http.services.backend-api.loadbalancer.server.port=8088"
+        # - "traefik.http.routers.backend-api.middlewares=compress"
+        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.path=/health"
+        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.interval=5s"
+        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.timeout=5s"
+        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.startupDelay=40s"
 
   mongo:
     image: mongo:6.0.8 # 2023/09時点でのstable版
@@ -71,7 +75,7 @@ services:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - devtrackr-network
+      - mynet
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27018/admin --quiet
       interval: 10s
@@ -96,48 +100,54 @@ services:
       mongo:
         condition: service_healthy # 完全に起動し、認証の準備が出来てから接続を試みる
     networks:
-      - devtrackr-network
+      - mynet
     labels:
       # Mongo Express
       - "traefik.enable=true"
       - "traefik.http.routers.mongo-express.entrypoints=web"
-      - "traefik.http.routers.mongo-express.rule=Host(`mongo-express.localhost`)"
+      - "traefik.http.routers.mongo-express.rule=Host(`db-admin.localhost`)"
       # Basic認証
-      - "traefik.http.routers.mongo-express.middlewares=auth"
+      # - "traefik.http.routers.mongo-express.middlewares=auth"
 
-  # https://zenn.dev/pitekusu/books/traefik-pitekusu
-  # TODO: HTTPS通信化  → https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
-  traefik:
-    image: traefik:v2.11.1
-    ports:
-      - "80:80"
-      - "8081:8080" # Traefikダッシュボード用のポートを追加
-    networks:
-      - devtrackr-network
-    environment:
-      TZ: Asia/Tokyo
-    depends_on:
-      backend: # コンパイル待たずにヘルスチェック
-        condition: service_started
-    labels:
-      # Traefikダッシュボード
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.entrypoints=web"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.dashboard.service=api@internal" # dashboardを参照する場合の記述
-      # TraefikダッシュボードのBasic認証
-      - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_BASIC_AUTH_USERNAME}:$$apr1$$${TRAEFIK_DASHBOARD_BASIC_AUTH_PASSWORD}"
+  reverse-proxy:
+    image: traefik:3.1.2
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true" # 開発環境用、本番ではfalse.
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.dashboard.address=:8081"
+      - "--providers.docker.network=mynet"
+      # Traefikのダッシュボード
+      - "--api.dashboard=true"
+      # アクセスログ
+      - "--accesslog=true"
+      - "--accesslog.filePath=/logs/access.log"
+      - "--accesslog.format=json"
+      # ミドルウェア用
+      - "--providers.file.filename=/etc/traefik.yml"
+      - "--providers.file.watch=true"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./backend/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./logs/traefik:/var/log/traefik
-
-# TODO: 他に起動中のコンテナ（SNHなど）もTraefikで拾ってしまうので設定必要
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik-logs:/logs
+      - ./backend/traefik/traefik.yml:/etc/traefik.yml
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - 80:80
+      - 8081:8081 # Traefikのダッシュボード用
+    networks:
+      - mynet
 
 networks:
-  devtrackr-network:
-    external: true
+  mynet:
+    driver: "bridge" # デフォルトのネットワークドライバ
+    # driver: "overlay" # Docker Swarmのネットワークドライバ
+    attachable: true # ネットワークに接続可能なコンテナを作成する
 
 volumes:
   mongodb_data:
+  traefik-logs:
