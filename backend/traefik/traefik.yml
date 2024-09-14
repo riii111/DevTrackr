@@ -1,16 +1,8 @@
 http:
-  middlewares:
-    api-middleware:
-      stripPrefix:
-        prefixes:
-          - "/api"
-
   routers:
     backend-api:
-      rule: "Host(`backend.localhost`)"
+      rule: "Host(`api.localhost`)"
       service: backend-api
-      middlewares:
-        - api-middleware
       entryPoints:
         - web
     dashboard:
