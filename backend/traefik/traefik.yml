@@ -17,5 +17,11 @@ http:
         servers:
           - url: "http://api:8088" # APIサービスのURL
 
+log:
+  level: INFO
+
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: json
 # TODO: HTTPS化する.
 # https://zenn.dev/pitekusu/books/traefik-pitekusu/viewer/https
