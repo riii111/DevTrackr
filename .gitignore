@@ -4,4 +4,4 @@
 .env
 
 # log
-/logs/traefik/access.log
+/traefik-logs/access.log
