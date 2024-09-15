@@ -7,10 +7,10 @@ use mongodb::{bson::Document, Collection, Database};
 #[async_trait]
 pub trait ProjectRepository {
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error>;
-    async fn find_many(
-        &self,
-        filter: Option<Document>,
-    ) -> Result<Vec<Project>, mongodb::error::Error>;
+    // async fn find_many(
+    //     &self,
+    //     filter: Option<Document>,
+    // ) -> Result<Vec<Project>, mongodb::error::Error>;
 }
 
 pub struct MongoProjectRepository {
@@ -31,11 +31,11 @@ impl ProjectRepository for MongoProjectRepository {
         self.collection.find_one(bson::doc! { "_id": id }).await
     }
 
-    async fn find_many(
-        &self,
-        filter: Option<Document>,
-    ) -> Result<Vec<Project>, mongodb::error::Error> {
-        let cursor = self.collection.find(filter.unwrap_or_default()).await?;
-        cursor.try_collect().await
-    }
+    // async fn find_many(
+    //     &self,
+    //     filter: Option<Document>,
+    // ) -> Result<Vec<Project>, mongodb::error::Error> {
+    //     let cursor = self.collection.find(filter.unwrap_or_default()).await?;
+    //     cursor.try_collect().await
+    // }
 }
