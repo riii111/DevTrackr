@@ -4,6 +4,7 @@ use tera::Tera;
 
 use crate::endpoints::posts;
 use crate::endpoints::projects;
+use crate::repositories::projects::MongoProjectRepository;
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
@@ -14,7 +15,10 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/projects")
                 // .route("", web::get().to(projects::get_all_projects))
-                .route("/{id}", web::get().to(projects::get_project)),
+                .route(
+                    "/{id}",
+                    web::get().to(projects::get_project::<MongoProjectRepository>),
+                ),
         )
         .service(
             web::scope("/api").service(
