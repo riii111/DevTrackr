@@ -1,9 +1,11 @@
 use actix_web::cookie::Key;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
+use config::db;
 use env_logger::Env;
 use std::env;
 use std::io::Result;
 
+mod config;
 mod dto;
 mod endpoints;
 mod middleware;
@@ -19,6 +21,7 @@ async fn main() -> Result<()> {
     let key = Key::generate();
     let message_framework = middleware::session::build_flash_messages_framework();
 
+    let db = db::init_db().await.expect("Database Initialization Failed");
     HttpServer::new(move || {
         App::new()
             .configure(routes::app)
