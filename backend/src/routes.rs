@@ -3,6 +3,7 @@ use actix_web::{get, HttpResponse, Responder};
 use tera::Tera;
 
 use crate::endpoints::posts;
+use crate::endpoints::projects;
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
@@ -10,6 +11,11 @@ pub fn app(cfg: &mut web::ServiceConfig) {
     cfg.app_data(tera.clone())
         .service(crate::routes::index)
         .service(health_check)
+        .service(
+            web::scope("/projects")
+                // .route("", web::get().to(projects::get_all_projects))
+                .route("/{id}", web::get().to(projects::get_project)),
+        )
         .service(
             web::scope("/api").service(
                 web::scope("/posts")
