@@ -1,6 +1,7 @@
 use crate::models::projects::Project;
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
+use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,11 +14,11 @@ pub enum ProjectError {
 }
 
 pub struct ProjectUseCase<R: ProjectRepository> {
-    repository: R,
+    repository: Arc<R>,
 }
 
 impl<R: ProjectRepository> ProjectUseCase<R> {
-    pub fn new(repository: R) -> Self {
+    pub fn new(repository: Arc<R>) -> Self {
         Self { repository }
     }
 
