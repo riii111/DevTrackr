@@ -18,8 +18,8 @@ pub struct Project {
     pub description: Option<String>,
     pub skill_labels: Vec<String>,
     pub company_name: String,
-    pub working_times: Option<Vec<WorkingTime>>,
     pub status: ProjectStatus,
+    pub working_time_id: Option<Vec<ObjectId>>, // TODO: 集計方法について要考慮
     pub total_working_time: Option<i64>,
     pub created_at: BsonDateTime,
     pub updated_at: Option<BsonDateTime>,
