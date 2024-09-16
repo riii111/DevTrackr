@@ -7,6 +7,7 @@ use mongodb::{Collection, Database};
 
 #[async_trait]
 pub trait ProjectRepository {
+    // TODO: find_oneだけに集約させるべき？
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error>;
     // async fn find_many(
     //     &self,
