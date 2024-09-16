@@ -1,8 +1,8 @@
+use crate::config::di;
 use actix_web::cookie::Key;
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer};
 use config::db;
 use env_logger::Env;
-use repositories::projects::MongoProjectRepository;
 use std::env;
 use std::io::Result;
 
@@ -23,11 +23,12 @@ async fn main() -> Result<()> {
     let message_framework = middleware::session::build_flash_messages_framework();
 
     let db = db::init_db().await.expect("Database Initialization Failed");
-    let project_repo = web::Data::new(MongoProjectRepository::new(&db));
+    // 依存関係の初期化
+    let app_state = di::init_dependencies(&db);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(project_repo.clone())
+            .app_data(app_state.clone())
             .configure(routes::app)
             .wrap(Logger::default())
             .wrap(message_framework.clone())
