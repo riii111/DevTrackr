@@ -1,17 +1,8 @@
+use crate::errors::ProjectError;
 use crate::models::projects::Project;
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum ProjectError {
-    #[error("プロジェクトIDが無効です")]
-    InvalidId,
-    #[error("データベースエラー: {0}")]
-    DatabaseError(#[from] mongodb::error::Error),
-    // 他にエラーがあれば追加
-}
 
 pub struct ProjectUseCase<R: ProjectRepository> {
     repository: Arc<R>,

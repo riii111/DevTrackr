@@ -9,6 +9,7 @@ use std::io::Result;
 mod config;
 mod dto;
 mod endpoints;
+mod errors;
 mod middleware;
 mod models;
 mod repositories;
