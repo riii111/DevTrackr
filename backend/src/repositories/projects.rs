@@ -1,8 +1,9 @@
 use crate::models::projects::Project;
 use async_trait::async_trait;
 use bson::oid::ObjectId;
-use futures::TryStreamExt;
-use mongodb::{bson::Document, Collection, Database};
+// use futures::TryStreamExt;
+// use mongodb::{bson::Document, Collection, Database};
+use mongodb::{Collection, Database};
 
 #[async_trait]
 pub trait ProjectRepository {
