@@ -104,7 +104,7 @@ export const ProjectDrawer = React.memo(() => {
                                     >
                                         {/* <ProjectDrawerBody drawerType="sub" width={SUB_DRAWER_WIDTH} /> */}
                                         <p className="mb-2">開発フェーズ: DB設計中</p>
-                                        <p className="mb-2">協力会社: Sky株式会社、...</p>
+                                        <p className="mb-2">協力会社: ナントカ株式会社、ふんちゃら株式会社...</p>
                                     </div>
                                 )}
                             </div>
