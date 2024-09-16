@@ -1,20 +1,16 @@
-use crate::repositories::projects::ProjectRepository;
+use crate::errors::ProjectError;
+use crate::repositories::projects::MongoProjectRepository;
+use crate::usecases::projects::ProjectUseCase;
 use actix_web::{web, HttpResponse, Responder};
-use bson::oid::ObjectId;
 
-pub async fn get_project<T: ProjectRepository>(
-    repo: web::Data<T>,
+pub async fn get_project(
+    usecase: web::Data<ProjectUseCase<MongoProjectRepository>>,
     id: web::Path<String>,
 ) -> impl Responder {
-    //  "&*id"について
-    // "*id"でPath<String>から、ラッパー元のStringを取り外す（参照外し）.そのStringに対して参照を作成して暗黙的に&strに変換している.
-    let object_id = match ObjectId::parse_str(&*id) {
-        Ok(oid) => oid,
-        Err(_) => return HttpResponse::BadRequest().finish(),
-    };
-    match repo.find_by_id(&object_id).await {
+    match usecase.get_project(&id).await {
         Ok(Some(project)) => HttpResponse::Ok().json(project),
         Ok(None) => HttpResponse::NotFound().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+        Err(ProjectError::InvalidId) => HttpResponse::BadRequest().finish(),
+        Err(ProjectError::DatabaseError(_)) => HttpResponse::InternalServerError().finish(),
     }
 }

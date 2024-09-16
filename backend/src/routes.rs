@@ -15,10 +15,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/projects")
                 // .route("", web::get().to(projects::get_all_projects))
-                .route(
-                    "/{id}",
-                    web::get().to(projects::get_project::<MongoProjectRepository>),
-                ),
+                .route("/{id}", web::get().to(projects::get_project)),
         )
         .service(
             web::scope("/api").service(
