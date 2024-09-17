@@ -1,5 +1,4 @@
-use actix_web::web;
-use actix_web::{get, HttpResponse, Responder};
+use actix_web::{web, get, HttpResponse, Responder};
 use tera::Tera;
 
 use crate::endpoints::{posts, projects, working_times};
@@ -20,7 +19,8 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/working_times")
                 .route("/{id}", web::get().to(working_times::get_working_time))
-                .route("", web::put().to(working_times::update_working_time)),
+                .route("", web::post().to(working_times::create_working_time))
+                .route("", web::put().to(working_times::update_working_time))
         )
         .service(
             web::scope("/api").service(
@@ -28,7 +28,6 @@ pub fn app(cfg: &mut web::ServiceConfig) {
                     .route("", web::get().to(posts::index))
                     .route("/{id}", web::get().to(posts::show))
                     .route("", web::post().to(posts::create)),
-                // .route("", web::put().to(posts::update)),
             ),
         )
         .default_service(web::to(crate::endpoints::posts::not_found));
