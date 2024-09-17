@@ -1,8 +1,9 @@
 use crate::errors::ProjectError;
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder};
 
+#[get("/{id}")]
 pub async fn get_project(
     usecase: web::Data<ProjectUseCase<MongoProjectRepository>>,
     id: web::Path<String>,
