@@ -1,29 +1,28 @@
 use crate::{
-    errors::WorkingTimeError,
-    models::working_time::{self, WorkingTime},
-    repositories::working_time::WorkingTimeRepository,
-    usecases::working_time::WorkingTimeUseCase,
+    errors::WorkingTimeError, models::working_times::WorkingTime,
+    repositories::working_times::MongoWorkingTimeRepository,
+    usecases::working_times::WorkingTimeUseCase,
 };
 use actix_web::{web, HttpResponse, Responder};
 use bson::oid::ObjectId;
 
-pub async fn get_working_time<T: WorkingTimeRepository>(
-    repo: web::Data<T>,
+pub async fn get_working_time(
+    usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     id: web::Path<String>,
 ) -> impl Responder {
     let object_id = match ObjectId::parse_str(&*id) {
         Ok(oid) => oid,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
-    match repo.find_by_id(&object_id).await {
+    match usecase.get_working_time_by_id(&object_id).await {
         Ok(Some(working_time)) => HttpResponse::Ok().json(working_time),
         Ok(None) => HttpResponse::NotFound().finish(), // 仮: 見つからなかった場合も正常系として返す.
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
 
-pub async fn create_working_time<T: WorkingTimeRepository>(
-    usecase: web::Data<WorkingTimeUseCase<impl WorkingTimeRepository>>,
+pub async fn create_working_time(
+    usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     working_time: web::Json<WorkingTime>,
 ) -> impl Responder {
     match usecase
