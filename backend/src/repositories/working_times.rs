@@ -50,5 +50,15 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
             .ok_or_else(|| mongodb::error::Error::custom("挿入されたドキュメントのIDが無効です"))
     }
 
+    async fn update_one(
+        &self,
+        filter: Document,
+        working_time: &WorkingTime,
+    ) -> Result<bool, mongodb::error::Error> {
+        let update = mongodb::bson::doc! {
+            "$set": mongodb::bson::to_document(working_time)?
+        };
+        let result = self.collection.update_one(filter, update).await?;
+        Ok(result.modified_count > 0)
     }
 }

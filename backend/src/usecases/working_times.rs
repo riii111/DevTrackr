@@ -38,3 +38,27 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .await
             .map_err(WorkingTimeError::DatabaseError)
     }
+
+    pub async fn update_working_time(
+        &self,
+        id: &ObjectId,
+        working_time: &WorkingTime,
+    ) -> Result<bool, WorkingTimeError> {
+        // バリデーションチェック
+        if working_time.start_time >= working_time.end_time {
+            return Err(WorkingTimeError::InvalidTimeRange);
+        }
+
+        // 既存のドキュメントが存在するか
+        if self.repository.find_by_id(id).await?.is_none() {
+            return Err(WorkingTimeError::NotFound);
+        }
+
+        let filter = mongodb::bson::doc! {"_id": id};
+
+        self.repository
+            .update_one(filter, working_time)
+            .await
+            .map_err(WorkingTimeError::DatabaseError)
+    }
+}
