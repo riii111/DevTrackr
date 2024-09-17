@@ -4,17 +4,12 @@ use crate::{
     usecases::working_times::WorkingTimeUseCase,
 };
 use actix_web::{web, HttpResponse, Responder};
-use bson::oid::ObjectId;
 
 pub async fn get_working_time(
     usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     id: web::Path<String>,
 ) -> impl Responder {
-    let object_id = match ObjectId::parse_str(&*id) {
-        Ok(oid) => oid,
-        Err(_) => return HttpResponse::BadRequest().finish(),
-    };
-    match usecase.get_working_time_by_id(&object_id).await {
+    match usecase.get_working_time_by_id(&id).await {
         Ok(Some(working_time)) => HttpResponse::Ok().json(working_time),
         Ok(None) => HttpResponse::NotFound().finish(), // 仮: 見つからなかった場合も正常系として返す.
         Err(_) => HttpResponse::InternalServerError().finish(),

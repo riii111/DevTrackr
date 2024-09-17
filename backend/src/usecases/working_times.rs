@@ -15,9 +15,10 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
 
     pub async fn get_working_time_by_id(
         &self,
-        id: &ObjectId,
+        id: &str,
     ) -> Result<Option<WorkingTime>, WorkingTimeError> {
         let object_id = ObjectId::parse_str(id).map_err(|_| WorkingTimeError::InvalidId)?;
+
         self.repository
             .find_by_id(&object_id)
             .await
