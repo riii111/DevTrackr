@@ -1,5 +1,5 @@
 use crate::errors::WorkingTimeError;
-use crate::models::working_times::{self, WorkingTime};
+use crate::models::working_times::WorkingTime;
 use crate::repositories::working_times::WorkingTimeRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;

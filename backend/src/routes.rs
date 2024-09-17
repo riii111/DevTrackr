@@ -1,44 +1,17 @@
-use actix_web::{web, get, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder, Scope};
 use tera::Tera;
 
 use crate::endpoints::{posts, projects, working_times};
 
-macro_rules! define_routes {
-    ($($method:ident $path:expr => $handler:expr),*) => {
-        |cfg: &mut web::ServiceConfig| {
-            $(
-                cfg.route($path, web::$method().to($handler));
-            )*
-        }
-    };
-}
-
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
-
-    // 各ルーティング先.
-    let project_routes = define_routes!(
-        get "/{id}" => projects::get_project
-    );
-
-    let working_routes = define_routes!(
-        get "/{id}" => working_times::get_working_time,
-        post "" => working_times::create_working_time,
-        put "/{id}" => working_times::update_working_time
-    );
 
     // ルーティング全体
     cfg.app_data(tera.clone())
         .service(crate::routes::index)
         .service(health_check)
-        .service(
-            web::scope("/projects")
-                .configure(project_routes)
-        )
-        .service(
-            web::scope("/working_times")
-                .configure(working_routes)
-        )
+        .service(projects_scope())
+        .service(working_times_scope())
         .service(
             web::scope("/api").service(
                 web::scope("/posts")
@@ -48,6 +21,17 @@ pub fn app(cfg: &mut web::ServiceConfig) {
             ),
         )
         .default_service(web::to(crate::endpoints::posts::not_found));
+}
+
+fn projects_scope() -> Scope {
+    web::scope("/projects").service(projects::get_project)
+}
+
+fn working_times_scope() -> Scope {
+    web::scope("/working_times")
+        .service(working_times::get_working_time)
+        .service(working_times::create_working_time)
+        .service(working_times::update_working_time)
 }
 
 #[get("/")]
