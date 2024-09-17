@@ -3,24 +3,43 @@ use tera::Tera;
 
 use crate::endpoints::{posts, projects, working_times};
 
+macro_rules! define_routes {
+    ($($method:ident $path:expr => $handler:expr),*) => {
+        |cfg: &mut web::ServiceConfig| {
+            $(
+                cfg.route($path, web::$method().to($handler));
+            )*
+        }
+    };
+}
+
+
+
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
 
+    // 各ルーティング先.
+    let project_routes = define_routes!(
+        get "/{id}" => projects::get_project
+    );
+
+    let working_routes = define_routes!(
+        get "/{id}" => working_times::get_working_time,
+        post "" => working_times::create_working_time,
+        put "/{id}" => working_times::update_working_time
+    );
+
+    // ルーティング全体
     cfg.app_data(tera.clone())
         .service(crate::routes::index)
         .service(health_check)
-        // projects
         .service(
             web::scope("/projects")
-                // .route("", web::get().to(projects::get_all_projects))
-                .route("/{id}", web::get().to(projects::get_project)),
+                .configure(project_routes)
         )
-        // working_times
         .service(
             web::scope("/working_times")
-                .route("/{id}", web::get().to(working_times::get_working_time))
-                .route("", web::post().to(working_times::create_working_time))
-                .route("", web::put().to(working_times::update_working_time))
+                .configure(working_routes)
         )
         .service(
             web::scope("/api").service(
