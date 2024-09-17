@@ -4,7 +4,6 @@ use tera::Tera;
 
 use crate::endpoints::posts;
 use crate::endpoints::projects;
-use crate::repositories::projects::MongoProjectRepository;
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
