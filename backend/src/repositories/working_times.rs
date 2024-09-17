@@ -11,6 +11,11 @@ pub trait WorkingTimeRepository {
         &self,
         working_time: &WorkingTime,
     ) -> Result<ObjectId, mongodb::error::Error>;
+    async fn update_one(
+        &self,
+        filter: Document,
+        working_time: &WorkingTime,
+    ) -> Result<bool, mongodb::error::Error>;
 }
 
 pub struct MongoWorkingTimeRepository {
@@ -34,4 +39,16 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
         self.collection.find_one(bson::doc! { "_id": id }).await
     }
 
+    async fn insert_one(
+        &self,
+        working_time: &WorkingTime,
+    ) -> Result<ObjectId, mongodb::error::Error> {
+        let result: InsertOneResult = self.collection.insert_one(working_time).await?;
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or_else(|| mongodb::error::Error::custom("挿入されたドキュメントのIDが無効です"))
     }
+
+    }
+}
