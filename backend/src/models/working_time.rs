@@ -10,3 +10,5 @@ pub struct WorkingTime {
     pub created_at: BsonDateTime,
     pub updated_at: Option<BsonDateTime>,
 }
+
+// TODO: 単体バリデーション追加する（未来の時刻が入力されていないか、など）
