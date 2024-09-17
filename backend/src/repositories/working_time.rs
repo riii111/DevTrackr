@@ -7,7 +7,10 @@ use mongodb::{bson::Document, results::InsertOneResult, Collection, Database};
 pub trait WorkingTimeRepository {
     async fn find_by_id(&self, id: &ObjectId)
         -> Result<Option<WorkingTime>, mongodb::error::Error>;
-    async fn insert_one(&self, working_time: &WorkingTime) -> Result<bool, mongodb::error::Error>;
+    async fn insert_one(
+        &self,
+        working_time: &WorkingTime,
+    ) -> Result<ObjectId, mongodb::error::Error>;
     async fn update_one(
         &self,
         filter: Document,
@@ -36,9 +39,15 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
         self.collection.find_one(bson::doc! { "_id": id }).await
     }
 
-    async fn insert_one(&self, working_time: &WorkingTime) -> Result<bool, mongodb::error::Error> {
+    async fn insert_one(
+        &self,
+        working_time: &WorkingTime,
+    ) -> Result<ObjectId, mongodb::error::Error> {
         let result: InsertOneResult = self.collection.insert_one(working_time).await?;
-        Ok(result.inserted_id.as_object_id().is_some())
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or_else(|| mongodb::error::Error::custom("挿入されたドキュメントのIDが無効です"))
     }
 
     async fn update_one(
