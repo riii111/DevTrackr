@@ -3,8 +3,9 @@ use crate::{
     repositories::working_times::MongoWorkingTimeRepository,
     usecases::working_times::WorkingTimeUseCase,
 };
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{get, post, put, web, HttpResponse, Responder};
 
+#[get("/{id}")]
 pub async fn get_working_time(
     usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     id: web::Path<String>,
@@ -16,6 +17,7 @@ pub async fn get_working_time(
     }
 }
 
+#[post("/")]
 pub async fn create_working_time(
     usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     working_time: web::Json<WorkingTime>,
@@ -32,6 +34,7 @@ pub async fn create_working_time(
     }
 }
 
+#[put("/{id}")]
 pub async fn update_working_time(
     usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
     working_time: web::Json<WorkingTime>,
