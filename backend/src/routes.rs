@@ -13,8 +13,6 @@ macro_rules! define_routes {
     };
 }
 
-
-
 pub fn app(cfg: &mut web::ServiceConfig) {
     let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
 
