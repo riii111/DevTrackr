@@ -30,7 +30,6 @@ pub struct WorkingTimeCreate {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkingTimeUpdate {
-    pub id: ObjectId,
     pub start_time: Option<DateTime<Utc>>,
     pub end_time: Option<DateTime<Utc>>,
 }
