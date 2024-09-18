@@ -1,5 +1,5 @@
 use crate::errors::WorkingTimeError;
-use crate::models::working_times::WorkingTime;
+use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use crate::repositories::working_times::WorkingTimeRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
@@ -16,7 +16,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
     pub async fn get_working_time_by_id(
         &self,
         id: &str,
-    ) -> Result<Option<WorkingTime>, WorkingTimeError> {
+    ) -> Result<Option<WorkingTimeInDB>, WorkingTimeError> {
         let object_id = ObjectId::parse_str(id).map_err(|_| WorkingTimeError::InvalidId)?;
 
         self.repository
@@ -27,7 +27,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
 
     pub async fn create_working_time(
         &self,
-        working_time: &WorkingTime,
+        working_time: &WorkingTimeCreate,
     ) -> Result<ObjectId, WorkingTimeError> {
         // バリデーションチェック
         if working_time.start_time >= working_time.end_time {
@@ -43,7 +43,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
     pub async fn update_working_time(
         &self,
         id: &ObjectId,
-        working_time: &WorkingTime,
+        working_time: &WorkingTimeUpdate,
     ) -> Result<bool, WorkingTimeError> {
         // バリデーションチェック
         if working_time.start_time >= working_time.end_time {
