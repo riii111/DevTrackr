@@ -1,9 +1,11 @@
 use crate::{
-    errors::WorkingTimeError, models::working_times::WorkingTime,
+    errors::WorkingTimeError,
+    models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
     repositories::working_times::MongoWorkingTimeRepository,
     usecases::working_times::WorkingTimeUseCase,
 };
 use actix_web::{get, post, put, web, HttpResponse, Responder};
+use bson::oid::ObjectId;
 use std::sync::Arc;
 
 #[get("/{id}")]
@@ -21,7 +23,7 @@ pub async fn get_working_time(
 #[post("")]
 pub async fn create_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
-    working_time: web::Json<WorkingTime>,
+    working_time: web::Json<WorkingTimeCreate>,
 ) -> impl Responder {
     match usecase
         .create_working_time(&working_time.into_inner())
@@ -38,20 +40,26 @@ pub async fn create_working_time(
 #[put("/{id}")]
 pub async fn update_working_time(
     usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
-    working_time: web::Json<WorkingTime>,
+    path: web::Path<String>,
+    working_time: web::Json<WorkingTimeUpdate>,
 ) -> impl Responder {
-    let working_time_inner = working_time.into_inner();
-    match working_time_inner.id {
-        Some(ref id) => match usecase.update_working_time(id, &working_time_inner).await {
-            Ok(_) => HttpResponse::NoContent().finish(),
-            Err(WorkingTimeError::InvalidTimeRange) => {
-                HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
+    let id = path.into_inner();
+    match ObjectId::parse_str(&id) {
+        Ok(obj_id) => {
+            match usecase
+                .update_working_time(&obj_id, &working_time.into_inner())
+                .await
+            {
+                Ok(_) => HttpResponse::NoContent().finish(),
+                Err(WorkingTimeError::InvalidTimeRange) => {
+                    HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
+                }
+                Err(WorkingTimeError::NotFound) => {
+                    HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
+                }
+                Err(_) => HttpResponse::InternalServerError().finish(),
             }
-            Err(WorkingTimeError::NotFound) => {
-                HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
-            }
-            Err(_) => HttpResponse::InternalServerError().finish(),
-        },
-        None => HttpResponse::BadRequest().json("IDが指定されていません"),
+        }
+        Err(_) => HttpResponse::BadRequest().json("不正なID形式です"),
     }
 }
