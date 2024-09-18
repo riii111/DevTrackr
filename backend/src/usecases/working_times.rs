@@ -55,10 +55,8 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             return Err(WorkingTimeError::NotFound);
         }
 
-        let filter = mongodb::bson::doc! {"_id": id};
-
         self.repository
-            .update_one(filter, working_time)
+            .update_one(*id, working_time)
             .await
             .map_err(WorkingTimeError::DatabaseError)
     }

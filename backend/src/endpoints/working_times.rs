@@ -41,17 +41,17 @@ pub async fn update_working_time(
     working_time: web::Json<WorkingTime>,
 ) -> impl Responder {
     let working_time_inner = working_time.into_inner();
-    match usecase
-        .update_working_time(&working_time_inner.id, &working_time_inner)
-        .await
-    {
-        Ok(_) => HttpResponse::NoContent().finish(),
-        Err(WorkingTimeError::InvalidTimeRange) => {
-            HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
-        }
-        Err(WorkingTimeError::NotFound) => {
-            HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
-        }
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    match working_time_inner.id {
+        Some(ref id) => match usecase.update_working_time(id, &working_time_inner).await {
+            Ok(_) => HttpResponse::NoContent().finish(),
+            Err(WorkingTimeError::InvalidTimeRange) => {
+                HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
+            }
+            Err(WorkingTimeError::NotFound) => {
+                HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
+            }
+            Err(_) => HttpResponse::InternalServerError().finish(),
+        },
+        None => HttpResponse::BadRequest().json("IDが指定されていません"),
     }
 }

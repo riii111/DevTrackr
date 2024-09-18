@@ -1,7 +1,8 @@
 use crate::models::working_times::WorkingTime;
 use async_trait::async_trait;
 use bson::oid::ObjectId;
-use mongodb::{bson::Document, results::InsertOneResult, Collection, Database};
+use chrono::Utc;
+use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait WorkingTimeRepository {
@@ -13,7 +14,7 @@ pub trait WorkingTimeRepository {
     ) -> Result<ObjectId, mongodb::error::Error>;
     async fn update_one(
         &self,
-        filter: Document,
+        id: ObjectId,
         working_time: &WorkingTime,
     ) -> Result<bool, mongodb::error::Error>;
 }
@@ -52,13 +53,17 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
 
     async fn update_one(
         &self,
-        filter: Document,
+        id: ObjectId,
         working_time: &WorkingTime,
     ) -> Result<bool, mongodb::error::Error> {
+        let mut update_doc = bson::to_document(working_time)?;
+        update_doc.insert("updated_at", Utc::now());
         let update = mongodb::bson::doc! {
-            "$set": mongodb::bson::to_document(working_time)?
+            "$set": update_doc
         };
-        let result = self.collection.update_one(filter, update).await?;
-        Ok(result.modified_count > 0)
+        self.collection
+            .update_one(mongodb::bson::doc! { "_id": id }, update)
+            .await
+            .map(|result| result.modified_count > 0)
     }
 }
