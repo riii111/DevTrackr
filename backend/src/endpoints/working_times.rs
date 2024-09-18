@@ -1,4 +1,5 @@
 use crate::{
+    dto::responses::working_time::{WorkingTimeCreatedResponse, WorkingTimeResponse},
     errors::WorkingTimeError,
     models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
     repositories::working_times::MongoWorkingTimeRepository,
@@ -14,8 +15,8 @@ pub async fn get_working_time(
     id: web::Path<String>,
 ) -> impl Responder {
     match usecase.get_working_time_by_id(&id).await {
-        Ok(Some(working_time)) => HttpResponse::Ok().json(working_time),
-        Ok(None) => HttpResponse::NotFound().finish(), // 仮: 見つからなかった場合も正常系として返す.
+        Ok(Some(working_time)) => HttpResponse::Ok().json(WorkingTimeResponse::from(working_time)),
+        Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
@@ -29,7 +30,9 @@ pub async fn create_working_time(
         .create_working_time(&working_time.into_inner())
         .await
     {
-        Ok(working_time_id) => HttpResponse::Created().json(working_time_id),
+        Ok(working_time_id) => {
+            HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id))
+        }
         Err(WorkingTimeError::InvalidTimeRange) => {
             HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
         }
