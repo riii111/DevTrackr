@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkingTime {
-    #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
     // app側では"id"として参照できるように
+    #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
     pub start_time: Option<DateTime<Utc>>,
     pub end_time: Option<DateTime<Utc>>,
@@ -37,6 +37,7 @@ pub struct WorkingTimeUpdate {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkingTimeInDB {
+    // app側では"id"として参照できるように
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>, // DB側にID生成を任せる
     pub start_time: DateTime<Utc>,
