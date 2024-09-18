@@ -13,6 +13,7 @@ pub struct WorkingTime {
     pub end_time: Option<DateTime<Utc>>,
     #[serde(default = "current_time")]
     pub created_at: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<DateTime<Utc>>,
 }
 
