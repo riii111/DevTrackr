@@ -4,6 +4,7 @@ use crate::{
     usecases::working_times::WorkingTimeUseCase,
 };
 use actix_web::{get, post, put, web, HttpResponse, Responder};
+use std::sync::Arc;
 
 #[get("/{id}")]
 pub async fn get_working_time(
@@ -17,9 +18,9 @@ pub async fn get_working_time(
     }
 }
 
-#[post("/")]
+#[post("")]
 pub async fn create_working_time(
-    usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
+    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     working_time: web::Json<WorkingTime>,
 ) -> impl Responder {
     match usecase

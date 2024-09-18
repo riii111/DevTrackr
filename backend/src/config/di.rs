@@ -1,18 +1,20 @@
 use crate::repositories::projects::MongoProjectRepository;
+use crate::repositories::working_times::MongoWorkingTimeRepository;
 use crate::usecases::projects::ProjectUseCase;
+use crate::usecases::working_times::WorkingTimeUseCase;
 use mongodb::Database;
 use std::sync::Arc;
 
-pub struct AppState {
-    pub project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
-    // pub working_time_usecase: Arc<WorkingTimeUseCase>,
+// working_time
+pub fn init_working_time_usecase(
+    db: &Database,
+) -> Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>> {
+    let working_time_repository = Arc::new(MongoWorkingTimeRepository::new(db));
+    Arc::new(WorkingTimeUseCase::new(working_time_repository))
 }
 
-pub fn init_dependencies(db: &Database) -> Arc<AppState> {
+// project
+pub fn init_project_usecase(db: &Database) -> Arc<ProjectUseCase<MongoProjectRepository>> {
     let project_repository = Arc::new(MongoProjectRepository::new(db));
-
-    Arc::new(AppState {
-        project_usecase: Arc::new(ProjectUseCase::new(project_repository)),
-        // 他のユースケース...
-    })
+    Arc::new(ProjectUseCase::new(project_repository))
 }
