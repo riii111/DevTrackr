@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 #[get("/{id}")]
 pub async fn get_working_time(
-    usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
+    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     id: web::Path<String>,
 ) -> impl Responder {
     info!("called GET get_working_time!!");
@@ -47,7 +47,7 @@ pub async fn create_working_time(
 
 #[put("/{id}")]
 pub async fn update_working_time(
-    usecase: web::Data<WorkingTimeUseCase<MongoWorkingTimeRepository>>,
+    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     path: web::Path<String>,
     working_time: web::Json<WorkingTimeUpdate>,
 ) -> impl Responder {
