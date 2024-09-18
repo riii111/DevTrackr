@@ -18,7 +18,9 @@ pub async fn get_working_time(
     info!("called GET get_working_time!!");
 
     match usecase.get_working_time_by_id(&id).await {
-        Ok(Some(working_time)) => HttpResponse::Ok().json(WorkingTimeResponse::from(working_time)),
+        Ok(Some(working_time)) => {
+            HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time))
+        }
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
