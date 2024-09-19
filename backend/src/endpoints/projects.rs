@@ -1,8 +1,10 @@
+use crate::dto::responses::projects::ProjectCreatedResponse;
 use crate::errors::ProjectError;
+use crate::models::projects::ProjectCreate;
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
-use actix_web::{get, web, HttpResponse, Responder};
 use actix_web::{get, post, web, HttpResponse, Responder};
+use log::info;
 use std::sync::Arc;
 
 #[get("/{id}")]
@@ -15,5 +17,17 @@ pub async fn get_project(
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(ProjectError::InvalidId) => HttpResponse::BadRequest().finish(),
         Err(ProjectError::DatabaseError(_)) => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+#[post("")]
+pub async fn create_project(
+    usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
+    project: web::Json<ProjectCreate>,
+) -> impl Responder {
+    info!("called POST create_working_time!!");
+    match usecase.create_project(project.into_inner()).await {
+        Ok(project_id) => HttpResponse::Created().json(ProjectCreatedResponse::from(project_id)),
+        Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }

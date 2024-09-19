@@ -47,4 +47,24 @@ impl ProjectRepository for MongoProjectRepository {
     //     let cursor = self.collection.find(filter.unwrap_or_default()).await?;
     //     cursor.try_collect().await
     // }
+    async fn insert_one(&self, project: ProjectCreate) -> Result<ObjectId, mongodb::error::Error> {
+        let project_in_db = ProjectInDB {
+            id: None, // MongoDBにID生成を任せる
+            title: project.title,
+            description: project.description,
+            company_name: project.company_name,
+            status: project.status,
+            working_time_id: None,
+            total_working_time: None,
+            skill_labels: project.skill_labels,
+            created_at: Utc::now(),
+            updated_at: None,
+        };
+
+        let result: InsertOneResult = self.collection.insert_one(&project_in_db).await?;
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or_else(|| mongodb::error::Error::custom("挿入されたドキュメントのIDが無効です"))
+    }
 }

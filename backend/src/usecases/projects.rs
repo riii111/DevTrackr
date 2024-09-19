@@ -1,5 +1,5 @@
 use crate::errors::ProjectError;
-use crate::models::projects::Project;
+use crate::models::projects::{ProjectCreate, ProjectInDB};
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
@@ -17,6 +17,13 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
         let object_id = ObjectId::parse_str(id).map_err(|_| ProjectError::InvalidId)?;
         self.repository
             .find_by_id(&object_id)
+            .await
+            .map_err(ProjectError::DatabaseError)
+    }
+
+    pub async fn create_project(&self, project: ProjectCreate) -> Result<ObjectId, ProjectError> {
+        self.repository
+            .insert_one(project)
             .await
             .map_err(ProjectError::DatabaseError)
     }

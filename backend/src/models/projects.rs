@@ -11,6 +11,16 @@ pub enum ProjectStatus {
     Cancelled,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ProjectCreate {
+    pub title: String,
+    pub description: Option<String>,
+    pub skill_labels: Option<Vec<String>>,
+    pub company_name: String,
+    #[serde(default = "default_project_status")]
+    pub status: ProjectStatus,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]

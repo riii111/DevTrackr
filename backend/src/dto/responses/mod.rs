@@ -1,2 +1,2 @@
-pub mod working_time;
+pub mod projects;
 pub mod working_times;

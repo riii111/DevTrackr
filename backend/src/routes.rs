@@ -24,7 +24,9 @@ pub fn app(cfg: &mut web::ServiceConfig) {
 }
 
 fn projects_scope() -> Scope {
-    web::scope("/projects").service(projects::get_project)
+    web::scope("/projects")
+        .service(projects::get_project)
+        .service(projects::create_project)
 }
 
 fn working_times_scope() -> Scope {
