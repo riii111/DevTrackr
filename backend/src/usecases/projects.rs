@@ -1,4 +1,4 @@
-use crate::errors::ProjectError;
+use crate::errors::project_error::ProjectError;
 use crate::models::projects::{ProjectCreate, ProjectInDB};
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;

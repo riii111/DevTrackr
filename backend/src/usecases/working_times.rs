@@ -1,4 +1,4 @@
-use crate::errors::WorkingTimeError;
+use crate::errors::working_time_error::WorkingTimeError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use crate::repositories::working_times::WorkingTimeRepository;
 use bson::oid::ObjectId;
