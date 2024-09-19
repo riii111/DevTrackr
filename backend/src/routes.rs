@@ -1,14 +1,10 @@
 use actix_web::{get, web, HttpResponse, Responder, Scope};
-use tera::Tera;
 
 use crate::endpoints::{posts, projects, working_times};
 
 pub fn app(cfg: &mut web::ServiceConfig) {
-    let tera = web::Data::new(Tera::new("templates/**/*.html").unwrap());
-
     // ルーティング全体
-    cfg.app_data(tera.clone())
-        .service(crate::routes::index)
+    cfg.service(crate::routes::index)
         .service(health_check)
         .service(projects_scope())
         .service(working_times_scope())
