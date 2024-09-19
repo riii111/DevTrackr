@@ -20,7 +20,7 @@ pub struct WorkingTimeUpdate {
 pub struct WorkingTimeInDB {
     // app側では"id"として参照できるように
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>, // DB側にID生成を任せる
+    pub id: Option<ObjectId>, // DB側にID生成させるので任意
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
