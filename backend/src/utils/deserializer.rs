@@ -3,6 +3,7 @@ use serde::de::{self, Deserializer};
 use serde::Deserialize;
 
 // カスタムデシリアライザ関数
+// ※RFC 3339...ISO 8601のサブセット. 広く認知された標準形式
 pub fn deserialize_bson_date_time<'de, D>(deserializer: D) -> Result<BsonDateTime, D::Error>
 where
     D: Deserializer<'de>,
