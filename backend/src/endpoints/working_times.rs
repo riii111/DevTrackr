@@ -1,6 +1,6 @@
 use crate::{
     dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse},
-    errors::WorkingTimeError,
+    errors::working_time_error::WorkingTimeError,
     models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
     repositories::working_times::MongoWorkingTimeRepository,
     usecases::working_times::WorkingTimeUseCase,
