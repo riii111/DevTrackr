@@ -1,9 +1,12 @@
 use crate::models::projects::{ProjectInDB, ProjectStatus};
-use crate::utils::serializer::{serialize_bson_datetime, serialize_option_bson_datetime};
+use crate::utils::serializer::{
+    serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
+};
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 pub struct ProjectResponse {
     #[serde(serialize_with = "serialize_object_id")]
     pub id: ObjectId,
@@ -18,14 +21,6 @@ pub struct ProjectResponse {
     pub created_at: BsonDateTime,
     #[serde(serialize_with = "serialize_option_bson_datetime")]
     pub updated_at: Option<BsonDateTime>,
-}
-
-// ObjectIdを16進数文字列としてシリアライズするためのヘルパー関数
-fn serialize_object_id<S>(object_id: &ObjectId, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(&object_id.to_hex())
 }
 
 //  パニック防止
