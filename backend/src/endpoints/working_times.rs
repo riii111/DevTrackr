@@ -22,7 +22,10 @@ pub async fn get_working_time(
             HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time))
         }
         Ok(None) => HttpResponse::NotFound().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+        Err(e) => {
+            log::error!("作業時間の取得中にエラーが発生しました: {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
     }
 }
 
@@ -43,7 +46,10 @@ pub async fn create_working_time(
         Err(WorkingTimeError::InvalidTimeRange) => {
             HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
         }
-        Err(_) => HttpResponse::InternalServerError().finish(),
+        Err(e) => {
+            log::error!("作業時間の作成中にエラーが発生しました: {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
     }
 }
 
@@ -69,7 +75,10 @@ pub async fn update_working_time(
                 Err(WorkingTimeError::NotFound) => {
                     HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
                 }
-                Err(_) => HttpResponse::InternalServerError().finish(),
+                Err(e) => {
+                    log::error!("作業時間の更新中にエラーが発生しました: {:?}", e);
+                    HttpResponse::InternalServerError().finish()
+                }
             }
         }
         Err(_) => HttpResponse::BadRequest().json("不正なID形式です"),
