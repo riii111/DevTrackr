@@ -1,22 +1,26 @@
-use crate::models::projects::Project;
+use crate::models::projects::{ProjectCreate, ProjectInDB};
 use async_trait::async_trait;
 use bson::oid::ObjectId;
 // use futures::TryStreamExt;
 // use mongodb::{bson::Document, Collection, Database};
-use mongodb::{Collection, Database};
+use chrono::Utc;
+use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait ProjectRepository {
     // TODO: find_oneだけに集約させるべき？
-    async fn find_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error>;
+    async fn find_by_id(&self, id: &ObjectId)
+        -> Result<Option<ProjectInDB>, mongodb::error::Error>;
     // async fn find_many(
     //     &self,
     //     filter: Option<Document>,
     // ) -> Result<Vec<Project>, mongodb::error::Error>;
+
+    async fn insert_one(&self, project: ProjectCreate) -> Result<ObjectId, mongodb::error::Error>;
 }
 
 pub struct MongoProjectRepository {
-    collection: Collection<Project>,
+    collection: Collection<ProjectInDB>,
 }
 
 impl MongoProjectRepository {
@@ -29,7 +33,10 @@ impl MongoProjectRepository {
 
 #[async_trait]
 impl ProjectRepository for MongoProjectRepository {
-    async fn find_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error> {
+    async fn find_by_id(
+        &self,
+        id: &ObjectId,
+    ) -> Result<Option<ProjectInDB>, mongodb::error::Error> {
         self.collection.find_one(bson::doc! { "_id": id }).await
     }
 
