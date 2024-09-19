@@ -13,7 +13,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
         Self { repository }
     }
 
-    pub async fn get_project_by_id(&self, id: &str) -> Result<Option<Project>, ProjectError> {
+    pub async fn get_project_by_id(&self, id: &str) -> Result<Option<ProjectInDB>, ProjectError> {
         let object_id = ObjectId::parse_str(id).map_err(|_| ProjectError::InvalidId)?;
         self.repository
             .find_by_id(&object_id)
