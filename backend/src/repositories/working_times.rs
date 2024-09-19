@@ -1,8 +1,8 @@
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use async_trait::async_trait;
-use bson::oid::ObjectId;
 use chrono::Utc;
+use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
@@ -37,7 +37,7 @@ impl MongoWorkingTimeRepository {
 impl WorkingTimeRepository for MongoWorkingTimeRepository {
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkingTimeInDB>, RepositoryError> {
         self.collection
-            .find_one(bson::doc! { "_id": id })
+            .find_one(doc! { "_id": id })
             .await
             .map_err(RepositoryError::DatabaseError)
     }
@@ -73,12 +73,12 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
         let mut update_doc = bson::to_document(working_time)
             .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
         update_doc.insert("updated_at", Utc::now());
-        let update = mongodb::bson::doc! {
+        let update = doc! {
             "$set": update_doc
         };
         let result = self
             .collection
-            .update_one(mongodb::bson::doc! { "_id": id }, update)
+            .update_one(doc! { "_id": id }, update)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         Ok(result.modified_count > 0)
