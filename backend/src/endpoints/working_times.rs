@@ -1,5 +1,5 @@
 use crate::{
-    dto::responses::working_time::{WorkingTimeCreatedResponse, WorkingTimeResponse},
+    dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse},
     errors::WorkingTimeError,
     models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
     repositories::working_times::MongoWorkingTimeRepository,
