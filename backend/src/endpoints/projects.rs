@@ -1,4 +1,4 @@
-use crate::dto::responses::projects::ProjectCreatedResponse;
+use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::errors::ProjectError;
 use crate::models::projects::ProjectCreate;
 use crate::repositories::projects::MongoProjectRepository;
@@ -13,7 +13,7 @@ pub async fn get_project(
     id: web::Path<String>,
 ) -> impl Responder {
     match usecase.get_project_by_id(&id).await {
-        Ok(Some(project)) => HttpResponse::Ok().json(project),
+        Ok(Some(project)) => HttpResponse::Ok().json(ProjectResponse::try_from(project)),
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(ProjectError::InvalidId) => HttpResponse::BadRequest().finish(),
         Err(ProjectError::DatabaseError(_)) => HttpResponse::InternalServerError().finish(),
