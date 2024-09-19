@@ -1,11 +1,11 @@
 use crate::{
     dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse},
-    errors::working_time_error::WorkingTimeError,
+    errors::app_error::AppError,
     models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
     repositories::working_times::MongoWorkingTimeRepository,
     usecases::working_times::WorkingTimeUseCase,
 };
-use actix_web::{get, post, put, web, HttpResponse, Responder};
+use actix_web::{get, post, put, web, HttpResponse};
 use bson::oid::ObjectId;
 use log::info;
 use std::sync::Arc;
@@ -14,43 +14,29 @@ use std::sync::Arc;
 pub async fn get_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     id: web::Path<String>,
-) -> impl Responder {
+) -> Result<HttpResponse, AppError> {
     info!("called GET get_working_time!!");
 
-    match usecase.get_working_time_by_id(&id).await {
-        Ok(Some(working_time)) => {
-            HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time))
-        }
-        Ok(None) => HttpResponse::NotFound().finish(),
-        Err(e) => {
-            log::error!("作業時間の取得中にエラーが発生しました: {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    let working_time = usecase
+        .get_working_time_by_id(&id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time)))
 }
 
 #[post("")]
 pub async fn create_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     working_time: web::Json<WorkingTimeCreate>,
-) -> impl Responder {
+) -> Result<HttpResponse, AppError> {
     info!("called POST create_working_time!!");
 
-    match usecase
+    let working_time_id = usecase
         .create_working_time(&working_time.into_inner())
-        .await
-    {
-        Ok(working_time_id) => {
-            HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id))
-        }
-        Err(WorkingTimeError::InvalidTimeRange) => {
-            HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
-        }
-        Err(e) => {
-            log::error!("作業時間の作成中にエラーが発生しました: {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+        .await?;
+
+    Ok(HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id)))
 }
 
 #[put("/{id}")]
@@ -58,29 +44,14 @@ pub async fn update_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     path: web::Path<String>,
     working_time: web::Json<WorkingTimeUpdate>,
-) -> impl Responder {
-    info!("called updated_working_time!!");
+) -> Result<HttpResponse, AppError> {
+    info!("called update_working_time!!");
 
-    let id = path.into_inner();
-    match ObjectId::parse_str(&id) {
-        Ok(obj_id) => {
-            match usecase
-                .update_working_time(&obj_id, &working_time.into_inner())
-                .await
-            {
-                Ok(_) => HttpResponse::NoContent().finish(),
-                Err(WorkingTimeError::InvalidTimeRange) => {
-                    HttpResponse::BadRequest().json("開始時間は終了時間より前である必要があります")
-                }
-                Err(WorkingTimeError::NotFound) => {
-                    HttpResponse::NotFound().json("更新対象のIDが見つかりませんでした")
-                }
-                Err(e) => {
-                    log::error!("作業時間の更新中にエラーが発生しました: {:?}", e);
-                    HttpResponse::InternalServerError().finish()
-                }
-            }
-        }
-        Err(_) => HttpResponse::BadRequest().json("不正なID形式です"),
-    }
+    let obj_id = ObjectId::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
+
+    usecase
+        .update_working_time(&obj_id, &working_time.into_inner())
+        .await?;
+
+    Ok(HttpResponse::NoContent().finish())
 }
