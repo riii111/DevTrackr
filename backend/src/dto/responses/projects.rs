@@ -1,8 +1,7 @@
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use serde::Serialize;
-
 use crate::models::projects::{ProjectInDB, ProjectStatus};
+use crate::utils::serializer::{serialize_bson_datetime, serialize_option_bson_datetime};
+use bson::{oid::ObjectId, DateTime as BsonDateTime};
+use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 pub struct ProjectResponse {
@@ -15,8 +14,10 @@ pub struct ProjectResponse {
     pub skill_labels: Vec<String>,
     pub working_time_id: Vec<ObjectId>,
     pub total_working_time: Option<i64>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    pub created_at: BsonDateTime,
+    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub updated_at: Option<BsonDateTime>,
 }
 
 // ObjectIdを16進数文字列としてシリアライズするためのヘルパー関数

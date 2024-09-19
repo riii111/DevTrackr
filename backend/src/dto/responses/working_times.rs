@@ -1,24 +1,22 @@
 use crate::models::working_times::WorkingTimeInDB;
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
+use crate::utils::serializer::{
+    serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
+};
+use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 pub struct WorkingTimeResponse {
     #[serde(serialize_with = "serialize_object_id")]
     pub id: ObjectId,
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
-}
-
-// ObjectIdを16進数文字列としてシリアライズするためのヘルパー関数
-fn serialize_object_id<S>(object_id: &ObjectId, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(&object_id.to_hex())
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    pub start_time: BsonDateTime,
+    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub end_time: Option<BsonDateTime>,
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    pub created_at: BsonDateTime,
+    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub updated_at: Option<BsonDateTime>,
 }
 
 //  パニック防止

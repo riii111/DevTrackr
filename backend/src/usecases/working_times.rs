@@ -34,10 +34,12 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
         working_time: &WorkingTimeCreate,
     ) -> Result<ObjectId, AppError> {
         // バリデーションチェック
-        if working_time.start_time >= working_time.end_time {
-            return Err(AppError::ValidationError(
-                "開始時間は終了時間より前である必要があります".to_string(),
-            ));
+        if let Some(end_time) = working_time.end_time {
+            if working_time.start_time >= end_time {
+                return Err(AppError::ValidationError(
+                    "開始時間は終了時間より前である必要があります".to_string(),
+                ));
+            }
         }
 
         self.repository
@@ -55,10 +57,12 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
         working_time: &WorkingTimeUpdate,
     ) -> Result<bool, AppError> {
         // バリデーションチェック
-        if working_time.start_time >= working_time.end_time {
-            return Err(AppError::ValidationError(
-                "開始時間は終了時間より前である必要があります".to_string(),
-            ));
+        if let Some(end_time) = working_time.end_time {
+            if working_time.start_time >= end_time {
+                return Err(AppError::ValidationError(
+                    "開始時間は終了時間より前である必要があります".to_string(),
+                ));
+            }
         }
         // 既存のドキュメントが存在するか
         if self

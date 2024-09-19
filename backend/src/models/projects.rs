@@ -1,5 +1,4 @@
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
+use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,8 +32,8 @@ pub struct ProjectInDB {
     pub status: ProjectStatus,
     pub working_time_id: Option<Vec<ObjectId>>, // TODO: 集計方法について要考慮
     pub total_working_time: Option<i64>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
+    pub created_at: BsonDateTime,
+    pub updated_at: Option<BsonDateTime>,
 }
 
 fn default_project_status() -> ProjectStatus {

@@ -2,7 +2,7 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::projects::{ProjectCreate, ProjectInDB};
 use async_trait::async_trait;
 use bson::oid::ObjectId;
-use chrono::Utc;
+use bson::DateTime as BsonDateTime;
 use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
@@ -44,7 +44,7 @@ impl ProjectRepository for MongoProjectRepository {
             working_time_id: None,
             total_working_time: None,
             skill_labels: project.skill_labels,
-            created_at: Utc::now(),
+            created_at: BsonDateTime::now(),
             updated_at: None,
         };
 

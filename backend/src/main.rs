@@ -16,6 +16,7 @@ mod repositories;
 mod request_params;
 mod routes;
 mod usecases;
+mod utils;
 
 #[actix_rt::main]
 async fn main() -> Result<()> {
