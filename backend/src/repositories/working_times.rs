@@ -1,3 +1,4 @@
+use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use async_trait::async_trait;
 use bson::oid::ObjectId;
@@ -6,19 +7,18 @@ use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait WorkingTimeRepository {
-    async fn find_by_id(
-        &self,
-        id: &ObjectId,
-    ) -> Result<Option<WorkingTimeInDB>, mongodb::error::Error>;
+    async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkingTimeInDB>, RepositoryError>;
+
     async fn insert_one(
         &self,
         working_time: &WorkingTimeCreate,
-    ) -> Result<ObjectId, mongodb::error::Error>;
+    ) -> Result<ObjectId, RepositoryError>;
+
     async fn update_one(
         &self,
         id: ObjectId,
         working_time: &WorkingTimeUpdate,
-    ) -> Result<bool, mongodb::error::Error>;
+    ) -> Result<bool, RepositoryError>;
 }
 
 pub struct MongoWorkingTimeRepository {
@@ -35,17 +35,17 @@ impl MongoWorkingTimeRepository {
 
 #[async_trait]
 impl WorkingTimeRepository for MongoWorkingTimeRepository {
-    async fn find_by_id(
-        &self,
-        id: &ObjectId,
-    ) -> Result<Option<WorkingTimeInDB>, mongodb::error::Error> {
-        self.collection.find_one(bson::doc! { "_id": id }).await
+    async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkingTimeInDB>, RepositoryError> {
+        self.collection
+            .find_one(bson::doc! { "_id": id })
+            .await
+            .map_err(RepositoryError::DatabaseError)
     }
 
     async fn insert_one(
         &self,
         working_time: &WorkingTimeCreate,
-    ) -> Result<ObjectId, mongodb::error::Error> {
+    ) -> Result<ObjectId, RepositoryError> {
         let working_time_in_db = WorkingTimeInDB {
             id: None, // MongoDBにID生成を任せる
             start_time: working_time.start_time,
@@ -54,26 +54,33 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
             updated_at: None,
         };
 
-        let result: InsertOneResult = self.collection.insert_one(&working_time_in_db).await?;
+        let result: InsertOneResult = self
+            .collection
+            .insert_one(&working_time_in_db)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
         result
             .inserted_id
             .as_object_id()
-            .ok_or_else(|| mongodb::error::Error::custom("挿入されたドキュメントのIDが無効です"))
+            .ok_or(RepositoryError::InvalidId)
     }
 
     async fn update_one(
         &self,
         id: ObjectId,
         working_time: &WorkingTimeUpdate,
-    ) -> Result<bool, mongodb::error::Error> {
-        let mut update_doc = bson::to_document(working_time)?;
+    ) -> Result<bool, RepositoryError> {
+        let mut update_doc = bson::to_document(working_time)
+            .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
         update_doc.insert("updated_at", Utc::now());
         let update = mongodb::bson::doc! {
             "$set": update_doc
         };
-        self.collection
+        let result = self
+            .collection
             .update_one(mongodb::bson::doc! { "_id": id }, update)
             .await
-            .map(|result| result.modified_count > 0)
+            .map_err(RepositoryError::DatabaseError)?;
+        Ok(result.modified_count > 0)
     }
 }
