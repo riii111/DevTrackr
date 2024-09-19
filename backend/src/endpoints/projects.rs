@@ -8,11 +8,11 @@ use log::info;
 use std::sync::Arc;
 
 #[get("/{id}")]
-pub async fn get_project(
+pub async fn get_project_by_id(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called GET get_project!!");
+    info!("called GET get_project_by_id!!");
     let project = usecase.get_project_by_id(&id).await?;
     Ok(HttpResponse::Ok().json(project))
 }

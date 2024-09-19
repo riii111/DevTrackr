@@ -11,11 +11,11 @@ use log::info;
 use std::sync::Arc;
 
 #[get("/{id}")]
-pub async fn get_working_time(
+pub async fn get_working_time_by_id(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called GET get_working_time!!");
+    info!("called GET get_working_time_by_id!!");
 
     let working_time = usecase
         .get_working_time_by_id(&id)
