@@ -9,11 +9,14 @@ use serde::Serialize;
 pub struct WorkingTimeResponse {
     #[serde(serialize_with = "serialize_object_id")]
     pub id: ObjectId,
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
-}
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    pub start_time: BsonDateTime,
+    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub end_time: Option<BsonDateTime>,
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    pub created_at: BsonDateTime,
+    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub updated_at: Option<BsonDateTime>,
 }
 
 //  パニック防止

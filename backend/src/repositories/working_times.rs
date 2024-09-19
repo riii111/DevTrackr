@@ -1,7 +1,6 @@
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use async_trait::async_trait;
-use chrono::Utc;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{results::InsertOneResult, Collection, Database};
 
@@ -48,9 +47,9 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
     ) -> Result<ObjectId, RepositoryError> {
         let working_time_in_db = WorkingTimeInDB {
             id: None, // MongoDBにID生成を任せる
-            start_time: working_time.start_time,
-            end_time: working_time.end_time,
-            created_at: Utc::now(),
+            start_time: BsonDateTime::from(working_time.start_time),
+            end_time: working_time.end_time.map(BsonDateTime::from),
+            created_at: BsonDateTime::now(),
             updated_at: None,
         };
 
@@ -72,7 +71,7 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
     ) -> Result<bool, RepositoryError> {
         let mut update_doc = bson::to_document(working_time)
             .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
-        update_doc.insert("updated_at", Utc::now());
+        update_doc.insert("updated_at", BsonDateTime::now());
         let update = doc! {
             "$set": update_doc
         };
