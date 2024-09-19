@@ -1,6 +1,8 @@
 use crate::models::working_times::WorkingTimeInDB;
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
+use crate::utils::serializer::{
+    serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
+};
+use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -12,13 +14,6 @@ pub struct WorkingTimeResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
-
-// ObjectIdを16進数文字列としてシリアライズするためのヘルパー関数
-fn serialize_object_id<S>(object_id: &ObjectId, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(&object_id.to_hex())
 }
 
 //  パニック防止
