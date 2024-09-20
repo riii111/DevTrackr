@@ -1,6 +1,7 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use serde::Serialize;
 use thiserror::Error;
+use utoipa::ToSchema;
 
 // 共通のアプリケーションエラー
 #[derive(Debug, Error)]
@@ -25,9 +26,34 @@ pub enum AppError {
 }
 
 // エラーレスポンスの構造体
-#[derive(Serialize)]
-struct ErrorResponse {
+#[derive(Serialize, ToSchema)]
+pub struct ErrorResponse {
     error: String,
+}
+
+// Swagger用に実装
+impl<'a> ToSchema<'a> for AppError {
+    fn schema() -> (
+        &'a str,
+        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+    ) {
+        let schema = utoipa::openapi::schema::ObjectBuilder::new()
+            .title(Some("AppError"))
+            .description(Some("アプリケーションエラー"))
+            .property(
+                "error",
+                utoipa::openapi::schema::ObjectBuilder::new()
+                    .property(
+                        "message",
+                        utoipa::openapi::schema::ObjectBuilder::new()
+                            .schema_type(utoipa::openapi::schema::SchemaType::String)
+                            .build(),
+                    )
+                    .build(),
+            )
+            .build();
+        ("AppError", schema.into())
+    }
 }
 
 impl AppError {

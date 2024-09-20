@@ -6,8 +6,20 @@ use crate::usecases::projects::ProjectUseCase;
 use actix_web::{get, post, web, HttpResponse};
 use log::info;
 use std::sync::Arc;
-use utoipa::OpenApi;
+// use utoipa::OpenApi;
 
+#[utoipa::path(
+    get,
+    path = "/projects/{id}",
+    responses(
+        (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
+        (status = 404, description = "プロジェクトが見つかりません", body = ErrorResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    params(
+        ("id" = String, Path, description = "プロジェクトID")
+    )
+)]
 #[get("/{id}")]
 pub async fn get_project_by_id(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
@@ -21,6 +33,16 @@ pub async fn get_project_by_id(
     Ok(HttpResponse::Ok().json(ProjectResponse::try_from(project)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/projects",
+    request_body = ProjectCreate,
+    responses(
+        (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
+        (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    )
+)]
 #[post("")]
 pub async fn create_project(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
