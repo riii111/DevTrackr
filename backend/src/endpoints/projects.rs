@@ -6,7 +6,6 @@ use crate::usecases::projects::ProjectUseCase;
 use actix_web::{get, post, web, HttpResponse};
 use log::info;
 use std::sync::Arc;
-// use utoipa::OpenApi;
 
 #[utoipa::path(
     get,
