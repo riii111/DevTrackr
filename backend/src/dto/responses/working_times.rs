@@ -4,18 +4,24 @@ use crate::utils::serializer::{
 };
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
+use utoipa::ToSchema;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 pub struct WorkingTimeResponse {
     #[serde(serialize_with = "serialize_object_id")]
+    #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: ObjectId,
     #[serde(serialize_with = "serialize_bson_datetime")]
+    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub start_time: BsonDateTime,
     #[serde(serialize_with = "serialize_option_bson_datetime")]
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
     #[serde(serialize_with = "serialize_bson_datetime")]
+    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
     #[serde(serialize_with = "serialize_option_bson_datetime")]
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
 }
 
@@ -34,9 +40,10 @@ impl TryFrom<WorkingTimeInDB> for WorkingTimeResponse {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 pub struct WorkingTimeCreatedResponse {
     #[serde(serialize_with = "serialize_object_id")]
+    #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: ObjectId,
 }
 

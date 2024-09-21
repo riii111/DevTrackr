@@ -1,11 +1,10 @@
 use crate::config::di;
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
+use crate::dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse};
+use crate::endpoints::{projects, working_times};
 use crate::errors::app_error::{AppError, ErrorResponse};
-// use crate::dto::responses::working_times::WorkingTimeResponse;
-// use crate::endpoints::{posts, projects, working_times};
-use crate::endpoints::projects;
 use crate::models::projects::{ProjectCreate, ProjectStatus};
-// use crate::models::working_times::WorkingTimeCreate;
+use crate::models::working_times::WorkingTimeCreate;
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use config::db;
@@ -30,16 +29,11 @@ mod utils;
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        // routes::index,
-        // routes::health_check,
         projects::get_project_by_id,
         projects::create_project,
-        // working_times::get_working_time_by_id,
-        // working_times::create_working_time,
+        working_times::get_working_time_by_id,
+        working_times::create_working_time,
         // working_times::update_working_time,
-        // posts::index,
-        // posts::show,
-        // posts::create
     ),
     components(
         schemas(
@@ -49,16 +43,14 @@ mod utils;
             ProjectStatus,
             ErrorResponse,
             AppError,
-            // WorkingTimeResponse,
-            // WorkingTimeCreate,
-            // PostResponse,
-            // PostCreate
+            WorkingTimeResponse,
+            WorkingTimeCreate,
+            WorkingTimeCreatedResponse,
         )
     ),
     tags(
         (name = "projects", description = "プロジェクト関連のエンドポイント"),
         (name = "working_times", description = "作業時間関連のエンドポイント"),
-        // (name = "posts", description = "投稿関連のエンドポイント")
     )
 )]
 struct ApiDoc;

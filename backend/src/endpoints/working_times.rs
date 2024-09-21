@@ -10,6 +10,18 @@ use bson::oid::ObjectId;
 use log::info;
 use std::sync::Arc;
 
+#[utoipa::path(
+    get,
+    path = "/working_times/{id}",
+    responses(
+        (status = 200, description = "勤怠の取得に成功", body = WorkingTimeResponse),
+        (status = 404, description = "勤怠が見つかりません", body = ErrorResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    params(
+        ("id" = String, Path, description = "勤怠ID")
+    )
+)]
 #[get("/{id}")]
 pub async fn get_working_time_by_id(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
@@ -25,6 +37,16 @@ pub async fn get_working_time_by_id(
     Ok(HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/working_times",
+    request_body = WorkingTimeCreate,
+    responses(
+        (status = 201, description = "勤怠の作成に成功", body = WorkingTimeCreatedResponse),
+        (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    )
+)]
 #[post("")]
 pub async fn create_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
