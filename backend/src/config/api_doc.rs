@@ -26,6 +26,7 @@ use utoipa::OpenApi;
             WorkingTimeResponse,
             WorkingTimeCreate,
             WorkingTimeCreatedResponse,
+            WorkingTimeUpdate,
         )
     ),
     tags(
