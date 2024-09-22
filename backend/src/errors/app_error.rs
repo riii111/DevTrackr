@@ -15,8 +15,8 @@ pub enum AppError {
     #[error("不正なリクエストです: {0}")]
     BadRequest(String),
 
-    #[error("データベース接続エラー: {0}")]
-    DatabaseConnectionError(String),
+    #[error("データベース接続エラー")]
+    DatabaseConnectionError,
 
     #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
@@ -63,7 +63,7 @@ impl AppError {
             AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
-            AppError::DatabaseConnectionError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::DatabaseConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }

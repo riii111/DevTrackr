@@ -21,7 +21,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .find_by_id(&object_id)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
@@ -31,7 +31,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .insert_one(project)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
@@ -47,7 +47,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .find_by_id(id)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?
             .is_none()
@@ -61,7 +61,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .update_one(*id, project)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }

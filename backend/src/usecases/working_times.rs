@@ -25,7 +25,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .find_by_id(&object_id)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
@@ -47,7 +47,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .insert_one(&working_time)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
@@ -71,7 +71,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .find_by_id(id)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?
             .is_none()
@@ -87,7 +87,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .find_by_id(&working_time.project_id)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?
             .is_none()
@@ -101,7 +101,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .update_one(*id, working_time)
             .await
             .map_err(|e| match e {
-                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }

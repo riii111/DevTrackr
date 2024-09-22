@@ -2,7 +2,7 @@ use thiserror::Error;
 
 // 低レベルの階層用のエラー
 
-#[derive(Debug, Error)]
+#[derive(Error, Debug)]
 pub enum RepositoryError {
     #[error("データベース接続エラー")]
     ConnectionError,
