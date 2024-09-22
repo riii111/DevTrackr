@@ -31,6 +31,7 @@ pub struct ProjectUpdate {
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ProjectInDB {
+    // app側では"id"として参照できるように
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>, // DB側にID生成させるので任意
