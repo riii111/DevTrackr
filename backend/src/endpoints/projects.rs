@@ -7,11 +7,13 @@ use actix_web::{get, post, put, web, HttpResponse};
 use bson::oid::ObjectId;
 use log::info;
 use std::sync::Arc;
+
 #[utoipa::path(
     get,
     path = "/projects/{id}",
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
+        (status = 400, description = "無効なIDです", body = ErrorResponse),
         (status = 404, description = "プロジェクトが見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
@@ -25,11 +27,21 @@ pub async fn get_project_by_id(
     id: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
     info!("called GET get_project_by_id!!");
-    let project = usecase
-        .get_project_by_id(&id)
-        .await?
-        .ok_or(AppError::NotFound)?;
-    Ok(HttpResponse::Ok().json(ProjectResponse::try_from(project)))
+
+    let project = match usecase.get_project_by_id(&id).await {
+        Ok(Some(project)) => project,
+        Ok(None) => {
+            return Err(AppError::NotFound(
+                "プロジェクトが見つかりません".to_string(),
+            ))
+        }
+        Err(e) => return Err(e), // AppErrorをそのまま返す
+    };
+
+    let response = ProjectResponse::try_from(project)
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    Ok(HttpResponse::Ok().json(response))
 }
 
 #[utoipa::path(
@@ -48,7 +60,9 @@ pub async fn create_project(
     project: web::Json<ProjectCreate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_project!!");
+
     let project_id = usecase.create_project(project.into_inner()).await?;
+
     Ok(HttpResponse::Created().json(ProjectCreatedResponse::from(project_id)))
 }
 
@@ -74,7 +88,8 @@ pub async fn update_project_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called PUT update_project_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
+    let obj_id = ObjectId::parse_str(&path.into_inner())
+        .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     usecase
         .update_project(&obj_id, &project.into_inner())

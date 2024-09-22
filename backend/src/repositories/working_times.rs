@@ -2,7 +2,7 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
-use mongodb::{results::InsertOneResult, Collection, Database};
+use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait WorkingTimeRepository {
@@ -47,6 +47,7 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
     ) -> Result<ObjectId, RepositoryError> {
         let working_time_in_db = WorkingTimeInDB {
             id: None, // MongoDBにID生成を任せる
+            project_id: working_time.project_id,
             start_time: BsonDateTime::from(working_time.start_time),
             end_time: working_time.end_time.map(BsonDateTime::from),
             created_at: BsonDateTime::now(),
@@ -61,7 +62,9 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
         result
             .inserted_id
             .as_object_id()
-            .ok_or(RepositoryError::InvalidId)
+            .ok_or(RepositoryError::DatabaseError(MongoError::custom(
+                "挿入されたドキュメントのIDが無効です",
+            )))
     }
 
     async fn update_one(
@@ -69,8 +72,8 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
         id: ObjectId,
         working_time: &WorkingTimeUpdate,
     ) -> Result<bool, RepositoryError> {
-        let mut update_doc = bson::to_document(working_time)
-            .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
+        let mut update_doc = bson::to_document(&working_time)
+            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
         update_doc.insert("updated_at", BsonDateTime::now());
         let update = doc! {
             "$set": update_doc

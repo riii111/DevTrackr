@@ -9,20 +9,20 @@ pub enum AppError {
     #[error("バリデーションエラー: {0}")]
     ValidationError(String),
 
-    #[error("無効なIDです")]
-    InvalidId,
+    #[error("リソースが見つかりません: {0}")]
+    NotFound(String),
 
-    #[error("リソースが見つかりません")]
-    NotFound,
+    #[error("不正なリクエストです: {0}")]
+    BadRequest(String),
 
-    #[error("不正なリクエストです")]
-    BadRequest,
+    #[error("データベース接続エラー: {0}")]
+    DatabaseConnectionError(String),
 
-    // #[error("内部サーバーエラーです")]
-    // InternalServerError,
-    #[error("データベースエラー: {0}")]
+    #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
-    // 必要に応じて他のエラーを追加
+
+    #[error("内部サーバーエラー: {0}")]
+    InternalServerError(String),
 }
 
 // エラーレスポンスの構造体
@@ -61,12 +61,11 @@ impl AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            AppError::BadRequest => StatusCode::BAD_REQUEST,
-            AppError::InvalidId => StatusCode::BAD_REQUEST,
-            AppError::NotFound => StatusCode::NOT_FOUND,
-            // AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::DatabaseConnectionError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            // 他のエラーも適宜追加
+            AppError::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

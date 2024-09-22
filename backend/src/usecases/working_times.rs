@@ -18,14 +18,15 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
         &self,
         id: &str,
     ) -> Result<Option<WorkingTimeInDB>, AppError> {
-        let object_id = ObjectId::parse_str(id).map_err(|_| AppError::InvalidId)?;
+        let object_id = ObjectId::parse_str(id)
+            .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
         self.repository
             .find_by_id(&object_id)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(db_err) => AppError::DatabaseError(db_err),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 
@@ -46,8 +47,8 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .insert_one(&working_time)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(db_err) => AppError::DatabaseError(db_err),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 
@@ -70,20 +71,38 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .find_by_id(id)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(db_err) => AppError::DatabaseError(db_err),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?
             .is_none()
         {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound(
+                "更新対象の勤怠が見つかりません".to_string(),
+            ));
+        }
+
+        // 対象のプロジェクトが存在するか
+        if self
+            .repository
+            .find_by_id(&working_time.project_id)
+            .await
+            .map_err(|e| match e {
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+            })?
+            .is_none()
+        {
+            return Err(AppError::ValidationError(
+                "更新対象のプロジェクトが存在しません".to_string(),
+            ));
         }
 
         self.repository
             .update_one(*id, working_time)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(db_err) => AppError::DatabaseError(db_err),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 }

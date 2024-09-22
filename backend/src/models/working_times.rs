@@ -7,6 +7,8 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct WorkingTimeCreate {
+    #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
+    pub project_id: ObjectId,
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     #[schema(value_type = String, example = "2023-04-13T10:34:56Z")]
     pub start_time: BsonDateTime,
@@ -17,6 +19,8 @@ pub struct WorkingTimeCreate {
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct WorkingTimeUpdate {
+    #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
+    pub project_id: ObjectId,
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub start_time: BsonDateTime,
@@ -31,6 +35,8 @@ pub struct WorkingTimeInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>, // DB側にID生成させるので任意
+    #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
+    pub project_id: ObjectId,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub start_time: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]

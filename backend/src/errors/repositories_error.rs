@@ -4,10 +4,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RepositoryError {
-    #[error("データベースエラー: {0}")]
+    #[error("データベース接続エラー")]
+    ConnectionError,
+    #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
-
-    #[error("挿入されたドキュメントのIDが無効です")]
-    InvalidId,
-    // 他に必要なエラーを追加
 }

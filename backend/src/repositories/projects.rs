@@ -2,7 +2,7 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
-use mongodb::{results::InsertOneResult, Collection, Database};
+use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait ProjectRepository {
@@ -57,7 +57,9 @@ impl ProjectRepository for MongoProjectRepository {
         result
             .inserted_id
             .as_object_id()
-            .ok_or(RepositoryError::InvalidId)
+            .ok_or(RepositoryError::DatabaseError(MongoError::custom(
+                "挿入されたドキュメントのIDが無効です",
+            )))
     }
 
     async fn update_one(
@@ -66,7 +68,7 @@ impl ProjectRepository for MongoProjectRepository {
         project: &ProjectUpdate,
     ) -> Result<bool, RepositoryError> {
         let mut update_doc = bson::to_document(&project)
-            .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
+            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
         update_doc.insert("updated_at", BsonDateTime::now());
         let update = doc! {
             "$set": update_doc

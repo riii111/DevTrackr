@@ -15,13 +15,14 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
     }
 
     pub async fn get_project_by_id(&self, id: &str) -> Result<Option<ProjectInDB>, AppError> {
-        let object_id = ObjectId::parse_str(id).map_err(|_| AppError::InvalidId)?;
+        let object_id = ObjectId::parse_str(id)
+            .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
         self.repository
             .find_by_id(&object_id)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(e) => AppError::DatabaseError(e),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 
@@ -30,8 +31,8 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .insert_one(project)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(e) => AppError::DatabaseError(e),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 
@@ -46,20 +47,22 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .find_by_id(id)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(db_err) => AppError::DatabaseError(db_err),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?
             .is_none()
         {
-            return Err(AppError::NotFound);
+            return Err(AppError::NotFound(
+                "更新対象のプロジェクトが見つかりません".to_string(),
+            ));
         }
 
         self.repository
             .update_one(*id, project)
             .await
             .map_err(|e| match e {
-                RepositoryError::DatabaseError(e) => AppError::DatabaseError(e),
-                RepositoryError::InvalidId => AppError::InvalidId,
+                RepositoryError::ConnectionError(err) => AppError::DatabaseConnectionError(err),
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })
     }
 }

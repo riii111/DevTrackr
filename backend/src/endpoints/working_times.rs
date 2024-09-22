@@ -15,6 +15,7 @@ use std::sync::Arc;
     path = "/working_times/{id}",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = WorkingTimeResponse),
+        (status = 400, description = "無効なIDです", body = ErrorResponse),
         (status = 404, description = "勤怠が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
@@ -29,12 +30,16 @@ pub async fn get_working_time_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called GET get_working_time_by_id!!");
 
-    let working_time = usecase
-        .get_working_time_by_id(&id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let working_time = match usecase.get_working_time_by_id(&id).await {
+        Ok(Some(working_time)) => working_time,
+        Ok(None) => return Err(AppError::NotFound("勤怠が見つかりません".to_string())),
+        Err(e) => return Err(e),
+    };
 
-    Ok(HttpResponse::Ok().json(WorkingTimeResponse::try_from(working_time)))
+    let response = WorkingTimeResponse::try_from(working_time)
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    Ok(HttpResponse::Ok().json(response))
 }
 
 #[utoipa::path(
@@ -68,6 +73,7 @@ pub async fn create_working_time(
     responses(
         (status = 204, description = "勤怠の更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 404, description = "勤怠が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     params(
@@ -82,7 +88,8 @@ pub async fn update_working_time_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called update_working_time_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
+    let obj_id = ObjectId::parse_str(&path.into_inner())
+        .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     usecase
         .update_working_time(&obj_id, &working_time.into_inner())
