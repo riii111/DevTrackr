@@ -75,12 +75,12 @@ pub async fn create_working_time(
     )
 )]
 #[put("/{id}")]
-pub async fn update_working_time(
+pub async fn update_working_time_by_id(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
     path: web::Path<String>,
     working_time: web::Json<WorkingTimeUpdate>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called update_working_time!!");
+    info!("called update_working_time_by_id!!");
 
     let obj_id = ObjectId::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
 

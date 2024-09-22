@@ -13,7 +13,7 @@ use utoipa::OpenApi;
         projects::create_project,
         working_times::get_working_time_by_id,
         working_times::create_working_time,
-        working_times::update_working_time,
+        working_times::update_working_time_by_id,
     ),
     components(
         schemas(
