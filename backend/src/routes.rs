@@ -1,6 +1,6 @@
-use actix_web::{get, web, HttpResponse, Responder, Scope};
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Scope};
 
-use crate::endpoints::{posts, projects, working_times};
+use crate::endpoints::{projects, working_times};
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     // ルーティング全体
@@ -8,15 +8,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(health_check)
         .service(projects_scope())
         .service(working_times_scope())
-        .service(
-            web::scope("/api").service(
-                web::scope("/posts")
-                    .route("", web::get().to(posts::index))
-                    .route("/{id}", web::get().to(posts::show))
-                    .route("", web::post().to(posts::create)),
-            ),
-        )
-        .default_service(web::to(crate::endpoints::posts::not_found));
+        .default_service(web::route().to(not_found));
 }
 
 fn projects_scope() -> Scope {
@@ -41,4 +33,8 @@ pub async fn index() -> impl Responder {
 async fn health_check() -> impl Responder {
     log::info!("ヘルスチェックエンドポイントにアクセスがありました");
     HttpResponse::Ok().body("Healthy")
+}
+
+async fn not_found(_req: HttpRequest) -> impl Responder {
+    HttpResponse::NotFound().json("リソースが見つかりません")
 }

@@ -21,7 +21,6 @@ mod errors;
 mod middleware;
 mod models;
 mod repositories;
-mod request_params;
 mod routes;
 mod usecases;
 mod utils;

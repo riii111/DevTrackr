@@ -61,6 +61,19 @@ pub async fn create_working_time(
     Ok(HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id)))
 }
 
+// #[utoipa::path(
+//     put,
+//     path = "/working_times/{id}",
+//     request_body = WorkingTimeUpdate,
+//     responses(
+//         (status = 204, description = "勤怠の更新に成功"),
+//         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+//         (status = 500, description = "サーバーエラー", body = ErrorResponse)
+//     ),
+//     params(
+//         ("id" = String, Path, description = "勤怠ID")
+//     )
+// )]
 #[put("/{id}")]
 pub async fn update_working_time(
     usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
