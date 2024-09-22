@@ -21,6 +21,15 @@ pub struct ProjectCreate {
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct ProjectUpdate {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub skill_labels: Option<Vec<String>>,
+    pub company_name: Option<String>,
+    pub status: Option<ProjectStatus>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ProjectInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]

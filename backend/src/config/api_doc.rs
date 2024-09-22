@@ -2,7 +2,7 @@ use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse};
 use crate::endpoints::{projects, working_times};
 use crate::errors::app_error::{AppError, ErrorResponse};
-use crate::models::projects::{ProjectCreate, ProjectStatus};
+use crate::models::projects::{ProjectCreate, ProjectStatus, ProjectUpdate};
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeUpdate};
 use utoipa::OpenApi;
 
@@ -11,6 +11,7 @@ use utoipa::OpenApi;
     paths(
         projects::get_project_by_id,
         projects::create_project,
+        projects::update_project_by_id,
         working_times::get_working_time_by_id,
         working_times::create_working_time,
         working_times::update_working_time_by_id,
@@ -20,6 +21,7 @@ use utoipa::OpenApi;
             ProjectResponse,
             ProjectCreate,
             ProjectCreatedResponse,
+            ProjectUpdate,
             ProjectStatus,
             ErrorResponse,
             AppError,

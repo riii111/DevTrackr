@@ -1,12 +1,12 @@
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::errors::app_error::AppError;
-use crate::models::projects::ProjectCreate;
+use crate::models::projects::{ProjectCreate, ProjectUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{get, post, put, web, HttpResponse};
+use bson::oid::ObjectId;
 use log::info;
 use std::sync::Arc;
-
 #[utoipa::path(
     get,
     path = "/projects/{id}",
@@ -50,4 +50,35 @@ pub async fn create_project(
     info!("called POST create_project!!");
     let project_id = usecase.create_project(project.into_inner()).await?;
     Ok(HttpResponse::Created().json(ProjectCreatedResponse::from(project_id)))
+}
+
+#[utoipa::path(
+    put,
+    path = "/projects/{id}",
+    request_body = ProjectUpdate,
+    responses(
+        (status = 204, description = "プロジェクトの更新に成功"),
+        (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 404, description = "プロジェクトが見つかりません", body = ErrorResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    params(
+        ("id" = String, Path, description = "プロジェクトID")
+    )
+)]
+#[put("/{id}")]
+pub async fn update_project_by_id(
+    usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
+    path: web::Path<String>,
+    project: web::Json<ProjectUpdate>,
+) -> Result<HttpResponse, AppError> {
+    info!("called PUT update_project_by_id!!");
+
+    let obj_id = ObjectId::parse_str(&path.into_inner()).map_err(|_| AppError::BadRequest)?;
+
+    usecase
+        .update_project(&obj_id, &project.into_inner())
+        .await?;
+
+    Ok(HttpResponse::NoContent().finish())
 }

@@ -21,6 +21,7 @@ fn projects_scope() -> Scope {
     web::scope("/projects")
         .service(projects::get_project_by_id)
         .service(projects::create_project)
+        .service(projects::update_project_by_id)
 }
 
 fn working_times_scope() -> Scope {

@@ -1,8 +1,7 @@
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::projects::{ProjectCreate, ProjectInDB};
+use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
-use bson::oid::ObjectId;
-use bson::DateTime as BsonDateTime;
+use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{results::InsertOneResult, Collection, Database};
 
 #[async_trait]
@@ -11,6 +10,12 @@ pub trait ProjectRepository {
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError>;
 
     async fn insert_one(&self, project: ProjectCreate) -> Result<ObjectId, RepositoryError>;
+
+    async fn update_one(
+        &self,
+        id: ObjectId,
+        project: &ProjectUpdate,
+    ) -> Result<bool, RepositoryError>;
 }
 
 pub struct MongoProjectRepository {
@@ -29,7 +34,7 @@ impl MongoProjectRepository {
 impl ProjectRepository for MongoProjectRepository {
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError> {
         self.collection
-            .find_one(bson::doc! { "_id": id })
+            .find_one(doc! { "_id": id })
             .await
             .map_err(RepositoryError::DatabaseError)
     }
@@ -53,5 +58,24 @@ impl ProjectRepository for MongoProjectRepository {
             .inserted_id
             .as_object_id()
             .ok_or(RepositoryError::InvalidId)
+    }
+
+    async fn update_one(
+        &self,
+        id: ObjectId,
+        project: &ProjectUpdate,
+    ) -> Result<bool, RepositoryError> {
+        let mut update_doc = bson::to_document(&project)
+            .map_err(|e| RepositoryError::DatabaseError(mongodb::error::Error::from(e)))?;
+        update_doc.insert("updated_at", BsonDateTime::now());
+        let update = doc! {
+            "$set": update_doc
+        };
+        let result = self
+            .collection
+            .update_one(doc! { "_id": id }, update)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+        Ok(result.modified_count > 0)
     }
 }
