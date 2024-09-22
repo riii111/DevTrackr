@@ -1,4 +1,7 @@
+use crate::config::api_doc::ApiDoc;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Scope};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::endpoints::{projects, working_times};
 
@@ -8,6 +11,9 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(health_check)
         .service(projects_scope())
         .service(working_times_scope())
+        .service(
+            SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+        )
         .default_service(web::route().to(not_found));
 }
 
