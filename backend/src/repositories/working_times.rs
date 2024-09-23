@@ -3,6 +3,7 @@ use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTi
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
+use std::sync::Arc;
 
 #[async_trait]
 pub trait WorkingTimeRepository {
@@ -25,7 +26,7 @@ pub struct MongoWorkingTimeRepository {
 }
 
 impl MongoWorkingTimeRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(db: Arc<Database>) -> Self {
         Self {
             collection: db.collection("working_time"),
         }
