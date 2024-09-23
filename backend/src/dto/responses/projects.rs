@@ -17,7 +17,7 @@ pub struct ProjectResponse {
     pub status: ProjectStatus,
     pub skill_labels: Vec<String>,
     #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
-    pub working_time_id: Vec<ObjectId>,
+    pub working_time_ids: Vec<ObjectId>,
     pub total_working_time: Option<i64>,
     #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
@@ -39,7 +39,7 @@ impl TryFrom<ProjectInDB> for ProjectResponse {
             company_name: db_project.company_name,
             status: db_project.status,
             skill_labels: db_project.skill_labels.unwrap_or(vec![]),
-            working_time_id: db_project.working_time_id.unwrap_or(vec![]),
+            working_time_ids: db_project.working_time_ids.unwrap_or(vec![]),
             total_working_time: db_project.total_working_time,
             created_at: db_project.created_at,
             updated_at: db_project.updated_at,

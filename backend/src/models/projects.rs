@@ -42,7 +42,7 @@ pub struct ProjectInDB {
     #[serde(default = "default_project_status")]
     pub status: ProjectStatus,
     #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
-    pub working_time_id: Option<Vec<ObjectId>>, // TODO: 集計方法について要考慮
+    pub working_time_ids: Option<Vec<ObjectId>>, // TODO: 集計方法について要考慮
     pub total_working_time: Option<i64>,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
