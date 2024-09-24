@@ -24,8 +24,8 @@
 `make up`
 
 ## アクセス先
-1. http://api.localhost/
-   バックエンド
+1. http://api.localhost/api-docs/#/
+   バックエンド（APIドキュメント）
 2. http://db-admin.localhost/
    MongoDB Express（MongoDBのGUI）
 3. http://traefik.localhost/
