@@ -1,3 +1,4 @@
+use crate::adapters::async_queue::AsyncQueueAdapter;
 use crate::errors::app_error::AppError;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
@@ -7,11 +8,15 @@ use std::sync::Arc;
 
 pub struct WorkingTimeUseCase<R: WorkingTimeRepository> {
     repository: Arc<R>,
+    queue_adapter: AsyncQueueAdapter,
 }
 
 impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
-    pub fn new(repository: Arc<R>) -> Self {
-        Self { repository }
+    pub fn new(repository: Arc<R>, queue_adapter: AsyncQueueAdapter) -> Self {
+        Self {
+            repository,
+            queue_adapter,
+        }
     }
 
     pub async fn get_working_time_by_id(
@@ -43,13 +48,26 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             }
         }
 
-        self.repository
+        let result = self
+            .repository
             .insert_one(&working_time)
             .await
             .map_err(|e| match e {
                 RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })
+            })?;
+
+        // キューにイベントを追加
+        if let Err(e) = self
+            .queue_adapter
+            .enqueue(working_time.project_id, calculate_duration(working_time))
+            .await
+        {
+            log::error!("Failed to enqueue update event: {}", e);
+            // ここでエラーを返すかどうかはビジネスロジック次第
+        }
+
+        Ok(result)
     }
 
     pub async fn update_working_time(
@@ -97,12 +115,46 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             ));
         }
 
-        self.repository
+        let result = self
+            .repository
             .update_one(*id, working_time)
             .await
             .map_err(|e| match e {
                 RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })
+            })?;
+
+        // キューにイベントを追加（更新の場合）
+        if let Err(e) = self
+            .queue_adapter
+            .enqueue(
+                working_time.project_id,
+                calculate_duration_diff(working_time),
+            )
+            .await
+        {
+            log::error!("Failed to enqueue update event: {}", e);
+            // ここでエラーを返すかどうかはビジネスロジック次第
+        }
+
+        Ok(result)
     }
+}
+
+// fn calculate_duration(working_time: &WorkingTimeCreate) -> i64 {
+fn calculate_duration(working_time: &WorkingTimeCreate) {
+    log::info!("called calculate_duration");
+    // 開始時間と終了時間から稼働時間を計算するロジック
+    // working_time.end_time.map_or(0, |end_time| {
+    //     (end_time - working_time.start_time).num_seconds()
+    // })
+}
+
+// fn calculate_duration_diff(working_time: &WorkingTimeUpdate) -> i64 {
+fn calculate_duration_diff(working_time: &WorkingTimeUpdate) {
+    log::info!("called calculate_duration_diff");
+    // 更新された稼働時間の差分を計算するロジック
+    // working_time.end_time.map_or(0, |end_time| {
+    //     (end_time - working_time.start_time).num_seconds()
+    // })
 }
