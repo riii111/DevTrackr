@@ -4,7 +4,6 @@ WORKDIR /usr/src/app
 
 RUN cargo install cargo-watch
 
- # ヘルスチェック用
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl pkg-config libssl-dev
 
 CMD ["cargo", "watch", "-x", "run"]
