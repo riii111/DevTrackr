@@ -141,20 +141,18 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
     }
 }
 
-// fn calculate_duration(working_time: &WorkingTimeCreate) -> i64 {
-fn calculate_duration(working_time: &WorkingTimeCreate) {
+fn calculate_duration(working_time: &WorkingTimeCreate) -> i64 {
     log::info!("called calculate_duration");
     // 開始時間と終了時間から稼働時間を計算するロジック
-    // working_time.end_time.map_or(0, |end_time| {
-    //     (end_time - working_time.start_time).num_seconds()
-    // })
+    working_time.end_time.map_or(0, |end_time| {
+        (end_time.to_chrono() - working_time.start_time.to_chrono()).num_seconds()
+    })
 }
 
-// fn calculate_duration_diff(working_time: &WorkingTimeUpdate) -> i64 {
-fn calculate_duration_diff(working_time: &WorkingTimeUpdate) {
+fn calculate_duration_diff(working_time: &WorkingTimeUpdate) -> i64 {
     log::info!("called calculate_duration_diff");
     // 更新された稼働時間の差分を計算するロジック
-    // working_time.end_time.map_or(0, |end_time| {
-    //     (end_time - working_time.start_time).num_seconds()
-    // })
+    working_time.end_time.map_or(0, |end_time| {
+        (end_time.to_chrono() - working_time.start_time.to_chrono()).num_seconds()
+    })
 }
