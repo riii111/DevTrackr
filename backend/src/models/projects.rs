@@ -10,6 +10,16 @@ pub enum ProjectStatus {
     Cancelled,
 }
 
+// #[derive(Serialize, Deserialize, Debug, ToSchema)]
+// pub struct MonthlyTotalWorkingTime {
+//     pub id: ObjectId,
+//     pub title: String,
+//     pub description: Option<String>,
+//     pub skill_labels: Option<Vec<String>>,
+//     pub company_name: String,
+//     pub status: ProjectStatus,
+// }
+
 #[derive(Deserialize, Debug, ToSchema)]
 pub struct ProjectCreate {
     pub title: String,
