@@ -1,6 +1,7 @@
 use crate::config::di;
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
+use adapters::async_queue;
 use config::db;
 use env_logger::Env;
 use std::env;
@@ -24,10 +25,15 @@ async fn main() -> Result<()> {
     let key = Key::generate();
     let message_framework = middleware::session::build_flash_messages_framework();
 
+    // DBの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
+    // 非同期キューの初期化
+    let (queue_adapter, receiver) = di::init_async_queue();
+    tokio::spawn(async move { async_queue::run_async_queue_worker(receiver).await });
+
     // 各ユースケースの初期化
-    let working_time_usecase = di::init_working_time_usecase(db.clone());
+    let working_time_usecase = di::init_working_time_usecase(db.clone(), queue_adapter);
     let project_usecase = di::init_project_usecase(db.clone());
 
     HttpServer::new(move || {
