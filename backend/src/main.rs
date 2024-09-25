@@ -1,11 +1,12 @@
 use crate::config::di;
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use adapters::async_queue;
+use adapters::async_queue_worker;
 use config::db;
 use env_logger::Env;
 use std::env;
 use std::io::Result;
+use std::sync::Arc;
 
 mod adapters;
 mod config;
@@ -28,16 +29,28 @@ async fn main() -> Result<()> {
     // DBの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
-    // 非同期キューの初期化
-    let (queue_adapter, receiver) = di::init_async_queue();
-    tokio::spawn(async move { async_queue::run_async_queue_worker(receiver).await });
-
-    // 各ユースケースの初期化
-    let working_time_usecase = di::init_working_time_usecase(db.clone(), queue_adapter);
+    // ユースケース初期化
     let project_usecase = di::init_project_usecase(db.clone());
+    let working_time_usecase = di::init_working_time_usecase(db.clone());
 
+    // // キュー初期化とタスク生成
+    // let (queue_adapter, receiver) = di::init_async_queue();
+    // let working_time_usecase = di::init_working_time_usecase(
+    // db.clone(),
+    // Arc::new(queue_adapter), project_usecase.clone()
+    // );
+
+    // `working_time_usecase` をクローンしてクロージャに渡す
+    // let working_time_usecase_clone = working_time_usecase.clone();
+
+    // tokio::spawn(async move {
+    //     async_queue_worker::run_async_queue_worker(receiver, working_time_usecase_clone).await
+    // });
+
+    // let working_time_usecase_for_server = working_time_usecase.clone();
     HttpServer::new(move || {
         App::new()
+            // .app_data(web::Data::new(working_time_usecase_for_server.clone()))
             .app_data(web::Data::new(working_time_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .configure(routes::app)
