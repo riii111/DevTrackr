@@ -62,7 +62,7 @@ pub async fn create_working_time(
     let working_time_id = usecase
         .create_working_time(&working_time.into_inner())
         .await?;
-
+    info!("end POST create_working_time!!");
     Ok(HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id)))
 }
 
