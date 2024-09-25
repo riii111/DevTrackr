@@ -6,3 +6,5 @@
 
 # log
 /traefik-logs/access.log
+
+.DS_Store
