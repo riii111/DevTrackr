@@ -1,4 +1,4 @@
-use crate::models::projects::{ProjectInDB, ProjectStatus};
+use crate::models::projects::{MonthlyWorkingTime, ProjectInDB, ProjectStatus};
 use crate::utils::serializer::{
     serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
 };
@@ -17,8 +17,8 @@ pub struct ProjectResponse {
     pub status: ProjectStatus,
     pub skill_labels: Vec<String>,
     #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
-    pub working_time_ids: Vec<ObjectId>,
     pub total_working_time: Option<i64>,
+    pub monthly_working_times: Vec<MonthlyWorkingTime>,
     #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
@@ -39,8 +39,8 @@ impl TryFrom<ProjectInDB> for ProjectResponse {
             company_name: db_project.company_name,
             status: db_project.status,
             skill_labels: db_project.skill_labels.unwrap_or(vec![]),
-            working_time_ids: db_project.working_time_ids.unwrap_or(vec![]),
-            total_working_time: db_project.total_working_time,
+            total_working_time: Some(db_project.total_working_time),
+            monthly_working_times: db_project.monthly_working_times,
             created_at: db_project.created_at,
             updated_at: db_project.updated_at,
         })
