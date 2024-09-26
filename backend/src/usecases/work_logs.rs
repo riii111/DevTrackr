@@ -78,11 +78,10 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         // 最新の総稼働時間を計算
         let diff_working_time =
             calculate_working_duration(&work_logs.start_time, &work_logs.end_time);
-        let updated_total_working_time =
-            associated_project.total_working_time.unwrap_or(0) + diff_working_time;
+        let updated_total_working_time = associated_project.total_working_time + diff_working_time;
         // 計算した総稼働時間をプロジェクトに反映して更新
         let project_update = ProjectUpdate {
-            total_working_time: Some(updated_total_working_time),
+            total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
         };
         self.project_usecase
@@ -128,11 +127,10 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         // 最新の総稼働時間を計算
         let diff_working_time =
             calculate_working_duration(&work_logs.start_time, &work_logs.end_time);
-        let updated_total_working_time =
-            associated_project.total_working_time.unwrap_or(0) + diff_working_time;
+        let updated_total_working_time = associated_project.total_working_time + diff_working_time;
         // 計算した総稼働時間をプロジェクトに反映して更新
         let project_update = ProjectUpdate {
-            total_working_time: Some(updated_total_working_time),
+            total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
         };
         self.project_usecase

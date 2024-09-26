@@ -13,11 +13,11 @@ pub struct ProjectResponse {
     pub id: ObjectId,
     pub title: String,
     pub description: String,
-    pub company_name: String,
     pub status: ProjectStatus,
     pub skill_labels: Vec<String>,
     #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
     pub total_working_time: Option<i64>,
+    pub hourly_pay: Option<i32>,
     #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
@@ -35,10 +35,10 @@ impl TryFrom<ProjectInDB> for ProjectResponse {
             id: db_project.id.ok_or("IDが存在しません")?,
             title: db_project.title,
             description: db_project.description.unwrap_or("".to_string()),
-            company_name: db_project.company_name,
             status: db_project.status,
             skill_labels: db_project.skill_labels.unwrap_or(vec![]),
-            total_working_time: db_project.total_working_time,
+            total_working_time: Some(db_project.total_working_time),
+            hourly_pay: db_project.hourly_pay,
             created_at: db_project.created_at,
             updated_at: db_project.updated_at,
         })

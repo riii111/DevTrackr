@@ -44,9 +44,10 @@ impl ProjectRepository for MongoProjectRepository {
             id: None, // MongoDBにID生成を任せる
             title: project.title,
             description: project.description,
-            company_name: project.company_name,
+            // company_id: project.company_id,  // TODO: 後で追加する
+            hourly_pay: project.hourly_pay,
             status: project.status,
-            total_working_time: Some(0),
+            total_working_time: 0,
             skill_labels: project.skill_labels,
             created_at: BsonDateTime::now(),
             updated_at: None,
