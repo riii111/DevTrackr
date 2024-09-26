@@ -1,6 +1,6 @@
 use crate::errors::app_error::AppError;
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::projects::{ProjectInDB, ProjectUpdate};
+use crate::models::projects::ProjectUpdate;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::repositories::working_times::WorkingTimeRepository;
