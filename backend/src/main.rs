@@ -27,6 +27,7 @@ async fn main() -> Result<()> {
 
     // 各ユースケースの初期化
     let project_usecase = di::init_project_usecase(&db);
+    let company_usecase = di::init_company_usecase(&db);
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
@@ -35,6 +36,7 @@ async fn main() -> Result<()> {
         App::new()
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
+            .app_data(web::Data::new(company_usecase.clone()))
             .configure(routes::app)
             .wrap(Logger::default())
             .wrap(message_framework.clone())
