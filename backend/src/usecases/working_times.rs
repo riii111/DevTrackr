@@ -63,8 +63,8 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
 
         let project_id_str = working_time.project_id.to_string();
 
-        // 対象のproject_idを取得し、プロジェクトの総稼働時間を更新する
-        let (associated_project, inserted_id) = try_join!(
+        // プロジェクトの取得と勤怠時間の作成を並行して実行
+        let (project, inserted_id) = try_join!(
             self.project_usecase.get_project_by_id(&project_id_str),
             async {
                 self.repository
@@ -77,7 +77,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             }
         )?;
 
-        let project = associated_project.ok_or_else(|| {
+        let associated_project = project.ok_or_else(|| {
             AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())
         })?;
 
@@ -85,12 +85,11 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
         let diff_working_time =
             calculate_working_duration(&working_time.start_time, &working_time.end_time);
         let updated_total_working_time =
-            project.total_working_time.unwrap_or(0) + diff_working_time;
+            associated_project.total_working_time.unwrap_or(0) + diff_working_time;
         // 計算した総稼働時間をプロジェクトに反映して更新
         let project_update = ProjectUpdate {
             total_working_time: Some(updated_total_working_time),
-            // 他のフィールドは更新しない
-            ..Default::default()
+            ..ProjectUpdate::from(associated_project)
         };
         self.project_usecase
             .update_project(&working_time.project_id, &project_update)

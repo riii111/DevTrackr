@@ -20,7 +20,7 @@ pub struct ProjectCreate {
     pub status: ProjectStatus,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, Default)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ProjectUpdate {
     pub title: Option<String>,
     pub description: Option<String>,
