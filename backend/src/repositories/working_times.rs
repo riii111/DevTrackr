@@ -2,11 +2,18 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
+use futures::stream::TryStreamExt;
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
+use std::sync::Arc;
 
 #[async_trait]
 pub trait WorkingTimeRepository {
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkingTimeInDB>, RepositoryError>;
+
+    async fn find_all_by_project_id(
+        &self,
+        project_id: &ObjectId,
+    ) -> Result<Vec<WorkingTimeInDB>, RepositoryError>;
 
     async fn insert_one(
         &self,
@@ -25,7 +32,7 @@ pub struct MongoWorkingTimeRepository {
 }
 
 impl MongoWorkingTimeRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(db: Arc<Database>) -> Self {
         Self {
             collection: db.collection("working_time"),
         }
@@ -39,6 +46,24 @@ impl WorkingTimeRepository for MongoWorkingTimeRepository {
             .find_one(doc! { "_id": id })
             .await
             .map_err(RepositoryError::DatabaseError)
+    }
+
+    async fn find_all_by_project_id(
+        &self,
+        project_id: &ObjectId,
+    ) -> Result<Vec<WorkingTimeInDB>, RepositoryError> {
+        let cursor = self
+            .collection
+            .find(doc! { "project_id": project_id })
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        let results: Vec<WorkingTimeInDB> = cursor
+            .try_collect()
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        Ok(results)
     }
 
     async fn insert_one(

@@ -3,6 +3,7 @@ use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
+use std::sync::Arc;
 
 #[async_trait]
 pub trait ProjectRepository {
@@ -23,7 +24,7 @@ pub struct MongoProjectRepository {
 }
 
 impl MongoProjectRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(db: Arc<Database>) -> Self {
         Self {
             collection: db.collection("projects"),
         }
@@ -46,8 +47,8 @@ impl ProjectRepository for MongoProjectRepository {
             description: project.description,
             company_name: project.company_name,
             status: project.status,
-            working_time_id: None,
-            total_working_time: None,
+            total_working_time: 0,
+            monthly_working_times: vec![],
             skill_labels: project.skill_labels,
             created_at: BsonDateTime::now(),
             updated_at: None,

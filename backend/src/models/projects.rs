@@ -20,13 +20,15 @@ pub struct ProjectCreate {
     pub status: ProjectStatus,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, Default)]
 pub struct ProjectUpdate {
     pub title: Option<String>,
     pub description: Option<String>,
     pub skill_labels: Option<Vec<String>>,
     pub company_name: Option<String>,
     pub status: Option<ProjectStatus>,
+    pub total_working_time: Option<i64>,
+    pub monthly_working_times: Option<Vec<MonthlyWorkingTime>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -41,9 +43,8 @@ pub struct ProjectInDB {
     pub company_name: String,
     #[serde(default = "default_project_status")]
     pub status: ProjectStatus,
-    #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
-    pub working_time_id: Option<Vec<ObjectId>>, // TODO: 集計方法について要考慮
-    pub total_working_time: Option<i64>,
+    pub total_working_time: i64,
+    pub monthly_working_times: Vec<MonthlyWorkingTime>,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
@@ -52,4 +53,11 @@ pub struct ProjectInDB {
 
 fn default_project_status() -> ProjectStatus {
     ProjectStatus::Planning
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct MonthlyWorkingTime {
+    pub year: i32,
+    pub month: u32,
+    pub total_seconds: i64,
 }
