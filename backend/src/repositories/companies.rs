@@ -41,20 +41,9 @@ impl CompanyRepository for MongoCompanyRepository {
     async fn insert_one(&self, company: CompanyCreate) -> Result<ObjectId, RepositoryError> {
         let company_in_db = CompanyInDB {
             id: None, // MongoDBにID生成を任せる
-            company_name: company.company_name,
-            establishment_year: company.establishment_year,
-            headquarters_location: company.headquarters_location,
-            website_url: company.website_url,
-            employee_count: company.employee_count,
-            annual_revenue: company.annual_revenue,
+            common: company.common,
             affiliation_start_date: company.affiliation_start_date,
             affiliation_end_date: company.affiliation_end_date,
-            contract_type: company.contract_type,
-            major_clients: company.major_clients,
-            major_services: company.major_services,
-            average_hourly_rate: company.average_hourly_rate,
-            bonus: company.bonus,
-            status: company.status,
             created_at: BsonDateTime::now(),
             updated_at: None,
         };
