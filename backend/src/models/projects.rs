@@ -20,13 +20,14 @@ pub struct ProjectCreate {
     pub status: ProjectStatus,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, Default)]
 pub struct ProjectUpdate {
     pub title: Option<String>,
     pub description: Option<String>,
     pub skill_labels: Option<Vec<String>>,
     pub company_name: Option<String>,
     pub status: Option<ProjectStatus>,
+    pub total_working_time: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]

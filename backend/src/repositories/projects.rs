@@ -46,7 +46,7 @@ impl ProjectRepository for MongoProjectRepository {
             description: project.description,
             company_name: project.company_name,
             status: project.status,
-            total_working_time: None,
+            total_working_time: Some(0),
             skill_labels: project.skill_labels,
             created_at: BsonDateTime::now(),
             updated_at: None,
