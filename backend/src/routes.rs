@@ -3,7 +3,7 @@ use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Scope};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::endpoints::{projects, work_logs};
+use crate::endpoints::{companies, projects, work_logs};
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     // ルーティング全体
@@ -11,6 +11,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         .service(health_check)
         .service(projects_scope())
         .service(work_logs_scope())
+        .service(companies_scope())
         .service(
             SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
         )
@@ -29,6 +30,13 @@ fn work_logs_scope() -> Scope {
         .service(work_logs::get_work_logs_by_id)
         .service(work_logs::create_work_logs)
         .service(work_logs::update_work_logs_by_id)
+}
+
+fn companies_scope() -> Scope {
+    web::scope("/companies")
+        .service(companies::get_company_by_id)
+        .service(companies::create_company)
+        .service(companies::update_company_by_id)
 }
 
 #[get("/")]
