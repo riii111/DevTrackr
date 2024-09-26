@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 // memo: バックエンド側では時刻をUTCで統一し、フロント側で変換する事を想定.
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct WorkingTimeCreate {
+pub struct WorkLogsCreate {
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
     pub project_id: ObjectId,
     #[serde(deserialize_with = "deserialize_bson_date_time")]
@@ -18,7 +18,7 @@ pub struct WorkingTimeCreate {
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct WorkingTimeUpdate {
+pub struct WorkLogsUpdate {
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
     pub project_id: ObjectId,
     #[serde(deserialize_with = "deserialize_bson_date_time")]
@@ -30,7 +30,7 @@ pub struct WorkingTimeUpdate {
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct WorkingTimeInDB {
+pub struct WorkLogsInDB {
     // app側では"id"として参照できるように
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "507f1f77bcf86cd799439011")]

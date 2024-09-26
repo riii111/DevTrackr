@@ -1,2 +1,2 @@
 pub mod projects;
-pub mod working_times;
+pub mod work_logs;

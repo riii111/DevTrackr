@@ -1,20 +1,17 @@
 use crate::repositories::projects::MongoProjectRepository;
-use crate::repositories::working_times::MongoWorkingTimeRepository;
+use crate::repositories::work_logs::MongoWorkLogsRepository;
 use crate::usecases::projects::ProjectUseCase;
-use crate::usecases::working_times::WorkingTimeUseCase;
+use crate::usecases::work_logs::WorkLogsUseCase;
 use mongodb::Database;
 use std::sync::Arc;
 
-// working_time
-pub fn init_working_time_usecase(
+// work_logs
+pub fn init_work_logs_usecase(
     db: &Database,
     project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
-) -> Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>> {
-    let working_time_repository = Arc::new(MongoWorkingTimeRepository::new(db));
-    Arc::new(WorkingTimeUseCase::new(
-        working_time_repository,
-        project_usecase,
-    ))
+) -> Arc<WorkLogsUseCase<MongoWorkLogsRepository>> {
+    let work_logs_repository = Arc::new(MongoWorkLogsRepository::new(db));
+    Arc::new(WorkLogsUseCase::new(work_logs_repository, project_usecase))
 }
 
 // project

@@ -1,4 +1,4 @@
-use crate::models::working_times::WorkingTimeInDB;
+use crate::models::work_logs::WorkLogsInDB;
 use crate::utils::serializer::{
     serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
 };
@@ -7,7 +7,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 #[derive(Serialize, Debug, ToSchema)]
-pub struct WorkingTimeResponse {
+pub struct WorkLogsResponse {
     #[serde(serialize_with = "serialize_object_id")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: ObjectId,
@@ -29,29 +29,29 @@ pub struct WorkingTimeResponse {
 }
 
 //  パニック防止
-impl TryFrom<WorkingTimeInDB> for WorkingTimeResponse {
+impl TryFrom<WorkLogsInDB> for WorkLogsResponse {
     type Error = &'static str;
 
-    fn try_from(db_working_time: WorkingTimeInDB) -> Result<Self, Self::Error> {
+    fn try_from(db_work_logs: WorkLogsInDB) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: db_working_time.id.ok_or("IDが存在しません")?,
-            project_id: db_working_time.project_id,
-            start_time: db_working_time.start_time,
-            end_time: db_working_time.end_time,
-            created_at: db_working_time.created_at,
-            updated_at: db_working_time.updated_at,
+            id: db_work_logs.id.ok_or("IDが存在しません")?,
+            project_id: db_work_logs.project_id,
+            start_time: db_work_logs.start_time,
+            end_time: db_work_logs.end_time,
+            created_at: db_work_logs.created_at,
+            updated_at: db_work_logs.updated_at,
         })
     }
 }
 
 #[derive(Serialize, Debug, ToSchema)]
-pub struct WorkingTimeCreatedResponse {
+pub struct WorkLogsCreatedResponse {
     #[serde(serialize_with = "serialize_object_id")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: ObjectId,
 }
 
-impl From<ObjectId> for WorkingTimeCreatedResponse {
+impl From<ObjectId> for WorkLogsCreatedResponse {
     fn from(id: ObjectId) -> Self {
         Self { id }
     }

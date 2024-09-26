@@ -1,9 +1,9 @@
 use crate::{
-    dto::responses::working_times::{WorkingTimeCreatedResponse, WorkingTimeResponse},
+    dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse},
     errors::app_error::AppError,
-    models::working_times::{WorkingTimeCreate, WorkingTimeUpdate},
-    repositories::working_times::MongoWorkingTimeRepository,
-    usecases::working_times::WorkingTimeUseCase,
+    models::work_logs::{WorkLogsCreate, WorkLogsUpdate},
+    repositories::work_logs::MongoWorkLogsRepository,
+    usecases::work_logs::WorkLogsUseCase,
 };
 use actix_web::{get, post, put, web, HttpResponse};
 use bson::oid::ObjectId;
@@ -12,9 +12,9 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
-    path = "/working_times/{id}",
+    path = "/work_logs/{id}",
     responses(
-        (status = 200, description = "勤怠の取得に成功", body = WorkingTimeResponse),
+        (status = 200, description = "勤怠の取得に成功", body = WorkLogsResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
         (status = 404, description = "勤怠が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
@@ -24,19 +24,19 @@ use std::sync::Arc;
     )
 )]
 #[get("/{id}")]
-pub async fn get_working_time_by_id(
-    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
+pub async fn get_work_logs_by_id(
+    usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called GET get_working_time_by_id!!");
+    info!("called GET get_work_logs_by_id!!");
 
-    let working_time = match usecase.get_working_time_by_id(&id).await {
-        Ok(Some(working_time)) => working_time,
+    let work_logs = match usecase.get_work_logs_by_id(&id).await {
+        Ok(Some(work_logs)) => work_logs,
         Ok(None) => return Err(AppError::NotFound("勤怠が見つかりません".to_string())),
         Err(e) => return Err(e),
     };
 
-    let response = WorkingTimeResponse::try_from(working_time)
+    let response = WorkLogsResponse::try_from(work_logs)
         .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
 
     Ok(HttpResponse::Ok().json(response))
@@ -44,32 +44,30 @@ pub async fn get_working_time_by_id(
 
 #[utoipa::path(
     post,
-    path = "/working_times",
-    request_body = WorkingTimeCreate,
+    path = "/work_logs",
+    request_body = WorkLogsCreate,
     responses(
-        (status = 201, description = "勤怠の作成に成功", body = WorkingTimeCreatedResponse),
+        (status = 201, description = "勤怠の作成に成功", body = WorkLogsCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
 #[post("")]
-pub async fn create_working_time(
-    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
-    working_time: web::Json<WorkingTimeCreate>,
+pub async fn create_work_logs(
+    usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
+    work_logs: web::Json<WorkLogsCreate>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called POST create_working_time!!");
+    info!("called POST create_work_logs!!");
 
-    let working_time_id = usecase
-        .create_working_time(&working_time.into_inner())
-        .await?;
+    let work_logs_id = usecase.create_work_logs(&work_logs.into_inner()).await?;
 
-    Ok(HttpResponse::Created().json(WorkingTimeCreatedResponse::from(working_time_id)))
+    Ok(HttpResponse::Created().json(WorkLogsCreatedResponse::from(work_logs_id)))
 }
 
 #[utoipa::path(
     put,
-    path = "/working_times/{id}",
-    request_body = WorkingTimeUpdate,
+    path = "/work_logs/{id}",
+    request_body = WorkLogsUpdate,
     responses(
         (status = 204, description = "勤怠の更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -81,18 +79,18 @@ pub async fn create_working_time(
     )
 )]
 #[put("/{id}")]
-pub async fn update_working_time_by_id(
-    usecase: web::Data<Arc<WorkingTimeUseCase<MongoWorkingTimeRepository>>>,
+pub async fn update_work_logs_by_id(
+    usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     path: web::Path<String>,
-    working_time: web::Json<WorkingTimeUpdate>,
+    work_logs: web::Json<WorkLogsUpdate>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called update_working_time_by_id!!");
+    info!("called update_work_logs_by_id!!");
 
     let obj_id = ObjectId::parse_str(&path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     usecase
-        .update_working_time(&obj_id, &working_time.into_inner())
+        .update_work_logs(&obj_id, &work_logs.into_inner())
         .await?;
 
     Ok(HttpResponse::NoContent().finish())

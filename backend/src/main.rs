@@ -29,11 +29,11 @@ async fn main() -> Result<()> {
     let project_usecase = di::init_project_usecase(&db);
 
     let project_usecase_clone = project_usecase.clone();
-    let working_time_usecase = di::init_working_time_usecase(&db, project_usecase_clone);
+    let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(working_time_usecase.clone()))
+            .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .configure(routes::app)
             .wrap(Logger::default())
