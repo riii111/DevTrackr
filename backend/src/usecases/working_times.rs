@@ -7,6 +7,7 @@ use crate::repositories::working_times::WorkingTimeRepository;
 use crate::usecases::projects::ProjectUseCase;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use std::sync::Arc;
+use tokio::try_join;
 
 // WorkingTimeCreate と WorkingTimeUpdate から共通のフィールドを取り出すヘルパー関数
 fn calculate_working_duration(start_time: &BsonDateTime, end_time: &Option<BsonDateTime>) -> i64 {
@@ -59,25 +60,33 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
                 ));
             }
         }
-        // 対象のproject_idを取得し、total_working_timeを更新する
-        let project = match self
-            .project_usecase
-            .get_project_by_id(&working_time.project_id.to_string())
-            .await?
-        {
-            Some(p) => p,
-            None => {
-                return Err(AppError::NotFound(
-                    "プロジェクトが見つかりません".to_string(),
-                ))
+
+        let project_id_str = working_time.project_id.to_string();
+
+        // 対象のproject_idを取得し、プロジェクトの総稼働時間を更新する
+        let (associated_project, inserted_id) = try_join!(
+            self.project_usecase.get_project_by_id(&project_id_str),
+            async {
+                self.repository
+                    .insert_one(working_time)
+                    .await
+                    .map_err(|e| match e {
+                        RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+                        RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+                    })
             }
-        };
-        // 最新の稼働時間を計算
+        )?;
+
+        let project = associated_project.ok_or_else(|| {
+            AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())
+        })?;
+
+        // 最新の総稼働時間を計算
         let diff_working_time =
             calculate_working_duration(&working_time.start_time, &working_time.end_time);
         let updated_total_working_time =
             project.total_working_time.unwrap_or(0) + diff_working_time;
-        // 計算した稼働時間をプロジェクトに反映して更新
+        // 計算した総稼働時間をプロジェクトに反映して更新
         let project_update = ProjectUpdate {
             total_working_time: Some(updated_total_working_time),
             // 他のフィールドは更新しない
@@ -87,13 +96,7 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
             .update_project(&working_time.project_id, &project_update)
             .await?;
 
-        self.repository
-            .insert_one(working_time)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })
+        Ok(inserted_id)
     }
 
     pub async fn update_working_time(
