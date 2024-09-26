@@ -36,19 +36,21 @@ pub struct CompanyInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>,
-    pub company_name: String,                       // 企業名
-    pub establishment_year: i32,                    // 設立年
-    pub headquarters_location: String,              // 本社所在地
-    pub website_url: String,                        // 企業の公式サイトURL
-    pub employee_count: i32,                        // 従業員数
-    pub annual_revenue: Option<AnnualRevenue>,      // 年間売上
-    pub affiliation_start_date: BsonDateTime,       // 契約開始日
+    pub company_name: String,                  // 企業名
+    pub establishment_year: i32,               // 設立年
+    pub headquarters_location: String,         // 本社所在地
+    pub website_url: String,                   // 企業の公式サイトURL
+    pub employee_count: i32,                   // 従業員数
+    pub annual_revenue: Option<AnnualRevenue>, // 年間売上
+    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
+    pub affiliation_start_date: BsonDateTime, // 契約開始日
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
-    pub contract_type: ContractType,                // 契約タイプ
-    pub major_clients: Option<Vec<String>>,         // 主要顧客
-    pub major_services: Option<Vec<String>>,        // 主要サービス
-    pub average_hourly_rate: Option<i32>,           // 平均時給
-    pub bonus: Option<Bonus>,                       // ボーナス
+    pub contract_type: ContractType,           // 契約タイプ
+    pub major_clients: Option<Vec<String>>,    // 主要顧客
+    pub major_services: Option<Vec<String>>,   // 主要サービス
+    pub average_hourly_rate: Option<i32>,      // 平均時給
+    pub bonus: Option<Bonus>,                  // ボーナス
     #[serde(default = "default_company_status")]
     pub status: CompanyStatus, // ユーザーとの契約ステータス
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
@@ -65,7 +67,9 @@ pub struct CompanyCreate {
     pub website_url: String,
     pub employee_count: i32,
     pub annual_revenue: Option<AnnualRevenue>,
+    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub affiliation_start_date: BsonDateTime,
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub affiliation_end_date: Option<BsonDateTime>,
     pub contract_type: ContractType,
     pub major_clients: Option<Vec<String>>,
@@ -84,7 +88,9 @@ pub struct CompanyUpdate {
     pub website_url: Option<String>,
     pub employee_count: Option<i32>,
     pub annual_revenue: Option<AnnualRevenue>,
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub affiliation_start_date: Option<BsonDateTime>,
+    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub affiliation_end_date: Option<BsonDateTime>,
     pub contract_type: Option<ContractType>,
     pub major_clients: Option<Vec<String>>,
