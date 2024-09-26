@@ -26,8 +26,10 @@ async fn main() -> Result<()> {
     let db = db::init_db().await.expect("Database Initialization Failed");
 
     // 各ユースケースの初期化
-    let working_time_usecase = di::init_working_time_usecase(&db);
     let project_usecase = di::init_project_usecase(&db);
+
+    let project_usecase_clone = project_usecase.clone();
+    let working_time_usecase = di::init_working_time_usecase(&db, project_usecase_clone);
 
     HttpServer::new(move || {
         App::new()

@@ -1,17 +1,26 @@
 use crate::errors::app_error::AppError;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::working_times::{WorkingTimeCreate, WorkingTimeInDB, WorkingTimeUpdate};
+use crate::repositories::projects::MongoProjectRepository;
 use crate::repositories::working_times::WorkingTimeRepository;
 use bson::oid::ObjectId;
+use crate::usecases::projects::ProjectUseCase;
 use std::sync::Arc;
 
 pub struct WorkingTimeUseCase<R: WorkingTimeRepository> {
     repository: Arc<R>,
+    project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
 }
 
 impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
-    pub fn new(repository: Arc<R>) -> Self {
-        Self { repository }
+    pub fn new(
+        repository: Arc<R>,
+        project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
+    ) -> Self {
+        Self {
+            repository,
+            project_usecase,
+        }
     }
 
     pub async fn get_working_time_by_id(
