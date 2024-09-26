@@ -111,56 +111,40 @@ impl<R: WorkingTimeRepository> WorkingTimeUseCase<R> {
                 ));
             }
         }
-        // 既存のドキュメントが存在するか
-        if self
-            .repository
-            .find_by_id(id)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?
-            .is_none()
-        {
-            return Err(AppError::NotFound(
-                "更新対象の勤怠が見つかりません".to_string(),
-            ));
-        }
+        let project_id_str = working_time.project_id.to_string();
 
-        // 対象のproject_idを取得し、total_working_timeを更新する
-        let project = match self
-            .project_usecase
-            .get_project_by_id(&working_time.project_id.to_string())
-            .await?
-        {
-            Some(p) => p,
-            None => {
-                return Err(AppError::NotFound(
-                    "プロジェクトが見つかりません".to_string(),
-                ))
+        // プロジェクトの取得と勤怠時間の更新を並行して実行
+        let (project, _) = try_join!(
+            self.project_usecase.get_project_by_id(&project_id_str),
+            async {
+                self.repository
+                    .update_one(*id, working_time)
+                    .await
+                    .map_err(|e| match e {
+                        RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+                        RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+                    })
             }
-        };
-        // 最新の稼働時間を計算
+        )?;
+
+        let associated_project = project.ok_or_else(|| {
+            AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())
+        })?;
+
+        // 最新の総稼働時間を計算
         let diff_working_time =
             calculate_working_duration(&working_time.start_time, &working_time.end_time);
         let updated_total_working_time =
-            project.total_working_time.unwrap_or(0) + diff_working_time;
-        // 計算した稼働時間をプロジェクトに反映して更新
+            associated_project.total_working_time.unwrap_or(0) + diff_working_time;
+        // 計算した総稼働時間をプロジェクトに反映して更新
         let project_update = ProjectUpdate {
             total_working_time: Some(updated_total_working_time),
-            // 他のフィールドは更新しない
-            ..Default::default()
+            ..ProjectUpdate::from(associated_project)
         };
         self.project_usecase
             .update_project(&working_time.project_id, &project_update)
             .await?;
 
-        self.repository
-            .update_one(*id, working_time)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })
+        Ok(true)
     }
 }
