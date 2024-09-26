@@ -53,3 +53,16 @@ pub struct ProjectInDB {
 fn default_project_status() -> ProjectStatus {
     ProjectStatus::Planning
 }
+
+impl From<ProjectInDB> for ProjectUpdate {
+    fn from(project: ProjectInDB) -> Self {
+        ProjectUpdate {
+            title: Some(project.title),
+            description: project.description,
+            skill_labels: project.skill_labels,
+            company_name: Some(project.company_name),
+            status: Some(project.status),
+            total_working_time: project.total_working_time,
+        }
+    }
+}
