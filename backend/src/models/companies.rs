@@ -1,7 +1,37 @@
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use validator::{Validate, ValidationError};
+use validator::{Validate, ValidationError, ValidationErrors};
+
+// Validate用のマクロ
+macro_rules! impl_validate {
+    ($type:ty) => {
+        impl Validate for $type {
+            fn validate(&self) -> Result<(), ValidationErrors> {
+                let mut errors = ValidationErrors::new();
+                if let Err(e) = self.common.validate() {
+                    for (field, field_errors) in e.field_errors() {
+                        for error in field_errors {
+                            errors.add(field, error.clone());
+                        }
+                    }
+                }
+                if let Err(e) = self.validate_dates() {
+                    errors.add("dates", e);
+                }
+                if errors.is_empty() {
+                    Ok(())
+                } else {
+                    Err(errors)
+                }
+            }
+        }
+    };
+}
+
+// Validateマクロを使用してCompanyCreateとCompanyUpdateのValidateを実装
+impl_validate!(CompanyCreate);
+impl_validate!(CompanyUpdate);
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub enum CompanyStatus {
@@ -43,7 +73,11 @@ pub struct Bonus {
 // TODO: 共通フィールドの扱い方については要検討。あくまでもモデル実装内部の話なのに、repositoriesやresponseで"common.""と記述するのが面倒
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct CompanyCommon {
-    #[validate(length(min = 2, max = 100, message = "会社名は2〜100文字である必要があります"))]
+    #[validate(length(
+        min = 2,
+        max = 100,
+        message = "会社名は2〜100文字である必要���あります"
+    ))]
     pub company_name: String,
     #[validate(range(
         min = 1800,
@@ -70,6 +104,7 @@ pub struct CompanyCommon {
     ))]
     pub average_hourly_rate: Option<i32>,
     pub bonus: Option<Bonus>,
+    #[serde(default = "default_company_status")]
     pub status: CompanyStatus,
 }
 
@@ -88,10 +123,6 @@ pub struct CompanyInDB {
     pub created_at: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
-}
-
-pub trait DateValidator {
-    fn validate_dates(&self) -> Result<(), ValidationError>;
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -123,23 +154,6 @@ impl CompanyCreate {
     }
 }
 
-impl Validate for CompanyCreate {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
-        if let Err(e) = self.common.validate() {
-            errors.extend(e);
-        }
-        if let Err(e) = self.validate_dates() {
-            errors.add("dates", e);
-        }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct CompanyUpdate {
     #[serde(flatten)]
@@ -168,23 +182,6 @@ impl CompanyUpdate {
             }
         }
         Ok(())
-    }
-}
-
-impl Validate for CompanyUpdate {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
-        if let Err(e) = self.common.validate() {
-            errors.extend(e);
-        }
-        if let Err(e) = self.validate_dates() {
-            errors.add("dates", e);
-        }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
     }
 }
 
