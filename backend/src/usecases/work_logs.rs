@@ -32,6 +32,13 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         }
     }
 
+    pub async fn get_all_work_logs(&self) -> Result<Vec<WorkLogsInDB>, AppError> {
+        self.repository.find_all().await.map_err(|e| match e {
+            RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+            RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+        })
+    }
+
     pub async fn get_work_logs_by_id(&self, id: &str) -> Result<Option<WorkLogsInDB>, AppError> {
         let object_id = ObjectId::parse_str(id)
             .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;

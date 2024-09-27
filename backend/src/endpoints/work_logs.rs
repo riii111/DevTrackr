@@ -12,6 +12,33 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
+    path = "/work_logs",
+    responses(
+        (status = 200, description = "勤怠の取得に成功", body = Vec<WorkLogsResponse>)
+    )
+)]
+#[get("")]
+pub async fn get_all_work_logs(
+    usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
+) -> Result<HttpResponse, AppError> {
+    info!("called GET get_all_work_logs!!");
+
+    let work_logs = match usecase.get_all_work_logs().await {
+        Ok(work_logs) => work_logs,
+        Err(e) => return Err(e),
+    };
+
+    let response = work_logs
+        .into_iter()
+        .map(WorkLogsResponse::try_from)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    Ok(HttpResponse::Ok().json(response))
+}
+
+#[utoipa::path(
+    get,
     path = "/work_logs/{id}",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = WorkLogsResponse),

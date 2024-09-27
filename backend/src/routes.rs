@@ -28,6 +28,7 @@ fn projects_scope() -> Scope {
 
 fn work_logs_scope() -> Scope {
     web::scope("/work_logs")
+        .service(work_logs::get_all_work_logs)
         .service(work_logs::get_work_logs_by_id)
         .service(work_logs::create_work_logs)
         .service(work_logs::update_work_logs_by_id)

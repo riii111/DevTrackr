@@ -2,10 +2,13 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::work_logs::{WorkLogsCreate, WorkLogsInDB, WorkLogsUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
+use futures::stream::TryStreamExt;
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait WorkLogsRepository {
+    async fn find_all(&self) -> Result<Vec<WorkLogsInDB>, RepositoryError>;
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkLogsInDB>, RepositoryError>;
 
     async fn insert_one(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, RepositoryError>;
@@ -31,6 +34,25 @@ impl MongoWorkLogsRepository {
 
 #[async_trait]
 impl WorkLogsRepository for MongoWorkLogsRepository {
+    async fn find_all(&self) -> Result<Vec<WorkLogsInDB>, RepositoryError> {
+        let mut work_logs = Vec::new();
+        let mut cursor = self
+            .collection
+            .find(doc! {})
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        while let Some(result) = cursor
+            .try_next()
+            .await
+            .map_err(RepositoryError::DatabaseError)?
+        {
+            work_logs.push(result);
+        }
+
+        Ok(work_logs)
+    }
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkLogsInDB>, RepositoryError> {
         self.collection
             .find_one(doc! { "_id": id })
