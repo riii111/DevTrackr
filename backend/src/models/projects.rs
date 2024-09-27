@@ -2,7 +2,7 @@ use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use serde_with::{serde_as, DefaultOnNull};
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 #[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum ProjectStatus {

@@ -1,7 +1,6 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use serde::Serialize;
 use serde_json::json;
-use std::borrow::Cow;
 use thiserror::Error;
 use utoipa::ToSchema;
 use validator::ValidationErrors;
