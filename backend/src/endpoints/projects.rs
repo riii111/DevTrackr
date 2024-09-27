@@ -10,6 +10,30 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
+    path = "/projects",
+    responses(
+        (status = 200, description = "プロジェクトの取得に成功", body = Vec<ProjectResponse>),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    )
+)]
+#[get("")]
+pub async fn get_all_projects(
+    usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
+) -> Result<HttpResponse, AppError> {
+    info!("called GET get_all_projects!!");
+
+    let projects = usecase.get_all_projects().await?;
+    let response = projects
+        .into_iter()
+        .map(ProjectResponse::try_from)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    Ok(HttpResponse::Ok().json(response))
+}
+
+#[utoipa::path(
+    get,
     path = "/projects/{id}",
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),

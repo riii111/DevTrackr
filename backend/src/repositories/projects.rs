@@ -2,11 +2,13 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
+use futures::TryStreamExt;
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait ProjectRepository {
-    // TODO: find_oneだけに集約させるべき？
+    async fn find_all(&self) -> Result<Vec<ProjectInDB>, RepositoryError>;
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError>;
 
     async fn insert_one(&self, project: ProjectCreate) -> Result<ObjectId, RepositoryError>;
@@ -32,6 +34,25 @@ impl MongoProjectRepository {
 
 #[async_trait]
 impl ProjectRepository for MongoProjectRepository {
+    async fn find_all(&self) -> Result<Vec<ProjectInDB>, RepositoryError> {
+        let mut projects = Vec::new();
+        let mut cursor = self
+            .collection
+            .find(doc! {})
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        while let Some(result) = cursor
+            .try_next()
+            .await
+            .map_err(RepositoryError::DatabaseError)?
+        {
+            projects.push(result);
+        }
+
+        Ok(projects)
+    }
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError> {
         self.collection
             .find_one(doc! { "_id": id })

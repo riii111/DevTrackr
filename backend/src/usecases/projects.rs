@@ -15,6 +15,13 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
         Self { repository }
     }
 
+    pub async fn get_all_projects(&self) -> Result<Vec<ProjectInDB>, AppError> {
+        self.repository.find_all().await.map_err(|e| match e {
+            RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+            RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+        })
+    }
+
     pub async fn get_project_by_id(&self, id: &str) -> Result<Option<ProjectInDB>, AppError> {
         let object_id = ObjectId::parse_str(id)
             .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
