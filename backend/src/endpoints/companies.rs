@@ -12,7 +12,7 @@ use std::sync::Arc;
     get,
     path = "/companies",
     responses(
-        (status = 200, description = "企業の取得に成功", body = CompanyResponse),
+        (status = 200, description = "企業の取得に成功", body = Vec<CompanyResponse>),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
