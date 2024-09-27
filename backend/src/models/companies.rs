@@ -189,12 +189,12 @@ impl CompanyUpdate {
                 "契約開始日は現在日時より前である必要があります",
             ));
         }
-        if self.affiliation_end_date.is_some()
-            && self.affiliation_end_date.unwrap() <= self.affiliation_start_date
-        {
-            return Err(ValidationError::new(
-                "契約終了日は契約開始日より後である必要があります",
-            ));
+        if let Some(end_date) = self.affiliation_end_date {
+            if end_date <= self.affiliation_start_date {
+                return Err(ValidationError::new(
+                    "契約終了日は契約開始日より後である必要があります",
+                ));
+            }
         }
         Ok(())
     }
