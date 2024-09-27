@@ -125,16 +125,13 @@ pub struct CompanyInDB {
     #[serde(flatten)]
     pub common: CompanyCommon,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub created_at: BsonDateTime, // 作成日時
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
 }
 
