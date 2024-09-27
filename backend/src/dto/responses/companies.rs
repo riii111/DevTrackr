@@ -5,6 +5,7 @@ use crate::utils::serializer::{
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
 use utoipa::ToSchema;
+use chrono::NaiveDate;
 
 #[derive(Serialize, Debug, ToSchema)]
 pub struct CompanyResponse {
@@ -17,12 +18,10 @@ pub struct CompanyResponse {
     pub website_url: String,
     pub employee_count: i32,
     pub annual_sales: Option<AnnualSales>,
-    #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    pub affiliation_start_date: BsonDateTime,
-    #[serde(serialize_with = "serialize_option_bson_datetime")]
+    pub affiliation_start_date: NaiveDate,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    pub affiliation_end_date: Option<BsonDateTime>,
+    pub affiliation_end_date: Option<NaiveDate>,
     pub contract_type: ContractType,
     pub major_clients: Option<Vec<String>>,
     pub major_services: Option<Vec<String>>,
