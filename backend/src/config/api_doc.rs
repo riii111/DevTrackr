@@ -22,6 +22,7 @@ use utoipa::OpenApi;
         companies::get_company_by_id,
         companies::create_company,
         companies::update_company_by_id,
+        companies::get_all_companies,
     ),
     components(
         schemas(

@@ -14,6 +14,13 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
         Self { repository }
     }
 
+    pub async fn get_all_companies(&self) -> Result<Vec<CompanyInDB>, AppError> {
+        self.repository.find_all().await.map_err(|e| match e {
+            RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+            RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+        })
+    }
+
     pub async fn get_company_by_id(&self, id: &str) -> Result<Option<CompanyInDB>, AppError> {
         let object_id = ObjectId::parse_str(id)
             .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;

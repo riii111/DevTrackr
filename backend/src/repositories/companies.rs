@@ -2,10 +2,13 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::companies::{CompanyCreate, CompanyInDB, CompanyUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
+use futures::TryStreamExt;
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
 pub trait CompanyRepository {
+    async fn find_all(&self) -> Result<Vec<CompanyInDB>, RepositoryError>;
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, RepositoryError>;
 
     async fn insert_one(&self, company: CompanyCreate) -> Result<ObjectId, RepositoryError>;
@@ -31,6 +34,25 @@ impl MongoCompanyRepository {
 
 #[async_trait]
 impl CompanyRepository for MongoCompanyRepository {
+    async fn find_all(&self) -> Result<Vec<CompanyInDB>, RepositoryError> {
+        let mut companies = Vec::new();
+        let mut cursor = self
+            .collection
+            .find(doc! {})
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        while let Some(result) = cursor
+            .try_next()
+            .await
+            .map_err(RepositoryError::DatabaseError)?
+        {
+            companies.push(result);
+        }
+
+        Ok(companies)
+    }
+
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, RepositoryError> {
         self.collection
             .find_one(doc! { "_id": id })

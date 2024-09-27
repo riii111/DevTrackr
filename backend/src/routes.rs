@@ -34,6 +34,7 @@ fn work_logs_scope() -> Scope {
 
 fn companies_scope() -> Scope {
     web::scope("/companies")
+        .service(companies::get_all_companies)
         .service(companies::get_company_by_id)
         .service(companies::create_company)
         .service(companies::update_company_by_id)

@@ -10,6 +10,29 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
+    path = "/companies",
+    responses(
+        (status = 200, description = "企業の取得に成功", body = CompanyResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    )
+)]
+#[get("")]
+pub async fn get_all_companies(
+    usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
+) -> Result<HttpResponse, AppError> {
+    info!("called GET get_all_companies!!");
+    let companies = usecase.get_all_companies().await?;
+    let response: Vec<CompanyResponse> = companies
+        .into_iter()
+        .map(CompanyResponse::try_from)
+        .collect::<Result<_, _>>()
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    Ok(HttpResponse::Ok().json(response))
+}
+
+#[utoipa::path(
+    get,
     path = "/companies/{id}",
     responses(
         (status = 200, description = "企業の取得に成功", body = CompanyResponse),
