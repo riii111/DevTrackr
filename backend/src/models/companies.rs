@@ -120,7 +120,7 @@ pub struct CompanyCommon {
     pub status: CompanyStatus, // 契約ステータス
 }
 
-#[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct CompanyInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
