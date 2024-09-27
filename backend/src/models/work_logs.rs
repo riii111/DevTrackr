@@ -9,6 +9,68 @@ trait TimeValidator {
     fn validate_times(&self) -> Result<(), ValidationError>;
 }
 
+// バリデーションロジックを共通化するマクロ
+macro_rules! impl_work_logs_validation {
+    ($type:ty) => {
+        impl TimeValidator for $type {
+            fn validate_times(&self) -> Result<(), ValidationError> {
+                let now = BsonDateTime::now();
+
+                if self.start_time > now {
+                    return Err(ValidationError::new(
+                        "開始時間は現在時刻より前である必要があります",
+                    ));
+                }
+
+                if let Some(end_time) = self.end_time {
+                    if end_time <= self.start_time {
+                        return Err(ValidationError::new(
+                            "終了時間は開始時間より後である必要があります",
+                        ));
+                    }
+                    if end_time > now {
+                        return Err(ValidationError::new(
+                            "終了時間は現在時刻より前である必要があります",
+                        ));
+                    }
+                }
+
+                Ok(())
+            }
+        }
+
+        impl $type {
+            pub fn validate_all(&self) -> Result<(), ValidationErrors> {
+                let mut errors = ValidationErrors::new();
+
+                // 既存のバリデーションを実行
+                if let Err(e) = <Self as Validate>::validate(self) {
+                    for (field, field_errors) in e.field_errors() {
+                        for error in field_errors {
+                            errors.add(field, error.clone());
+                        }
+                    }
+                }
+
+                // カスタムバリデーションを実行
+                if let Err(e) = self.validate_times() {
+                    errors.add("time", e);
+                }
+
+                if errors.is_empty() {
+                    Ok(())
+                } else {
+                    Err(errors)
+                }
+            }
+        }
+    };
+}
+
+// マクロを使用してバリデーションロジックを実装
+impl_work_logs_validation!(WorkLogsCreate);
+impl_work_logs_validation!(WorkLogsUpdate);
+
 #[derive(Serialize, Deserialize, Debug, ToSchema, Validate)]
 pub struct WorkLogsCreate {
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
@@ -57,109 +119,4 @@ pub struct WorkLogsInDB {
     pub created_at: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
-}
-impl TimeValidator for WorkLogsCreate {
-    fn validate_times(&self) -> Result<(), ValidationError> {
-        let now = BsonDateTime::now();
-
-        if self.start_time > now {
-            return Err(ValidationError::new(
-                "開始時間は現在時刻より前である必要があります",
-            ));
-        }
-
-        if let Some(end_time) = self.end_time {
-            if end_time <= self.start_time {
-                return Err(ValidationError::new(
-                    "終了時間は開始時間より後である必要があります",
-                ));
-            }
-            if end_time > now {
-                return Err(ValidationError::new(
-                    "終了時間は現在時刻より前である必要があります",
-                ));
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl TimeValidator for WorkLogsUpdate {
-    fn validate_times(&self) -> Result<(), ValidationError> {
-        let now = BsonDateTime::now();
-
-        if self.start_time > now {
-            return Err(ValidationError::new(
-                "開始時間は現在時刻より前である必要があります",
-            ));
-        }
-
-        if let Some(end_time) = self.end_time {
-            if end_time <= self.start_time {
-                return Err(ValidationError::new(
-                    "終了時間は開始時間より後である必要があります",
-                ));
-            }
-            if end_time > now {
-                return Err(ValidationError::new(
-                    "終了時間は現在時刻より前である必要があります",
-                ));
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl WorkLogsCreate {
-    pub fn validate_all(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
-
-        // 既存のバリデーションを実行
-        if let Err(e) = <Self as Validate>::validate(self) {
-            for (field, field_errors) in e.field_errors() {
-                for error in field_errors {
-                    errors.add(field, error.clone());
-                }
-            }
-        }
-
-        // カスタムバリデーションを実行
-        if let Err(e) = self.validate_times() {
-            errors.add("time", e);
-        }
-
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-}
-
-impl WorkLogsUpdate {
-    pub fn validate_all(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
-
-        // 既存のバリデーションを実行
-        if let Err(e) = <Self as Validate>::validate(self) {
-            for (field, field_errors) in e.field_errors() {
-                for error in field_errors {
-                    errors.add(field, error.clone());
-                }
-            }
-        }
-
-        // カスタムバリデーションを実行
-        if let Err(e) = self.validate_times() {
-            errors.add("time", e);
-        }
-
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
 }
