@@ -28,7 +28,7 @@ pub struct ProjectUpdate {
     pub title: String,
     pub description: Option<String>,
     pub skill_labels: Option<Vec<String>>,
-    #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
+    // #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     // pub company_id: ObjectId,  // TODO: 後で追加する
     pub hourly_pay: Option<i32>,
     pub status: ProjectStatus,
@@ -44,7 +44,7 @@ pub struct ProjectInDB {
     pub title: String,
     pub description: Option<String>,
     pub skill_labels: Option<Vec<String>>,
-    #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
+    // #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     // pub company_id: ObjectId,  // TODO: 後で追加する
     pub hourly_pay: Option<i32>,
     #[serde_as(as = "DefaultOnNull")]
