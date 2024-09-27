@@ -1,3 +1,4 @@
+use crate::utils::deserializer::{deserialize_bson_date_time, deserialize_option_bson_date_time};
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -126,12 +127,16 @@ pub struct CompanyInDB {
     #[serde(flatten)]
     pub common: CompanyCommon,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
+    #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub created_at: BsonDateTime, // 作成日時
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
 }
 
@@ -140,8 +145,10 @@ pub struct CompanyCreate {
     #[serde(flatten)]
     pub common: CompanyCommon,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
 }
 
@@ -168,28 +175,28 @@ impl CompanyCreate {
 pub struct CompanyUpdate {
     #[serde(flatten)]
     pub common: CompanyCommon,
+    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_bson_date_time")]
+    pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    pub affiliation_start_date: Option<BsonDateTime>, // 契約開始日
-    #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
+    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
 }
 
 impl CompanyUpdate {
     fn validate_dates(&self) -> Result<(), ValidationError> {
         let now = BsonDateTime::now();
-        if let Some(start_date) = self.affiliation_start_date {
-            if start_date > now {
-                return Err(ValidationError::new(
-                    "契約開始日は現在日時より前である必要があります",
-                ));
-            }
-            if let Some(end_date) = self.affiliation_end_date {
-                if end_date <= start_date {
-                    return Err(ValidationError::new(
-                        "契約終了日は契約開始日より後である必要があります",
-                    ));
-                }
-            }
+        if self.affiliation_start_date > now {
+            return Err(ValidationError::new(
+                "契約開始日は現在日時より前である必要があります",
+            ));
+        }
+        if self.affiliation_end_date.is_some()
+            && self.affiliation_end_date.unwrap() <= self.affiliation_start_date
+        {
+            return Err(ValidationError::new(
+                "契約終了日は契約開始日より後である必要があります",
+            ));
         }
         Ok(())
     }
@@ -199,7 +206,7 @@ impl From<CompanyInDB> for CompanyUpdate {
     fn from(company: CompanyInDB) -> Self {
         CompanyUpdate {
             common: company.common,
-            affiliation_start_date: Some(company.affiliation_start_date),
+            affiliation_start_date: company.affiliation_start_date,
             affiliation_end_date: company.affiliation_end_date,
         }
     }
