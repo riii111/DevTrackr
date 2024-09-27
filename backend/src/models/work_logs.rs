@@ -13,6 +13,7 @@ trait TimeValidator {
 macro_rules! impl_work_logs_validation {
     ($type:ty) => {
         impl TimeValidator for $type {
+            // カスタムバリデーション: 開始時間と終了時間のバリデーションを行う
             fn validate_times(&self) -> Result<(), ValidationError> {
                 let now = BsonDateTime::now();
 

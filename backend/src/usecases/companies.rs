@@ -4,7 +4,6 @@ use crate::models::companies::{CompanyCreate, CompanyInDB, CompanyUpdate};
 use crate::repositories::companies::CompanyRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
-use validator::Validate;
 
 pub struct CompanyUseCase<R: CompanyRepository> {
     repository: Arc<R>,
@@ -30,7 +29,7 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
     pub async fn create_company(&self, company: CompanyCreate) -> Result<ObjectId, AppError> {
         // バリデーションを実行
         company
-            .validate()
+            .validate_all()
             .map_err(|e| AppError::ValidationError(e))?;
 
         self.repository
@@ -49,7 +48,7 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
     ) -> Result<bool, AppError> {
         // バリデーションを実行
         company
-            .validate()
+            .validate_all()
             .map_err(|e| AppError::ValidationError(e))?;
 
         // 既存のドキュメントが存在するか確認

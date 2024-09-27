@@ -1,17 +1,47 @@
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
+use chrono::{NaiveDate, TimeZone, Utc};
+use chrono_tz::Asia::Tokyo;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError, ValidationErrors};
-use serde_with::serde_as;
-use chrono::{NaiveDate, Utc, TimeZone};
-use chrono_tz::Asia::Tokyo;
 
-// Validate用のマクロ
-macro_rules! impl_validate {
+// カスタムバリデーション用のトレイト
+trait DateValidator {
+    fn validate_dates(&self) -> Result<(), ValidationError>;
+}
+
+// バリデーションロジックを共通化するマクロ
+macro_rules! impl_company_validation {
     ($type:ty) => {
-        impl Validate for $type {
-            fn validate(&self) -> Result<(), ValidationErrors> {
+        impl DateValidator for $type {
+            // カスタムバリデーション: 契約開始日と契約終了日のバリデーションを行う
+            fn validate_dates(&self) -> Result<(), ValidationError> {
+                let today = Tokyo
+                    .from_utc_datetime(&Utc::now().naive_utc())
+                    .date_naive();
+
+                if self.affiliation_start_date > today {
+                    return Err(ValidationError::new(
+                        "契約開始日は現在日付より前である必要があります",
+                    ));
+                }
+                if let Some(end_date) = self.affiliation_end_date {
+                    if end_date <= self.affiliation_start_date {
+                        return Err(ValidationError::new(
+                            "契約終了日は契約開始日より後である必要があります",
+                        ));
+                    }
+                }
+                Ok(())
+            }
+        }
+
+        impl $type {
+            pub fn validate_all(&self) -> Result<(), ValidationErrors> {
                 let mut errors = ValidationErrors::new();
+
+                // 既存のバリデーションを実行
                 if let Err(e) = self.common.validate() {
                     for (field, field_errors) in e.field_errors() {
                         for error in field_errors {
@@ -19,9 +49,12 @@ macro_rules! impl_validate {
                         }
                     }
                 }
+
+                // カスタムバリデーションを実行
                 if let Err(e) = self.validate_dates() {
                     errors.add("dates", e);
                 }
+
                 if errors.is_empty() {
                     Ok(())
                 } else {
@@ -33,16 +66,16 @@ macro_rules! impl_validate {
 }
 
 // Validateマクロを使用してCompanyCreateとCompanyUpdateのValidateを実装
-impl_validate!(CompanyCreate);
-impl_validate!(CompanyUpdate);
+impl_company_validation!(CompanyCreate);
+impl_company_validation!(CompanyUpdate);
 
 #[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum CompanyStatus {
     #[default]
     PendingContract, // 契約予定
-    Contract,        // 契約中
-    Completed,       // 完了
-    Cancelled,       // キャンセル
+    Contract,  // 契約中
+    Completed, // 完了
+    Cancelled, // キャンセル
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -168,48 +201,5 @@ impl From<CompanyInDB> for CompanyUpdate {
             affiliation_start_date: company.affiliation_start_date,
             affiliation_end_date: company.affiliation_end_date,
         }
-    }
-}
-
-trait DateValidator {
-    fn get_start_date(&self) -> NaiveDate;
-    fn get_end_date(&self) -> Option<NaiveDate>;
-
-    fn validate_dates(&self) -> Result<(), ValidationError> {
-        let today = Tokyo.from_utc_datetime(&Utc::now().naive_utc()).date_naive();
-
-        if self.get_start_date() > today {
-            return Err(ValidationError::new(
-                "契約開始日は現在日付より前である必要があります",
-            ));
-        }
-        if let Some(end_date) = self.get_end_date() {
-            if end_date <= self.get_start_date() {
-                return Err(ValidationError::new(
-                    "契約終了日は契約開始日より後である必要があります",
-                ));
-            }
-        }
-        Ok(())
-    }
-}
-
-impl DateValidator for CompanyCreate {
-    fn get_start_date(&self) -> NaiveDate {
-        self.affiliation_start_date
-    }
-
-    fn get_end_date(&self) -> Option<NaiveDate> {
-        self.affiliation_end_date
-    }
-}
-
-impl DateValidator for CompanyUpdate {
-    fn get_start_date(&self) -> NaiveDate {
-        self.affiliation_start_date
-    }
-
-    fn get_end_date(&self) -> Option<NaiveDate> {
-        self.affiliation_end_date
     }
 }
