@@ -2,6 +2,7 @@ use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use serde_with::{serde_as, DefaultOnNull};
+use validator::{Validate, ValidationError};
 
 #[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum ProjectStatus {
@@ -13,25 +14,34 @@ pub enum ProjectStatus {
     Cancelled,  // キャンセル
 }
 
-#[derive(Deserialize, Debug, ToSchema)]
+#[derive(Deserialize, Debug, Validate, ToSchema)]
 pub struct ProjectCreate {
+    #[validate(length(min = 1, max = 100, message = "タイトルは1〜100文字である必要があります"))]
     pub title: String,
+    #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
+    #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
     // pub company_id: ObjectId,  // TODO: 後で追加する
+    #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
     pub status: ProjectStatus,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct ProjectUpdate {
+    #[validate(length(min = 1, max = 100, message = "タイトルは1〜100文字である必要があります"))]
     pub title: String,
+    #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
+    #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
     // #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     // pub company_id: ObjectId,  // TODO: 後で追加する
+    #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
     pub status: ProjectStatus,
+    #[validate(range(min = 0, message = "総作業時間は0以上である必要があります"))]
     pub total_working_time: i64,
 }
 

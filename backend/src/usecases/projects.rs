@@ -4,6 +4,7 @@ use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
+use validator::Validate;
 
 pub struct ProjectUseCase<R: ProjectRepository> {
     repository: Arc<R>,
@@ -27,6 +28,11 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
     }
 
     pub async fn create_project(&self, project: ProjectCreate) -> Result<ObjectId, AppError> {
+        // バリデーションを実行
+        project
+            .validate()
+            .map_err(|e| AppError::ValidationError(e))?;
+
         self.repository
             .insert_one(project)
             .await
@@ -41,6 +47,11 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
         id: &ObjectId,
         project: &ProjectUpdate,
     ) -> Result<bool, AppError> {
+        // バリデーションを実行
+        project
+            .validate()
+            .map_err(|e| AppError::ValidationError(e))?;
+
         // 既存のドキュメントが存在するか
         if self
             .repository
