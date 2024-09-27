@@ -12,13 +12,13 @@ use std::sync::Arc;
     get,
     path = "/companies/{id}",
     responses(
-        (status = 200, description = "会社の取得に成功", body = CompanyResponse),
+        (status = 200, description = "企業の取得に成功", body = CompanyResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
-        (status = 404, description = "会社が見つかりません", body = ErrorResponse),
+        (status = 404, description = "企業が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     params(
-        ("id" = String, Path, description = "会社ID")
+        ("id" = String, Path, description = "企業ID")
     )
 )]
 #[get("/{id}")]
@@ -30,7 +30,7 @@ pub async fn get_company_by_id(
 
     let company = match usecase.get_company_by_id(&id).await {
         Ok(Some(company)) => company,
-        Ok(None) => return Err(AppError::NotFound("会社が見つかりません".to_string())),
+        Ok(None) => return Err(AppError::NotFound("企業が見つかりません".to_string())),
         Err(e) => return Err(e), // AppErrorをそのまま返す
     };
 
@@ -45,7 +45,7 @@ pub async fn get_company_by_id(
     path = "/companies",
     request_body = CompanyCreate,
     responses(
-        (status = 201, description = "会社の作成に成功", body = CompanyCreatedResponse),
+        (status = 201, description = "企業の作成に成功", body = CompanyCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
@@ -67,13 +67,13 @@ pub async fn create_company(
     path = "/companies/{id}",
     request_body = CompanyUpdate,
     responses(
-        (status = 204, description = "会社の更新に成功"),
+        (status = 204, description = "企業の更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
-        (status = 404, description = "会社が見つかりません", body = ErrorResponse),
+        (status = 404, description = "企業が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     params(
-        ("id" = String, Path, description = "会社ID")
+        ("id" = String, Path, description = "企業ID")
     )
 )]
 #[put("/{id}")]

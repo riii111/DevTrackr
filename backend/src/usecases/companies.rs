@@ -64,7 +64,7 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
             .is_none()
         {
             return Err(AppError::NotFound(
-                "更新対象の会社が見つかりません".to_string(),
+                "更新対象の企業が見つかりません".to_string(),
             ));
         }
 
