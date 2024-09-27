@@ -141,8 +141,10 @@ pub struct CompanyInDB {
 pub struct CompanyCreate {
     #[serde(flatten)]
     pub common: CompanyCommon,
+    /// 契約開始日（JST, YYYY-MM-DD形式で受け取ること）
     #[schema(value_type = String, example = "2023-12-01")]
     pub affiliation_start_date: NaiveDate, // 契約開始日
+    /// 契約終了日（JST, YYYY-MM-DD形式で受け取ること）
     #[schema(value_type = Option<String>, example = "2024-09-30")]
     pub affiliation_end_date: Option<NaiveDate>, // 契約終了日
 }
@@ -151,8 +153,10 @@ pub struct CompanyCreate {
 pub struct CompanyUpdate {
     #[serde(flatten)]
     pub common: CompanyCommon,
+    /// 契約開始日（JST, YYYY-MM-DD形式で受け取ること）
     #[schema(value_type = String, example = "2023-12-01")]
     pub affiliation_start_date: NaiveDate, // 契約開始日
+    /// 契約終了日（JST, YYYY-MM-DD形式で受け取ること）
     #[schema(value_type = Option<String>, example = "2024-09-30")]
     pub affiliation_end_date: Option<NaiveDate>, // 契約終了日
 }
