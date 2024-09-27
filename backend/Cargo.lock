@@ -824,6 +824,7 @@ dependencies = [
  "mongodb",
  "serde",
  "serde_json",
+ "serde_with",
  "tera",
  "thiserror",
  "tokio",

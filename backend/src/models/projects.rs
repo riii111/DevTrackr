@@ -1,9 +1,11 @@
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use serde_with::{serde_as, DefaultOnNull};
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum ProjectStatus {
+    #[default]
     Planning,   // 企画中
     InProgress, // 進行中
     Completed,  // 完了
@@ -18,7 +20,6 @@ pub struct ProjectCreate {
     pub skill_labels: Option<Vec<String>>,
     // pub company_id: ObjectId,  // TODO: 後で追加する
     pub hourly_pay: Option<i32>,
-    #[serde(default = "default_project_status")]
     pub status: ProjectStatus,
 }
 
@@ -34,6 +35,7 @@ pub struct ProjectUpdate {
     pub total_working_time: i64,
 }
 
+#[serde_as]
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ProjectInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -45,17 +47,13 @@ pub struct ProjectInDB {
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     // pub company_id: ObjectId,  // TODO: 後で追加する
     pub hourly_pay: Option<i32>,
-    #[serde(default = "default_project_status")]
+    #[serde_as(as = "DefaultOnNull")]
     pub status: ProjectStatus,
     pub total_working_time: i64,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
-}
-
-fn default_project_status() -> ProjectStatus {
-    ProjectStatus::Planning
 }
 
 impl From<ProjectInDB> for ProjectUpdate {
