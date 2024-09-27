@@ -1,13 +1,16 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use serde::Serialize;
+use serde_json::json;
+use std::borrow::Cow;
 use thiserror::Error;
 use utoipa::ToSchema;
+use validator::ValidationErrors;
 
 // 共通のアプリケーションエラー
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("バリデーションエラー: {0}")]
-    ValidationError(String),
+    ValidationError(ValidationErrors),
 
     #[error("リソースが見つかりません: {0}")]
     NotFound(String),
@@ -77,8 +80,51 @@ impl AppError {
 
 impl actix_web::ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code()).json(ErrorResponse {
-            error: self.error_message(),
-        })
+        match self {
+            AppError::ValidationError(errors) => {
+                let error_messages: Vec<String> = errors
+                    .field_errors()
+                    .into_iter()
+                    .map(|(field, error_vec)| {
+                        let messages: Vec<String> = error_vec
+                            .iter()
+                            .map(|error| {
+                                error
+                                    .message
+                                    .as_ref()
+                                    .map(|cow| cow.to_string())
+                                    .unwrap_or_else(|| error.code.to_string())
+                            })
+                            .collect();
+                        format!("{}: {}", field, messages.join(", "))
+                    })
+                    .collect();
+
+                HttpResponse::BadRequest().json(json!({
+                    "error": "バリデーションエラー",
+                    "details": error_messages
+                }))
+            }
+            AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
+                "error": "リソースが見つかりません",
+                "details": [self.error_message()]
+            })),
+            AppError::BadRequest(_) => HttpResponse::BadRequest().json(json!({
+                "error": "不正なリクエスト",
+                "details": [self.error_message()]
+            })),
+            AppError::DatabaseConnectionError => HttpResponse::InternalServerError().json(json!({
+                "error": "データベース接続エラー",
+                "details": [self.error_message()]
+            })),
+            AppError::DatabaseError(error) => HttpResponse::InternalServerError().json(json!({
+                "error": "データベースエラー",
+                "details": [error.to_string()]
+            })),
+            AppError::InternalServerError(_) => HttpResponse::InternalServerError().json(json!({
+                "error": "内部サーバーエラー",
+                "details": [self.error_message()]
+            })),
+        }
     }
 }

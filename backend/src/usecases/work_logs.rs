@@ -8,6 +8,7 @@ use crate::usecases::projects::ProjectUseCase;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use std::sync::Arc;
 use tokio::try_join;
+use validator::{ValidationError, ValidationErrors};
 
 // WorkLogsCreate と WorkLogsUpdate から共通のフィールドを取り出すヘルパー関数
 fn calculate_working_duration(start_time: &BsonDateTime, end_time: &Option<BsonDateTime>) -> i64 {
@@ -49,9 +50,12 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         // バリデーションチェック
         if let Some(end_time) = work_logs.end_time {
             if work_logs.start_time >= end_time {
-                return Err(AppError::ValidationError(
-                    "開始時間は終了時間より前である必要があります".to_string(),
-                ));
+                let mut errors = ValidationErrors::new();
+                errors.add(
+                    "time",
+                    ValidationError::new("開始時間は終了時間より前である必要があります"),
+                );
+                return Err(AppError::ValidationError(errors));
             }
         }
 
@@ -99,9 +103,12 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         // バリデーションチェック
         if let Some(end_time) = work_logs.end_time {
             if work_logs.start_time >= end_time {
-                return Err(AppError::ValidationError(
-                    "開始時間は終了時間より前である必要があります".to_string(),
-                ));
+                let mut errors = ValidationErrors::new();
+                errors.add(
+                    "time",
+                    ValidationError::new("開始時間は終了時間より前である必要があります"),
+                );
+                return Err(AppError::ValidationError(errors));
             }
         }
         let project_id_str = work_logs.project_id.to_string();

@@ -31,7 +31,7 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
         // バリデーションを実行
         company
             .validate()
-            .map_err(|e| AppError::ValidationError(e.to_string()))?;
+            .map_err(|e| AppError::ValidationError(e))?;
 
         self.repository
             .insert_one(company)
@@ -50,7 +50,7 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
         // バリデーションを実行
         company
             .validate()
-            .map_err(|e| AppError::ValidationError(e.to_string()))?;
+            .map_err(|e| AppError::ValidationError(e))?;
 
         // 既存のドキュメントが存在するか確認
         if self
