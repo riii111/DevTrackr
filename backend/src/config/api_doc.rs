@@ -4,7 +4,7 @@ use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse
 use crate::endpoints::{companies, projects, work_logs};
 use crate::errors::app_error::{AppError, ErrorResponse};
 use crate::models::companies::{
-    AnnualRevenue, Bonus, CompanyCreate, CompanyStatus, CompanyUpdate, ContractType,
+    AnnualRevenue, Bonus, CompanyCommon, CompanyCreate, CompanyStatus, CompanyUpdate, ContractType,
 };
 use crate::models::projects::{ProjectCreate, ProjectStatus, ProjectUpdate};
 use crate::models::work_logs::{WorkLogsCreate, WorkLogsUpdate};
@@ -44,6 +44,7 @@ use utoipa::OpenApi;
             Bonus,
             CompanyStatus,
             ContractType,
+            CompanyCommon,
         )
     ),
     tags(
