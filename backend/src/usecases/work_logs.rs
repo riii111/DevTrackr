@@ -8,7 +8,7 @@ use crate::usecases::projects::ProjectUseCase;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use std::sync::Arc;
 use tokio::try_join;
-use validator::{ValidationError, ValidationErrors};
+use validator::{Validate, ValidationError, ValidationErrors};
 
 // WorkLogsCreate と WorkLogsUpdate から共通のフィールドを取り出すヘルパー関数
 fn calculate_working_duration(start_time: &BsonDateTime, end_time: &Option<BsonDateTime>) -> i64 {
@@ -47,19 +47,12 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
     }
 
     pub async fn create_work_logs(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, AppError> {
-        // バリデーションチェック
-        if let Some(end_time) = work_logs.end_time {
-            if work_logs.start_time >= end_time {
-                let mut errors = ValidationErrors::new();
-                errors.add(
-                    "time",
-                    ValidationError::new("開始時間は終了時間より前である必要があります"),
-                );
-                return Err(AppError::ValidationError(errors));
-            }
-        }
-
         let project_id_str = work_logs.project_id.to_string();
+
+        // バリデーションチェック
+        work_logs
+            .validate_all()
+            .map_err(|e| AppError::ValidationError(e))?;
 
         // プロジェクトの取得と勤怠時間の作成を並行して実行
         let (project, inserted_id) = try_join!(
@@ -100,18 +93,12 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         id: &ObjectId,
         work_logs: &WorkLogsUpdate,
     ) -> Result<bool, AppError> {
-        // バリデーションチェック
-        if let Some(end_time) = work_logs.end_time {
-            if work_logs.start_time >= end_time {
-                let mut errors = ValidationErrors::new();
-                errors.add(
-                    "time",
-                    ValidationError::new("開始時間は終了時間より前である必要があります"),
-                );
-                return Err(AppError::ValidationError(errors));
-            }
-        }
         let project_id_str = work_logs.project_id.to_string();
+
+        // バリデーションチェック
+        work_logs
+            .validate_all()
+            .map_err(|e| AppError::ValidationError(e))?;
 
         // プロジェクトの取得と勤怠時間の更新を並行して実行
         let (project, _) = try_join!(
