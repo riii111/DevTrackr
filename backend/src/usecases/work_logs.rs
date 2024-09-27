@@ -8,7 +8,6 @@ use crate::usecases::projects::ProjectUseCase;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use std::sync::Arc;
 use tokio::try_join;
-use validator::{Validate, ValidationError, ValidationErrors};
 
 // WorkLogsCreate と WorkLogsUpdate から共通のフィールドを取り出すヘルパー関数
 fn calculate_working_duration(start_time: &BsonDateTime, end_time: &Option<BsonDateTime>) -> i64 {
