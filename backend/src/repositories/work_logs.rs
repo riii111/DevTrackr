@@ -44,6 +44,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
             project_id: work_logs.project_id,
             start_time: BsonDateTime::from(work_logs.start_time),
             end_time: work_logs.end_time.map(BsonDateTime::from),
+            memo: work_logs.memo.clone(),
             created_at: BsonDateTime::now(),
             updated_at: None,
         };
