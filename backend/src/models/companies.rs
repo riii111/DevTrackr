@@ -100,10 +100,8 @@ pub struct CompanyCommon {
     pub annual_sales: Option<AnnualSales>, // 年間売上
     pub contract_type: ContractType,       // 契約タイプ
     #[validate(length(max = 10, message = "主要顧客は最大10件まで登録できます"))]
-    #[schema(example = "金融,IT,製造")]
     pub major_clients: Option<Vec<String>>, // 主要顧客
     #[validate(length(max = 10, message = "主要サービスは最大10件まで登録できます"))]
-    #[schema(example = "システム開発,ネットワークセキュリティ,データ分析")]
     pub major_services: Option<Vec<String>>, // 主要サービス
     #[validate(range(
         min = 500,
@@ -148,7 +146,7 @@ pub struct CompanyCreate {
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
+    #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
 }
 
@@ -179,7 +177,7 @@ pub struct CompanyUpdate {
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    #[serde(deserialize_with = "deserialize_option_bson_date_time")]
+    #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
 }
 
