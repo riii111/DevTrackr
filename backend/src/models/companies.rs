@@ -53,20 +53,24 @@ pub enum ContractType {
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct AnnualSales {
     #[validate(range(min = 0, message = "年間売上は0以上である必要があります"))]
+    #[schema(example = 100000000)]
     pub amount: i64, // 年間売上
     #[validate(range(max = 2100, message = "会計年度は2100年以前である必要があります"))]
+    #[schema(example = 2024)]
     pub fiscal_year: i32, // 会計年度
 }
 
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct Bonus {
     #[validate(range(min = 0, message = "ボーナス金額は0以上である必要があります"))]
+    #[schema(example = 1000000)]
     pub amount: i64, // ボーナス金額
     #[validate(range(
         min = 1,
         max = 12,
         message = "ボーナス頻度は1から12の間である必要があります"
     ))]
+    #[schema(example = 2)]
     pub frequency: i32, // ボーナス頻度
 }
 
