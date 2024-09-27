@@ -51,6 +51,7 @@ use utoipa::OpenApi;
     tags(
         (name = "projects", description = "プロジェクト関連のエンドポイント"),
         (name = "work_logs", description = "勤怠関連のエンドポイント"),
+        (name = "companies", description = "企業関連のエンドポイント"),
     )
 )]
 pub struct ApiDoc;
