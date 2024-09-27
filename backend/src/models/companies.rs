@@ -51,7 +51,7 @@ pub enum ContractType {
 }
 
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
-pub struct AnnualRevenue {
+pub struct AnnualSales {
     #[validate(range(min = 0, message = "年間売上は0以上である必要があります"))]
     pub amount: i64, // 年間売上
     #[validate(range(max = 2100, message = "会計年度は2100年以前である必要があります"))]
@@ -73,7 +73,7 @@ pub struct Bonus {
 // TODO: 共通フィールドの扱い方については要検討。あくまでもモデル実装内部の話なのに、repositoriesやresponseで"common.""と記述するのが面倒
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct CompanyCommon {
-    #[validate(length(min = 2, max = 100, message = "会社名は2〜100文字である必要あります"))]
+    #[validate(length(min = 2, max = 100, message = "企業名は2〜100文字である必要があります"))]
     #[schema(example = "株式会社テスト")]
     pub company_name: String, // 企業名
     #[validate(range(
@@ -83,17 +83,17 @@ pub struct CompanyCommon {
     ))]
     #[schema(example = 2024)]
     pub establishment_year: i32, // 設立年
-    #[validate(length(max = 200, message = "本社所在地は200文字以内である必要があります"))]
+    #[validate(length(max = 200, message = "所在地は200文字以内である必要があります"))]
     #[schema(example = "東京都千代田区")]
-    pub headquarters_location: String, // 本社所在地
+    pub location: String, // 所在地
     #[validate(url(message = "有効なURLを入力してください"))]
     #[schema(example = "https://www.example.com")]
     pub website_url: String, // 企業サイトURL
     #[validate(range(min = 1, message = "従業員数は1以上である必要があります"))]
     #[schema(example = 100)]
     pub employee_count: i32, // 従業員数
-    pub annual_revenue: Option<AnnualRevenue>, // 年間売上
-    pub contract_type: ContractType,           // 契約タイプ
+    pub annual_sales: Option<AnnualSales>, // 年間売上
+    pub contract_type: ContractType,       // 契約タイプ
     #[validate(length(max = 10, message = "主要顧客は最大10件まで登録できます"))]
     #[schema(example = "金融,IT,製造")]
     pub major_clients: Option<Vec<String>>, // 主要顧客

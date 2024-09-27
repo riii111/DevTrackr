@@ -1,4 +1,4 @@
-use crate::models::companies::{AnnualRevenue, Bonus, CompanyInDB, CompanyStatus, ContractType};
+use crate::models::companies::{AnnualSales, Bonus, CompanyInDB, CompanyStatus, ContractType};
 use crate::utils::serializer::{
     serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
 };
@@ -13,10 +13,10 @@ pub struct CompanyResponse {
     pub id: ObjectId,
     pub company_name: String,
     pub establishment_year: i32,
-    pub headquarters_location: String,
+    pub location: String,
     pub website_url: String,
     pub employee_count: i32,
-    pub annual_revenue: Option<AnnualRevenue>,
+    pub annual_sales: Option<AnnualSales>,
     #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub affiliation_start_date: BsonDateTime,
@@ -45,10 +45,10 @@ impl TryFrom<CompanyInDB> for CompanyResponse {
             id: db_company.id.ok_or("IDが存在しません")?,
             company_name: db_company.common.company_name,
             establishment_year: db_company.common.establishment_year,
-            headquarters_location: db_company.common.headquarters_location,
+            location: db_company.common.location,
             website_url: db_company.common.website_url,
             employee_count: db_company.common.employee_count,
-            annual_revenue: db_company.common.annual_revenue,
+            annual_sales: db_company.common.annual_sales,
             affiliation_start_date: db_company.affiliation_start_date,
             affiliation_end_date: db_company.affiliation_end_date,
             contract_type: db_company.common.contract_type,
