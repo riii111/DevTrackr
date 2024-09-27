@@ -1,13 +1,13 @@
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use serde_with::{serde_as, DefaultOnNull};
+use utoipa::ToSchema;
 use validator::Validate;
 
 #[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum ProjectStatus {
     #[default]
-    Planning,   // 企画中
+    Planning, // 企画中
     InProgress, // 進行中
     Completed,  // 完了
     OnHold,     // 一時中断
@@ -16,7 +16,11 @@ pub enum ProjectStatus {
 
 #[derive(Deserialize, Debug, Validate, ToSchema)]
 pub struct ProjectCreate {
-    #[validate(length(min = 1, max = 100, message = "タイトルは1〜100文字である必要があります"))]
+    #[validate(length(
+        min = 1,
+        max = 100,
+        message = "タイトルは1〜100文字である必要があります"
+    ))]
     pub title: String,
     #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
@@ -30,7 +34,11 @@ pub struct ProjectCreate {
 
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct ProjectUpdate {
-    #[validate(length(min = 1, max = 100, message = "タイトルは1〜100文字である必要があります"))]
+    #[validate(length(
+        min = 1,
+        max = 100,
+        message = "タイトルは1〜100文字である必要があります"
+    ))]
     pub title: String,
     #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
