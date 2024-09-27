@@ -157,16 +157,30 @@ pub struct CompanyUpdate {
     pub affiliation_end_date: Option<NaiveDate>, // 契約終了日
 }
 
-impl CompanyUpdate {
+impl From<CompanyInDB> for CompanyUpdate {
+    fn from(company: CompanyInDB) -> Self {
+        CompanyUpdate {
+            common: company.common,
+            affiliation_start_date: company.affiliation_start_date,
+            affiliation_end_date: company.affiliation_end_date,
+        }
+    }
+}
+
+trait DateValidator {
+    fn get_start_date(&self) -> NaiveDate;
+    fn get_end_date(&self) -> Option<NaiveDate>;
+
     fn validate_dates(&self) -> Result<(), ValidationError> {
-        let now = BsonDateTime::now();
-        if self.affiliation_start_date > now {
+        let today = Tokyo.from_utc_datetime(&Utc::now().naive_utc()).date_naive();
+
+        if self.get_start_date() > today {
             return Err(ValidationError::new(
-                "契約開始日は現在日時より前である必要があります",
+                "契約開始日は現在日付より前である必要があります",
             ));
         }
-        if let Some(end_date) = self.affiliation_end_date {
-            if end_date <= self.affiliation_start_date {
+        if let Some(end_date) = self.get_end_date() {
+            if end_date <= self.get_start_date() {
                 return Err(ValidationError::new(
                     "契約終了日は契約開始日より後である必要があります",
                 ));
@@ -176,12 +190,22 @@ impl CompanyUpdate {
     }
 }
 
-impl From<CompanyInDB> for CompanyUpdate {
-    fn from(company: CompanyInDB) -> Self {
-        CompanyUpdate {
-            common: company.common,
-            affiliation_start_date: company.affiliation_start_date,
-            affiliation_end_date: company.affiliation_end_date,
-        }
+impl DateValidator for CompanyCreate {
+    fn get_start_date(&self) -> NaiveDate {
+        self.affiliation_start_date
+    }
+
+    fn get_end_date(&self) -> Option<NaiveDate> {
+        self.affiliation_end_date
+    }
+}
+
+impl DateValidator for CompanyUpdate {
+    fn get_start_date(&self) -> NaiveDate {
+        self.affiliation_start_date
+    }
+
+    fn get_end_date(&self) -> Option<NaiveDate> {
+        self.affiliation_end_date
     }
 }
