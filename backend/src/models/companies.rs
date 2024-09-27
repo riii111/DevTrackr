@@ -3,6 +3,7 @@ use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError, ValidationErrors};
+use serde_with::serde_as;
 
 // Validate用のマクロ
 macro_rules! impl_validate {
@@ -34,8 +35,9 @@ macro_rules! impl_validate {
 impl_validate!(CompanyCreate);
 impl_validate!(CompanyUpdate);
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum CompanyStatus {
+    #[default]
     PendingContract, // 契約予定
     Contract,        // 契約中
     Completed,       // 完了
@@ -76,6 +78,7 @@ pub struct Bonus {
 }
 
 // TODO: 共通フィールドの扱い方については要検討。あくまでもモデル実装内部の話なのに、repositoriesやresponseで"common.""と記述するのが面倒
+#[serde_as]
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct CompanyCommon {
     #[validate(length(min = 2, max = 100, message = "企業名は2〜100文字である必要があります"))]
@@ -112,7 +115,6 @@ pub struct CompanyCommon {
     pub average_hourly_rate: Option<i32>, // 平均時給
     #[schema(example = json!({"amount": 100000, "frequency": 1}))]
     pub bonus: Option<Bonus>, // ボーナス
-    #[serde(default = "default_company_status")]
     #[schema(example = "PendingContract")]
     pub status: CompanyStatus, // 契約ステータス
 }
@@ -127,7 +129,6 @@ pub struct CompanyInDB {
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub affiliation_start_date: BsonDateTime, // 契約開始日
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     pub affiliation_end_date: Option<BsonDateTime>, // 契約終了日
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime, // 作成日時
@@ -205,8 +206,4 @@ impl From<CompanyInDB> for CompanyUpdate {
             affiliation_end_date: company.affiliation_end_date,
         }
     }
-}
-
-fn default_company_status() -> CompanyStatus {
-    CompanyStatus::PendingContract
 }
