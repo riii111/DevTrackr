@@ -24,3 +24,22 @@ where
         .transpose()
         .map_err(de::Error::custom)
 }
+
+// ProjectQueryのスキルラベルのデシリアライザ
+pub fn deserialize_skill_labels<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum SkillLabels {
+        Single(String),
+        Multiple(Vec<String>),
+    }
+
+    match Option::<SkillLabels>::deserialize(deserializer)? {
+        Some(SkillLabels::Single(s)) => Ok(Some(vec![s])),
+        Some(SkillLabels::Multiple(vec)) => Ok(Some(vec)),
+        None => Ok(None),
+    }
+}

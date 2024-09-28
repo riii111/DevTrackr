@@ -55,13 +55,20 @@ impl ProjectRepository for MongoProjectRepository {
 
         if let Some(filter) = filter {
             if let Some(title) = filter.title {
+                // タイトルに部分一致するプロジェクトを検索（大文字小文字を無視）
                 query.insert("title", doc! { "$regex": title, "$options": "i" });
             }
             if let Some(status) = filter.status {
+                // ステータスに一致するプロジェクトを検索
                 query.insert("status", status.to_string());
             }
             if let Some(labels) = filter.skill_labels {
-                query.insert("skill_labels", doc! { "$all": labels });
+                // 指定されたスキルラベルのいずれかを持つプロジェクトを検索
+                query.insert("skill_labels", doc! { "$in": labels });
+            }
+            if let Some(company_id) = filter.company_id {
+                // 企業IDに一致するプロジェクトを検索
+                query.insert("company_id", company_id);
             }
         }
 
@@ -84,7 +91,7 @@ impl ProjectRepository for MongoProjectRepository {
         // findメソッドの呼び出し
         let mut cursor = self
             .collection
-            .find(Some(query), Some(find_options))
+            .find(query, find_options)
             .await
             .map_err(RepositoryError::DatabaseError)?;
 
