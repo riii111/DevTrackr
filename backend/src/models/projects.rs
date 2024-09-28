@@ -1,3 +1,4 @@
+use crate::utils::deserializer::deserialize_skill_labels;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DefaultOnNull};
@@ -151,6 +152,7 @@ pub struct ProjectQuery {
     pub status: Option<String>,
 
     /// スキルラベルの一覧
+    #[serde(default, deserialize_with = "deserialize_skill_labels")]
     #[schema(
         example = json!(["C++", "Rust"]),
         value_type = Vec<String>
@@ -158,7 +160,7 @@ pub struct ProjectQuery {
     pub skill_labels: Option<Vec<String>>,
 
     /// 企業ID
-    #[schema(example = "80a6c1e9f0f7b9001234abcd")]
+    #[schema(value_type = String, example = "80a6c1e9f0f7b9001234abcd")]
     pub company_id: Option<ObjectId>,
 
     /// 取得するドキュメント数の制限
