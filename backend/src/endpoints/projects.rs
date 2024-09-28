@@ -15,8 +15,8 @@ use validator::Validate;
     params(
         ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
         ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
-        ("company_id" = Option<ObjectId>, Query, description = "企業ID"),
         ("skill_labels" = Option<Vec<String>>, Query, description = "スキルラベルの一覧"),
+        ("company_id" = Option<String>, Query, description = "企業ID"),
         ("limit" = Option<i64>, Query, description = "取得するドキュメント数の制限"),
         ("offset" = Option<u64>, Query, description = "取得を開始する位置(0スタート)"),
         ("sort" = Option<Vec<String>>, Query, description = "ソート条件（例: 'name:asc', 'created_at:desc'）")
