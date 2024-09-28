@@ -25,6 +25,11 @@ async fn main() -> Result<()> {
 
     let db = db::init_db().await.expect("Database Initialization Failed");
 
+    // インデックスの作成
+    if let Err(e) = db::create_indexes(&db).await {
+        log::error!("インデックスの作成に失敗しました: {}", e);
+    }
+
     // 各ユースケースの初期化
     let project_usecase = di::init_project_usecase(&db);
     let company_usecase = di::init_company_usecase(&db);
