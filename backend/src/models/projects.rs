@@ -135,3 +135,33 @@ pub fn validate_sort_order(order: &SortOrder) -> Result<(), ValidationError> {
         SortOrder::Asc | SortOrder::Desc => Ok(()),
     }
 }
+
+#[derive(Deserialize, ToSchema)]
+pub struct ProjectQuery {
+    /// プロジェクトのタイトル（部分一致）
+    #[schema(example = "プロジェクトA")]
+    pub title: Option<String>,
+
+    /// プロジェクトのステータス
+    #[schema(example = "InProgress")]
+    pub status: Option<String>,
+
+    /// スキルラベルの一覧
+    #[schema(
+        example = json!(["C++", "Rust"]),
+        value_type = Vec<String>
+    )]
+    pub skill_labels: Option<Vec<String>>,
+
+    /// 取得するドキュメント数の制限
+    #[schema(example = 10)]
+    pub limit: Option<i64>,
+
+    /// 取得を開始する位置
+    #[schema(example = 0)]
+    pub offset: Option<u64>,
+
+    /// ソート条件（例: "name:asc", "created_at:desc"）
+    #[schema(example = "name:asc")]
+    pub sort: Option<Vec<String>>,
+}
