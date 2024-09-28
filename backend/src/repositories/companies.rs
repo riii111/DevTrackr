@@ -38,7 +38,7 @@ impl CompanyRepository for MongoCompanyRepository {
         let mut companies = Vec::new();
         let mut cursor = self
             .collection
-            .find(doc! {})
+            .find(doc! {}, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
 
@@ -55,7 +55,7 @@ impl CompanyRepository for MongoCompanyRepository {
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, RepositoryError> {
         self.collection
-            .find_one(doc! { "_id": id })
+            .find_one(doc! { "_id": id }, None)
             .await
             .map_err(RepositoryError::DatabaseError)
     }
@@ -72,7 +72,7 @@ impl CompanyRepository for MongoCompanyRepository {
 
         let result: InsertOneResult = self
             .collection
-            .insert_one(&company_in_db)
+            .insert_one(&company_in_db, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         result
@@ -96,7 +96,7 @@ impl CompanyRepository for MongoCompanyRepository {
         };
         let result = self
             .collection
-            .update_one(doc! { "_id": id }, update)
+            .update_one(doc! { "_id": id }, update, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         Ok(result.modified_count > 0)

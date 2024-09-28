@@ -38,7 +38,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
         let mut work_logs = Vec::new();
         let mut cursor = self
             .collection
-            .find(doc! {})
+            .find(doc! {}, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
 
@@ -55,7 +55,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkLogsInDB>, RepositoryError> {
         self.collection
-            .find_one(doc! { "_id": id })
+            .find_one(doc! { "_id": id }, None)
             .await
             .map_err(RepositoryError::DatabaseError)
     }
@@ -73,7 +73,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
 
         let result: InsertOneResult = self
             .collection
-            .insert_one(&work_logs_in_db)
+            .insert_one(&work_logs_in_db, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         result
@@ -97,7 +97,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
         };
         let result = self
             .collection
-            .update_one(doc! { "_id": id }, update)
+            .update_one(doc! { "_id": id }, update, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         Ok(result.modified_count > 0)
