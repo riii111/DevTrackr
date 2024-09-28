@@ -1,8 +1,9 @@
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DefaultOnNull};
+use std::fmt;
 use utoipa::ToSchema;
-use validator::Validate;
+use validator::{Validate, ValidationError};
 
 #[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
 pub enum ProjectStatus {
@@ -12,6 +13,18 @@ pub enum ProjectStatus {
     Completed,  // 完了
     OnHold,     // 一時中断
     Cancelled,  // キャンセル
+}
+
+impl fmt::Display for ProjectStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ProjectStatus::Planning => write!(f, "planning"),
+            ProjectStatus::InProgress => write!(f, "in_progress"),
+            ProjectStatus::Completed => write!(f, "completed"),
+            ProjectStatus::OnHold => write!(f, "on_hold"),
+            ProjectStatus::Cancelled => write!(f, "cancelled"),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Validate, ToSchema)]
@@ -87,3 +100,18 @@ impl From<ProjectInDB> for ProjectUpdate {
         }
     }
 }
+
+#[derive(Debug, Deserialize, Default)]
+pub struct ProjectFilter {
+    pub title: Option<String>,
+    pub status: Option<String>,
+    pub skill_labels: Option<Vec<String>>,
+}
+
+impl ProjectFilter {
+    /// フィルタが空かどうかをチェックする
+    pub fn is_empty(&self) -> bool {
+        self.title.is_none() && self.status.is_none() && self.skill_labels.is_none()
+    }
+}
+

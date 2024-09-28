@@ -1,13 +1,22 @@
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
+use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
-use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
+use bson::{doc, oid::ObjectId, DateTime as BsonDateTime, Document};
 use futures::TryStreamExt;
-use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
+use mongodb::{
+    error::Error as MongoError, options::FindOptions, results::InsertOneResult, Collection,
+    Database,
+};
 
 #[async_trait]
 pub trait ProjectRepository {
-    async fn find_all(&self) -> Result<Vec<ProjectInDB>, RepositoryError>;
+    async fn find_many(
+        &self,
+        filter: Option<ProjectFilter>,
+        limit: Option<i64>,
+        offset: Option<u64>,
+        sort: Option<Vec<(String, i8)>>,
+    ) -> Result<Vec<ProjectInDB>, RepositoryError>;
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError>;
 
@@ -34,14 +43,52 @@ impl MongoProjectRepository {
 
 #[async_trait]
 impl ProjectRepository for MongoProjectRepository {
-    async fn find_all(&self) -> Result<Vec<ProjectInDB>, RepositoryError> {
-        let mut projects = Vec::new();
+    async fn find_many(
+        &self,
+        filter: Option<ProjectFilter>,
+        limit: Option<i64>,
+        offset: Option<u64>,
+        sort: Option<Vec<(String, i8)>>,
+    ) -> Result<Vec<ProjectInDB>, RepositoryError> {
+        // クエリの構築
+        let mut query = Document::new();
+
+        if let Some(filter) = filter {
+            if let Some(title) = filter.title {
+                query.insert("title", doc! { "$regex": title, "$options": "i" });
+            }
+            if let Some(status) = filter.status {
+                query.insert("status", status.to_string());
+            }
+            if let Some(labels) = filter.skill_labels {
+                query.insert("skill_labels", doc! { "$all": labels });
+            }
+        }
+
+        // FindOptionsの構築
+        let mut find_options = FindOptions::default();
+        if let Some(limit) = limit {
+            find_options.limit = Some(limit);
+        }
+        if let Some(offset) = offset {
+            find_options.skip = Some(offset);
+        }
+        if let Some(sort_params) = sort {
+            let sort_doc: Document = sort_params
+                .into_iter()
+                .map(|(k, v)| (k, bson::Bson::Int32(v as i32)))
+                .collect();
+            find_options.sort = Some(sort_doc);
+        }
+
+        // findメソッドの呼び出し
         let mut cursor = self
             .collection
-            .find(doc! {})
+            .find(Some(query), Some(find_options))
             .await
             .map_err(RepositoryError::DatabaseError)?;
 
+        let mut projects = Vec::new();
         while let Some(result) = cursor
             .try_next()
             .await
@@ -55,7 +102,7 @@ impl ProjectRepository for MongoProjectRepository {
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, RepositoryError> {
         self.collection
-            .find_one(doc! { "_id": id })
+            .find_one(doc! { "_id": id }, None)
             .await
             .map_err(RepositoryError::DatabaseError)
     }
@@ -74,7 +121,7 @@ impl ProjectRepository for MongoProjectRepository {
             updated_at: None,
         };
 
-        let result: InsertOneResult = self.collection.insert_one(&project_in_db).await?;
+        let result: InsertOneResult = self.collection.insert_one(&project_in_db, None).await?;
         result
             .inserted_id
             .as_object_id()
@@ -96,7 +143,7 @@ impl ProjectRepository for MongoProjectRepository {
         };
         let result = self
             .collection
-            .update_one(doc! { "_id": id }, update)
+            .update_one(doc! { "_id": id }, update, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
         Ok(result.modified_count > 0)
