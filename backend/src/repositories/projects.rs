@@ -112,7 +112,7 @@ impl ProjectRepository for MongoProjectRepository {
             id: None, // MongoDBにID生成を任せる
             title: project.title,
             description: project.description,
-            // company_id: project.company_id,  // TODO: 後で追加する
+            company_id: project.company_id,
             hourly_pay: project.hourly_pay,
             status: project.status,
             total_working_time: 0,

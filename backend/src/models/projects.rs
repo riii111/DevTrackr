@@ -39,7 +39,8 @@ pub struct ProjectCreate {
     pub description: Option<String>,
     #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
-    // pub company_id: ObjectId,  // TODO: 後で追加する
+    #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
+    pub company_id: ObjectId, // プロジェクトの企業ID
     #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
     pub status: ProjectStatus,
@@ -57,8 +58,8 @@ pub struct ProjectUpdate {
     pub description: Option<String>,
     #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
-    // #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
-    // pub company_id: ObjectId,  // TODO: 後で追加する
+    #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
+    pub company_id: ObjectId, // プロジェクトの企業ID
     #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
     pub status: ProjectStatus,
@@ -72,19 +73,19 @@ pub struct ProjectInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>,
-    pub title: String,
-    pub description: Option<String>,
-    pub skill_labels: Option<Vec<String>>,
-    // #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
-    // pub company_id: ObjectId,  // TODO: 後で追加する
-    pub hourly_pay: Option<i32>,
+    pub title: String,                     // プロジェクトのタイトル
+    pub description: Option<String>,       // プロジェクトの説明
+    pub skill_labels: Option<Vec<String>>, // プロジェクトの採用技術
+    #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
+    pub company_id: ObjectId, // プロジェクトの企業ID
+    pub hourly_pay: Option<i32>,           // プロジェクトの時給
     #[serde_as(as = "DefaultOnNull")]
-    pub status: ProjectStatus,
-    pub total_working_time: i64,
+    pub status: ProjectStatus, // プロジェクトの状況
+    pub total_working_time: i64,           // 総作業時間
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    pub created_at: BsonDateTime,
+    pub created_at: BsonDateTime, // 作成日時
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
-    pub updated_at: Option<BsonDateTime>,
+    pub updated_at: Option<BsonDateTime>, // 更新日時
 }
 
 impl From<ProjectInDB> for ProjectUpdate {
@@ -93,7 +94,7 @@ impl From<ProjectInDB> for ProjectUpdate {
             title: project.title,
             description: project.description,
             skill_labels: project.skill_labels,
-            // company_id: project.company_id,  // TODO: 後で追加する
+            company_id: project.company_id,
             hourly_pay: project.hourly_pay,
             status: project.status,
             total_working_time: project.total_working_time,
