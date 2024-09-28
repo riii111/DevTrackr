@@ -20,7 +20,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
 
 fn projects_scope() -> Scope {
     web::scope("/projects")
-        .service(projects::get_all_projects)
+        .service(projects::get_projects)
         .service(projects::get_project_by_id)
         .service(projects::create_project)
         .service(projects::update_project_by_id)

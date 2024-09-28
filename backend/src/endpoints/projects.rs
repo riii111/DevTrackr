@@ -1,28 +1,102 @@
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::errors::app_error::AppError;
-use crate::models::projects::{ProjectCreate, ProjectUpdate};
+use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
 use actix_web::{get, post, put, web, HttpResponse};
 use bson::oid::ObjectId;
 use log::info;
+use serde::Deserialize;
 use std::sync::Arc;
+
+#[derive(Deserialize)]
+pub struct ProjectQuery {
+    /// プロジェクトのタイトル（部分一致）
+    title: Option<String>,
+    /// プロジェクトのステータス
+    status: Option<String>,
+    /// スキルラベルの一覧
+    skill_labels: Option<Vec<String>>,
+    /// 取得するドキュメント数の制限
+    limit: Option<i64>,
+    /// 取得を開始する位置
+    offset: Option<u64>,
+    /// ソート条件（例: "name:asc", "created_at:desc"）
+    sort: Option<Vec<String>>,
+}
 
 #[utoipa::path(
     get,
     path = "/projects",
+    params(
+        ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
+        ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
+        ("skill_labels" = Option<Vec<String>>, Query, description = "スキルラベルの一覧"),
+        ("limit" = Option<i64>, Query, description = "取得するドキュメント数の制限"),
+        ("offset" = Option<u64>, Query, description = "取得を開始する位置"),
+        ("sort" = Option<Vec<String>>, Query, description = "ソート条件（例: 'name:asc', 'created_at:desc'）")
+    ),
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = Vec<ProjectResponse>),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
 #[get("")]
-pub async fn get_all_projects(
+pub async fn get_projects(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
+    query: web::Query<ProjectQuery>,
 ) -> Result<HttpResponse, AppError> {
-    info!("called GET get_all_projects!!");
+    info!("called GET search_projects!!");
 
-    let projects = usecase.get_all_projects().await?;
+    // クエリパラメータを ProjectFilter にマッピング
+    let filter = ProjectFilter {
+        title: query.title.clone(),
+        status: query.status.clone(),
+        skill_labels: query.skill_labels.clone(),
+    };
+
+    // ソート条件のパース
+    let sort = if let Some(sort_params) = &query.sort {
+        let parsed_sort = sort_params
+            .iter()
+            .filter_map(|s| {
+                let parts: Vec<&str> = s.split(':').collect();
+                if parts.len() == 2 {
+                    let key = parts[0].to_string();
+                    let order = match parts[1].to_lowercase().as_str() {
+                        "asc" => 1,
+                        "desc" => -1,
+                        _ => return None,
+                    };
+                    Some((key, order))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<(String, i8)>>();
+
+        if parsed_sort.is_empty() {
+            None
+        } else {
+            Some(parsed_sort)
+        }
+    } else {
+        None
+    };
+
+    let projects = usecase
+        .search_projects(
+            if filter.is_empty() {
+                None
+            } else {
+                Some(filter)
+            },
+            query.limit,
+            query.offset,
+            sort,
+        )
+        .await?;
+
     let response = projects
         .into_iter()
         .map(ProjectResponse::try_from)

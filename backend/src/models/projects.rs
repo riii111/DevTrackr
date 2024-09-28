@@ -115,3 +115,23 @@ impl ProjectFilter {
     }
 }
 
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub struct SortParam {
+    pub field: String,
+    #[validate(custom(function = "validate_sort_order"))]
+    pub order: SortOrder,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SortOrder {
+    Asc,
+    Desc,
+}
+
+pub fn validate_sort_order(order: &SortOrder) -> Result<(), ValidationError> {
+    match order {
+        SortOrder::Asc | SortOrder::Desc => Ok(()),
+    }
+}

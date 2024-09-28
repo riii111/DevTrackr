@@ -1,6 +1,6 @@
 use crate::errors::app_error::AppError;
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::projects::{ProjectCreate, ProjectInDB, ProjectUpdate};
+use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectInDB, ProjectUpdate};
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
@@ -15,11 +15,22 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
         Self { repository }
     }
 
-    pub async fn get_all_projects(&self) -> Result<Vec<ProjectInDB>, AppError> {
-        self.repository.find_all().await.map_err(|e| match e {
-            RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-            RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-        })
+    /// プロジェクトを検索し、条件に一致するプロジェクトを取得する。
+    /// パラメータが `None` の場合は全てのプロジェクトを取得する。
+    pub async fn search_projects(
+        &self,
+        filter: Option<ProjectFilter>,
+        limit: Option<i64>,
+        offset: Option<u64>,
+        sort: Option<Vec<(String, i8)>>,
+    ) -> Result<Vec<ProjectInDB>, AppError> {
+        self.repository
+            .find_many(filter, limit, offset, sort)
+            .await
+            .map_err(|e| match e {
+                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
+                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
+            })
     }
 
     pub async fn get_project_by_id(&self, id: &str) -> Result<Option<ProjectInDB>, AppError> {

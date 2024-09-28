@@ -16,7 +16,7 @@ use utoipa::OpenApi;
         projects::get_project_by_id,
         projects::create_project,
         projects::update_project_by_id,
-        projects::get_all_projects,
+        projects::get_projects,
         work_logs::get_all_work_logs,
         work_logs::get_work_logs_by_id,
         work_logs::create_work_logs,
