@@ -54,12 +54,6 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
 
     pub async fn create_work_logs(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, AppError> {
         let project_id_str = work_logs.project_id.to_string();
-
-        // バリデーションチェック
-        work_logs
-            .validate_all()
-            .map_err(|e| AppError::ValidationError(e))?;
-
         // プロジェクトの取得と勤怠時間の作成を並行して実行
         let (project, inserted_id) = try_join!(
             self.project_usecase.get_project_by_id(&project_id_str),
@@ -100,11 +94,6 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         work_logs: &WorkLogsUpdate,
     ) -> Result<bool, AppError> {
         let project_id_str = work_logs.project_id.to_string();
-
-        // バリデーションチェック
-        work_logs
-            .validate_all()
-            .map_err(|e| AppError::ValidationError(e))?;
 
         // プロジェクトの取得と勤怠時間の更新を並行して実行
         let (project, _) = try_join!(

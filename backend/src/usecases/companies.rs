@@ -34,11 +34,6 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
     }
 
     pub async fn create_company(&self, company: CompanyCreate) -> Result<ObjectId, AppError> {
-        // バリデーションを実行
-        company
-            .validate_all()
-            .map_err(|e| AppError::ValidationError(e))?;
-
         self.repository
             .insert_one(company)
             .await
@@ -53,11 +48,6 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
         id: &ObjectId,
         company: &CompanyUpdate,
     ) -> Result<bool, AppError> {
-        // バリデーションを実行
-        company
-            .validate_all()
-            .map_err(|e| AppError::ValidationError(e))?;
-
         // 既存のドキュメントが存在するか確認
         if self
             .repository

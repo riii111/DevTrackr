@@ -80,6 +80,11 @@ pub async fn create_company(
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_company!!");
 
+    // バリデーションを実行
+    company
+        .validate_all()
+        .map_err(|e| AppError::ValidationError(e))?;
+
     let company_id = usecase.create_company(company.into_inner()).await?;
 
     Ok(HttpResponse::Created().json(CompanyCreatedResponse::from(company_id)))
@@ -109,6 +114,11 @@ pub async fn update_company_by_id(
 
     let obj_id = ObjectId::parse_str(&path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
+
+    // バリデーションを実行
+    company
+        .validate_all()
+        .map_err(|e| AppError::ValidationError(e))?;
 
     usecase
         .update_company_by_id(&obj_id, &company.into_inner())
