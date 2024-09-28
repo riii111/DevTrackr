@@ -16,6 +16,7 @@ use validator::Validate;
         ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
         ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
         ("skill_labels[]" = Option<Vec<String>>, Query, description = "スキルラベルの一覧"),
+        ("company_id" = Option<ObjectId>, Query, description = "企業ID"),
         ("limit" = Option<i64>, Query, description = "取得するドキュメント数の制限"),
         ("offset" = Option<u64>, Query, description = "取得を開始する位置(0スタート)"),
         ("sort" = Option<Vec<String>>, Query, description = "ソート条件（例: 'name:asc', 'created_at:desc'）")
@@ -37,6 +38,7 @@ pub async fn get_projects(
         title: query.title.clone(),
         status: query.status.clone(),
         skill_labels: query.skill_labels.clone(),
+        company_id: query.company_id.clone(),
     };
 
     // ソート条件のパース

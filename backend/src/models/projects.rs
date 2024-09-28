@@ -107,12 +107,16 @@ pub struct ProjectFilter {
     pub title: Option<String>,
     pub status: Option<String>,
     pub skill_labels: Option<Vec<String>>,
+    pub company_id: Option<ObjectId>,
 }
 
 impl ProjectFilter {
     /// フィルタが空かどうかをチェックする
     pub fn is_empty(&self) -> bool {
-        self.title.is_none() && self.status.is_none() && self.skill_labels.is_none()
+        self.title.is_none()
+            && self.status.is_none()
+            && self.skill_labels.is_none()
+            && self.company_id.is_none()
     }
 }
 
@@ -152,6 +156,10 @@ pub struct ProjectQuery {
         value_type = Vec<String>
     )]
     pub skill_labels: Option<Vec<String>>,
+
+    /// 企業ID
+    #[schema(example = "80a6c1e9f0f7b9001234abcd")]
+    pub company_id: Option<ObjectId>,
 
     /// 取得するドキュメント数の制限
     #[schema(example = 10)]
