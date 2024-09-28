@@ -111,7 +111,6 @@ pub struct Bonus {
     pub frequency: i32, // ボーナス頻度
 }
 
-// TODO: 共通フィールドの扱い方については要検討。あくまでもモデル実装内部の話なのに、repositoriesやresponseで"common.""と記述するのが面倒
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Validate, ToSchema)]
 pub struct CompanyCommon {

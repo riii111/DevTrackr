@@ -4,7 +4,6 @@ use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectInDB, Project
 use crate::repositories::projects::ProjectRepository;
 use bson::oid::ObjectId;
 use std::sync::Arc;
-use validator::Validate;
 
 pub struct ProjectUseCase<R: ProjectRepository> {
     repository: Arc<R>,
