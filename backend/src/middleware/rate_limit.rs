@@ -6,27 +6,31 @@ use log::{info, warn};
 use std::future::{ready, Ready};
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::Duration;
 
-// レート制限を適用するためのミドルウェア構造体
+/// レート制限を適用するためのミドルウェア構造体
 pub struct RateLimiterMiddleware {
     redis_client: Arc<RedisClient>,
-    max_requests: u64,
-    duration: Duration,
+    config: RateLimitConfig,
 }
 
 impl RateLimiterMiddleware {
-    // 新しいRateLimiterMiddlewareインスタンスを作成
-    pub fn new(redis_client: Arc<RedisClient>, rate_limit_config: RateLimitConfig) -> Self {
+    /// 新しいRateLimiterMiddlewareインスタンスを作成
+    ///
+    /// # 引数
+    /// * `redis_client` - Redisクライアント
+    /// * `config` - レート制限の設定
+    pub fn new(redis_client: Arc<RedisClient>, config: RateLimitConfig) -> Self {
         RateLimiterMiddleware {
             redis_client,
-            max_requests: rate_limit_config.max_requests,
-            duration: rate_limit_config.duration,
+            config,
         }
     }
 }
-
-// Transformトレイトの実装
+/// Transformトレイトの実装
+///
+/// Actix Webのミドルウェアを定義するためのトレイト。
+/// HTTPリクエスト処理の前に独自のロジックを挿入可能。
+/// ここではレート制限のチェックを行う。
 impl<S, B> Transform<S, ServiceRequest> for RateLimiterMiddleware
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
@@ -39,23 +43,24 @@ where
     type Transform = RateLimiterMiddlewareService<S>;
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
-    // 新しいトランスフォームを作成
+    /// 新しいトランスフォームを作成
+    ///
+    /// # 引数
+    /// * `service` - 内部サービス
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(RateLimiterMiddlewareService {
             service,
             redis_client: self.redis_client.clone(),
-            max_requests: self.max_requests,
-            duration: self.duration,
+            config: self.config.clone(),
         }))
     }
 }
 
-// 実際のレート制限ロジックを含むミドルウェアサービス
+/// 実際のレート制限ロジックを含むミドルウェアサービス
 pub struct RateLimiterMiddlewareService<S> {
     service: S,
     redis_client: Arc<RedisClient>,
-    max_requests: u64,
-    duration: Duration,
+    config: RateLimitConfig,
 }
 
 // Serviceトレイトの実装
@@ -72,7 +77,10 @@ where
     // 内部サービスの準備状態を転送
     actix_web::dev::forward_ready!(service);
 
-    // 各リクエストに対して呼び出され、レート制限チェックを実行
+    /// 各リクエストに対して呼び出され、レート制限チェックを実行
+    ///
+    /// # 引数
+    /// * `req` - サービスリクエスト
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // クライアントのIPアドレスを取得し、レート制限のキーとして使用
         let key = req
@@ -83,20 +91,19 @@ where
 
         let fut = self.service.call(req);
         let redis_client = self.redis_client.clone();
-        let max_requests = self.max_requests;
-        let duration = self.duration;
+        let config = self.config.clone();
 
         Box::pin(async move {
             // レート制限のカウントを取得
             match redis_client
-                .increment_and_check(&key, max_requests, duration.as_secs())
+                .increment_and_check(&key, config.max_requests, config.duration.as_secs())
                 .await
             {
                 // レート制限が許可された場合
                 Ok(true) => {
                     info!(
                         "Rate limit allowed for {}: {}/{} requests",
-                        key, 1, max_requests
+                        key, 1, config.max_requests
                     );
                     fut.await
                 }
@@ -105,12 +112,12 @@ where
                     warn!(
                         "Rate limit exceeded for {}: {}/{} requests",
                         key,
-                        max_requests + 1,
-                        max_requests
+                        config.max_requests + 1,
+                        config.max_requests
                     );
                     Err(actix_web::error::ErrorTooManyRequests("Rate limit exceeded").into())
                 }
-                // それ以外のエラー
+                // それ以外のエラー（Redisの接続エラーなど）
                 Err(e) => {
                     warn!("Rate limiter error for {}: {}", key, e);
                     Err(actix_web::error::ErrorInternalServerError(e).into())
