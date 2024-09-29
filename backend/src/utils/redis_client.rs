@@ -57,7 +57,6 @@ impl RedisClient {
         max_requests: u64,
         expiry: u64,
     ) -> Result<bool> {
-        // moveクロージャで使用するためにコピー
         let key = key.to_string();
         let max_requests = max_requests;
         let expiry = expiry;
@@ -65,14 +64,16 @@ impl RedisClient {
         self.with_connection(move |mut con| {
             Box::pin(async move {
                 // アトミックなパイプラインでインクリメントと有効期限の設定を行う
-                let (count,): (u64,) = redis::pipe()
+                let result: (u64,) = redis::pipe()
                     .atomic()
                     .incr(&key, 1) // キーをインクリメント
                     .expire(&key, expiry as i64) // キーの有効期限を設定
+                    .ignore() // expireの結果を無視
                     .query_async(&mut con)
                     .await
                     .map_err(|e: RedisError| Error::new(ErrorKind::Other, e))?;
 
+                let count = result.0;
                 // カウントが最大リクエスト数以下かどうかを返す
                 Ok(count <= max_requests)
             })
