@@ -1,7 +1,6 @@
 use dotenv::dotenv;
 use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database};
 
-use crate::models::companies::CompanyInDB;
 use crate::models::projects::ProjectInDB;
 use crate::models::work_logs::WorkLogsInDB;
 
