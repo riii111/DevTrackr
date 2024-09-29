@@ -43,6 +43,7 @@ services:
       - HOST=0.0.0.0
       - RATE_LIMIT_DURATION=${RATE_LIMIT_DURATION}
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
     #   interval: 21s
@@ -51,6 +52,7 @@ services:
     #   start_period: 40s
     depends_on:
       - mongo
+      - redis
     deploy:
       replicas: 1
       labels:
@@ -63,6 +65,13 @@ services:
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.interval=5s"
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.timeout=5s"
         # - "traefik.http.services.backend-api.loadbalancer.healthcheck.startupDelay=40s"
+
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - mynet
 
   mongo:
     image: mongo:6.0.8 # 2023/09時点でのstable版
