@@ -34,7 +34,6 @@ async fn main() -> Result<()> {
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
-    log::info!("Attempting to connect to Redis at: {}", redis_url); // デバッグ用
 
     // レートリミットの値を初期化
     let rate_limit_config = config::rate_limit::RateLimitConfig::from_env();

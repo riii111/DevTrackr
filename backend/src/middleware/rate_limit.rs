@@ -47,6 +47,9 @@ where
     ///
     /// # 引数
     /// * `service` - 内部サービス
+    ///
+    /// トランスフォーム(リクエスト処理の前後に追加の処理を挟むための仕組み)
+    /// ミドルウェアの動作をカスタマイズしたり、新機能追加する際に使用
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(RateLimiterMiddlewareService {
             service,
