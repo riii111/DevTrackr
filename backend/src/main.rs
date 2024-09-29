@@ -23,6 +23,11 @@ async fn main() -> Result<()> {
     let key = Key::generate();
     let message_framework = middleware::session::build_flash_messages_framework();
 
+    // キャッシュレイヤ、レートリミットの値を初期化
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let rate_limit_config = config::rate_limit::RateLimitConfig::from_env();
+
+    // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
     // インデックスの作成
@@ -47,6 +52,12 @@ async fn main() -> Result<()> {
             .wrap(message_framework.clone())
             .wrap(middleware::session::build_cookie_session_middleware(
                 key.clone(),
+            ))
+            .wrap(middleware::rate_limit::RateLimiter::new(
+                utils::redis_client::RedisClient::new(config::redis::create_redis_actor(
+                    &redis_url,
+                )),
+                rate_limit_config.clone(),
             ))
     })
     .bind(format!(
