@@ -6,24 +6,24 @@ use tokio::time::timeout;
 
 pub struct RedisClient {
     actor: Addr<RedisActor>,
-    url: String,
 }
 
 impl RedisClient {
-    pub fn new(actor: Addr<RedisActor>, url: String) -> Self {
-        Self { actor, url }
+    pub fn new(actor: Addr<RedisActor>) -> Self {
+        Self { actor }
     }
 
-    pub fn get_actor(&self) -> &Addr<RedisActor> {
-        &self.actor
+    pub async fn increment_and_check(
+        &self,
+        key: &str,
+        max_requests: u64,
+        expiry: u64,
+    ) -> Result<bool, Error> {
+        let count = self.increment_and_get(key, expiry).await?;
+        Ok(count <= max_requests)
     }
 
-    pub fn get_url(&self) -> &str {
-        &self.url
-    }
-
-    pub async fn increment_and_get(&self, key: &str, expiry: u64) -> Result<u32, Error> {
-        // INCRコマンドを送信し、カウンターをインクリメント
+    async fn increment_and_get(&self, key: &str, expiry: u64) -> Result<u64, Error> {
         let incr_result = timeout(
             Duration::from_secs(5), // 5秒のタイムアウトを設定
             self.actor.send(Command(resp_array!["INCR", key])),
@@ -75,7 +75,7 @@ impl RedisClient {
                 ))
             })?;
 
-            Ok(count as u32)
+            Ok(count as u64)
         } else {
             Err(Error::from(std::io::Error::new(
                 std::io::ErrorKind::Other,

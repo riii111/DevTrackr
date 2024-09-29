@@ -1,13 +1,12 @@
 use crate::config::rate_limit::RateLimitConfig;
 use crate::utils::redis_client::RedisClient;
-use actix_limitation::Limiter;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::Error;
 use log::{info, warn};
 use std::future::{ready, Ready};
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 // レート制限を適用するためのミドルウェア構造体
 pub struct RateLimiterMiddleware {
@@ -42,20 +41,21 @@ where
 
     // 新しいトランスフォームを作成
     fn new_transform(&self, service: S) -> Self::Future {
-        let redis_url = self.redis_client.get_url();
-        let limiter = Limiter::builder(redis_url)
-            .limit(self.max_requests as usize)
-            .period(self.duration)
-            .build()
-            .expect("Failed to create RateLimiter");
-        ready(Ok(RateLimiterMiddlewareService { service, limiter }))
+        ready(Ok(RateLimiterMiddlewareService {
+            service,
+            redis_client: self.redis_client.clone(),
+            max_requests: self.max_requests,
+            duration: self.duration,
+        }))
     }
 }
 
 // 実際のレート制限ロジックを含むミドルウェアサービス
 pub struct RateLimiterMiddlewareService<S> {
     service: S,
-    limiter: Limiter,
+    redis_client: Arc<RedisClient>,
+    max_requests: u64,
+    duration: Duration,
 }
 
 // Serviceトレイトの実装
@@ -82,40 +82,31 @@ where
             .to_string();
 
         let fut = self.service.call(req);
-        let limiter = self.limiter.clone();
+        let redis_client = self.redis_client.clone();
+        let max_requests = self.max_requests;
+        let duration = self.duration;
 
         Box::pin(async move {
             // レート制限のカウントを取得
-            match limiter.count(key.clone()).await {
+            match redis_client
+                .increment_and_check(&key, max_requests, duration.as_secs())
+                .await
+            {
                 // レート制限が許可された場合
-                Ok(status) => {
-                    let now = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs() as usize;
-                    let reset_in = status.reset_epoch_utc().saturating_sub(now);
+                Ok(true) => {
                     info!(
-                        "Rate limit status for {}: {}/{} requests, reset in {} seconds",
-                        key,
-                        status.remaining(),
-                        status.limit(),
-                        reset_in
+                        "Rate limit allowed for {}: {}/{} requests",
+                        key, 1, max_requests
                     );
                     fut.await
                 }
                 // レート制限が超過した場合
-                Err(actix_limitation::Error::LimitExceeded(status)) => {
-                    let now = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs() as usize;
-                    let reset_in = status.reset_epoch_utc().saturating_sub(now);
+                Ok(false) => {
                     warn!(
-                        "Rate limit exceeded for {}: {}/{} requests, reset in {} seconds",
+                        "Rate limit exceeded for {}: {}/{} requests",
                         key,
-                        status.remaining(),
-                        status.limit(),
-                        reset_in
+                        max_requests + 1,
+                        max_requests
                     );
                     Err(actix_web::error::ErrorTooManyRequests("Rate limit exceeded").into())
                 }

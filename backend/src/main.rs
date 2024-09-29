@@ -28,10 +28,12 @@ async fn main() -> Result<()> {
     // ロガーの設定
     std::env::set_var("RUST_LOG", "info,actix_redis=debug,actix_web=debug");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    // セッションキーの生成
     let key = Key::generate();
     let message_framework = middleware::session::build_flash_messages_framework();
 
-    // キャッシュレイヤ、レートリミットの値を初期化
+    // RedisActorの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
     log::info!("Attempting to connect to Redis at: {}", redis_url); // デバッグ用
     let mut retry_count = 0;
@@ -60,10 +62,8 @@ async fn main() -> Result<()> {
     }
 
     // RedisClientの作成とArcでラップ
-    let redis_client = Arc::new(utils::redis_client::RedisClient::new(
-        redis_actor,
-        redis_url.clone(),
-    ));
+    let redis_actor = redis_actor.expect("Failed to connect to Redis after multiple attempts");
+    let redis_client = Arc::new(utils::redis_client::RedisClient::new(redis_actor));
 
     // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
