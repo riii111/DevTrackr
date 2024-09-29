@@ -4,7 +4,7 @@ use std::time::Duration;
 #[derive(Clone)]
 pub struct RateLimitConfig {
     pub duration: Duration,
-    pub max_requests: u32,
+    pub max_requests: u64,
 }
 
 impl RateLimitConfig {

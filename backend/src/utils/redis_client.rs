@@ -6,11 +6,20 @@ use tokio::time::timeout;
 
 pub struct RedisClient {
     actor: Addr<RedisActor>,
+    url: String,
 }
 
 impl RedisClient {
-    pub fn new(actor: Addr<RedisActor>) -> Self {
-        Self { actor }
+    pub fn new(actor: Addr<RedisActor>, url: String) -> Self {
+        Self { actor, url }
+    }
+
+    pub fn get_actor(&self) -> &Addr<RedisActor> {
+        &self.actor
+    }
+
+    pub fn get_url(&self) -> &str {
+        &self.url
     }
 
     pub async fn increment_and_get(&self, key: &str, expiry: u64) -> Result<u32, Error> {

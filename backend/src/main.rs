@@ -5,6 +5,7 @@ use config::db;
 use env_logger::Env;
 use std::env;
 use std::io::Result;
+use std::sync::Arc;
 
 mod config;
 mod dto;
@@ -26,6 +27,14 @@ async fn main() -> Result<()> {
     // キャッシュレイヤ、レートリミットの値を初期化
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
     let rate_limit_config = config::rate_limit::RateLimitConfig::from_env();
+
+    // RedisActorの作成
+    let redis_actor = config::redis::create_redis_actor(&redis_url);
+    // RedisClientの作成とArcでラップ
+    let redis_client = Arc::new(utils::redis_client::RedisClient::new(
+        redis_actor,
+        redis_url.clone(),
+    ));
 
     // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
@@ -53,10 +62,8 @@ async fn main() -> Result<()> {
             .wrap(middleware::session::build_cookie_session_middleware(
                 key.clone(),
             ))
-            .wrap(middleware::rate_limit::RateLimiter::new(
-                utils::redis_client::RedisClient::new(config::redis::create_redis_actor(
-                    &redis_url,
-                )),
+            .wrap(middleware::rate_limit::RateLimiterMiddleware::new(
+                redis_client.clone(),
                 rate_limit_config.clone(),
             ))
     })
