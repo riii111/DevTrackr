@@ -41,6 +41,8 @@ services:
       - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
       - RUST_LOG=${RUST_LOG:-debug}
       - HOST=0.0.0.0
+      - RATE_LIMIT_DURATION=${RATE_LIMIT_DURATION}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS}
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
     #   interval: 21s
