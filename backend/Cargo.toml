@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 actix = "0.13"
+actix-cors = "0.7.0"
 actix-csrf = "0.7.0"
 actix-limitation = "0.5.1"
 actix-rt = "2.10.0"
