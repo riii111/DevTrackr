@@ -1,5 +1,6 @@
 use crate::config::di;
-use actix_web::cookie::Key;
+use actix_session::{storage::RedisSessionStore, SessionMiddleware};
+use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use config::db;
 use dotenv::dotenv;
@@ -27,13 +28,6 @@ async fn main() -> Result<()> {
     // ロガーの設定
     std::env::set_var("RUST_LOG", "info,actix_web=debug");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
-
-    // セッションキーの読み込み
-    let key = Key::from(
-        env::var("SESSION_KEY")
-            .expect("SESSION_KEYが設定されていません")
-            .as_bytes(),
-    );
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
@@ -68,6 +62,31 @@ async fn main() -> Result<()> {
         Err(e) => log::error!("PINGコマンドの実行に失敗しました: {}", e),
     }
 
+    // Redisセッションストアの作成
+    let redis_store = RedisSessionStore::new(redis_url)
+        .await
+        .expect("Redisセッションストアの作成に失敗しました");
+    let session_ttl = Duration::from_secs(
+        env::var("SESSION_TTL")
+            .map_err(|e| log::warn!("SESSION_TTL環境変数の取得に失敗: {}", e))
+            .unwrap_or("3600".to_string())
+            .parse()
+            .map_err(|e| log::warn!("SESSION_TTLの解析に失敗: {}", e))
+            .unwrap_or(3600),
+    );
+    let session_key = Key::from(
+        env::var("SESSION_KEY")
+            .expect("SESSION_KEYが設定されていません")
+            .as_bytes(),
+    );
+    // セッションキーの長さをチェック
+    if session_key.master().len() < 64 {
+        panic!(
+            "SESSION_KEYは少なくとも64バイト(512ビット)の長さが必要です。現在の長さ: {} バイト",
+            session_key.master().len()
+        );
+    }
+
     // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
@@ -93,9 +112,14 @@ async fn main() -> Result<()> {
                 redis_client.clone(),
                 rate_limit_config.clone(),
             ))
-            .wrap(middleware::session::build_cookie_session_middleware(
-                key.clone(),
-            ))
+            .wrap(
+                SessionMiddleware::builder(redis_store.clone(), session_key.clone())
+                    .session_lifecycle(
+                        actix_session::config::PersistentSession::default()
+                            .session_ttl(CookieDuration::seconds(session_ttl.as_secs() as i64)),
+                    )
+                    .build(),
+            )
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
