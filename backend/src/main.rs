@@ -87,15 +87,17 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(company_usecase.clone()))
             .configure(routes::app)
             .wrap(Logger::default())
-            .wrap(message_framework.clone())
-            .wrap(middleware::session::build_cookie_session_middleware(
-                key.clone(),
-            ))
             .wrap(middleware::security_headers::SecurityHeaders)
+            .wrap(middleware::cors::cors_middleware())
+            // .wrap(middleware::csrf::csrf_middleware())
             .wrap(middleware::rate_limit::RateLimiterMiddleware::new(
                 redis_client.clone(),
                 rate_limit_config.clone(),
             ))
+            .wrap(middleware::session::build_cookie_session_middleware(
+                key.clone(),
+            ))
+            .wrap(message_framework.clone())
     })
     .bind(format!(
         "0.0.0.0:{}",
