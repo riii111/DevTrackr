@@ -30,7 +30,6 @@ async fn main() -> Result<()> {
 
     // セッションキーの生成
     let key = Key::generate();
-    let message_framework = middleware::session::build_flash_messages_framework();
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
@@ -93,7 +92,6 @@ async fn main() -> Result<()> {
             .wrap(middleware::session::build_cookie_session_middleware(
                 key.clone(),
             ))
-            .wrap(message_framework.clone())
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))

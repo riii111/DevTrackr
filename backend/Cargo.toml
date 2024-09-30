@@ -12,7 +12,6 @@ actix-rt = "2.10.0"
 # actix-sessionではデータ格納のためのバックエンドが無効になっているため、どのセッションを使用するか指定する必要がある
 actix-session = { version = "0.6.2", default-features = false, features = ["cookie-session"] }
 actix-web = "4.8.0"
-actix-web-flash-messages = { version = "0.4.2", features = ["sessions"] }
 anyhow = "1.0.86"
 async-trait = "0.1.82"
 bcrypt = "0.15.1"
