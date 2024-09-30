@@ -82,14 +82,10 @@ async fn main() -> Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(work_logs_usecase.clone()))
-            .app_data(web::Data::new(project_usecase.clone()))
-            .app_data(web::Data::new(company_usecase.clone()))
-            .configure(routes::app)
+            .wrap(middleware::csrf::csrf_middleware())
             .wrap(Logger::default())
             .wrap(middleware::security_headers::SecurityHeaders)
             .wrap(middleware::cors::cors_middleware())
-            // .wrap(middleware::csrf::csrf_middleware())
             .wrap(middleware::rate_limit::RateLimiterMiddleware::new(
                 redis_client.clone(),
                 rate_limit_config.clone(),
@@ -98,6 +94,10 @@ async fn main() -> Result<()> {
                 key.clone(),
             ))
             .wrap(message_framework.clone())
+            .app_data(web::Data::new(work_logs_usecase.clone()))
+            .app_data(web::Data::new(project_usecase.clone()))
+            .app_data(web::Data::new(company_usecase.clone()))
+            .configure(routes::app)
     })
     .bind(format!(
         "0.0.0.0:{}",
