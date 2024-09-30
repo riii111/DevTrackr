@@ -91,6 +91,7 @@ async fn main() -> Result<()> {
             .wrap(middleware::session::build_cookie_session_middleware(
                 key.clone(),
             ))
+            .wrap(middleware::security_headers::SecurityHeaders)
             .wrap(middleware::rate_limit::RateLimiterMiddleware::new(
                 redis_client.clone(),
                 rate_limit_config.clone(),
