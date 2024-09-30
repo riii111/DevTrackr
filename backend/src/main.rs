@@ -28,8 +28,12 @@ async fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "info,actix_web=debug");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    // セッションキーの生成
-    let key = Key::generate();
+    // セッションキーの読み込み
+    let key = Key::from(
+        env::var("SESSION_KEY")
+            .expect("SESSION_KEYが設定されていません")
+            .as_bytes(),
+    );
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
