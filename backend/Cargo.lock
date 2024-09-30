@@ -45,6 +45,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-csrf"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b57dd48e459549346e4ee512d65887b5a8423699340a11b090d1dc322351320"
+dependencies = [
+ "actix-web",
+ "base64 0.13.1",
+ "cookie",
+ "rand",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "actix-http"
 version = "3.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -965,6 +979,7 @@ name = "devtrackr_api"
 version = "0.1.0"
 dependencies = [
  "actix",
+ "actix-csrf",
  "actix-limitation",
  "actix-rt",
  "actix-session 0.6.2",
@@ -981,6 +996,7 @@ dependencies = [
  "futures",
  "log",
  "mongodb",
+ "rand",
  "redis 0.27.2",
  "serde",
  "serde_json",
@@ -3027,7 +3043,19 @@ checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
  "log",
  "pin-project-lite",
+ "tracing-attributes",
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-attributes"
+version = "0.1.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
