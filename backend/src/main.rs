@@ -88,9 +88,6 @@ async fn main() -> Result<()> {
         );
     }
 
-    // JWT認証のミドルウェアを設定
-    let auth = HttpAuthentication::bearer(middleware::jwt::validator);
-
     // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
@@ -105,6 +102,15 @@ async fn main() -> Result<()> {
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
+    let auth_usecase = di::init_auth_usecase(&db);
+
+    // JWT認証のミドルウェアを設定
+    let auth = HttpAuthentication::bearer(move |req, credentials| {
+        let auth_usecase = auth_usecase.clone();
+        Box::pin(async move {
+            middleware::jwt::validator(req, credentials, web::Data::new(auth_usecase)).await
+        })
+    });
 
     HttpServer::new(move || {
         App::new()
