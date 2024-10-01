@@ -1,6 +1,7 @@
 use dotenv::dotenv;
 use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database};
 
+use crate::models::auth::AuthToken;
 use crate::models::projects::ProjectInDB;
 use crate::models::work_logs::WorkLogsInDB;
 
@@ -15,9 +16,47 @@ pub async fn init_db() -> Result<Database> {
 /// コレクションにインデックスを作成する関数
 pub async fn create_indexes(db: &Database) -> Result<()> {
     log::info!("Creating indexes...");
+    create_auth_indexes(db).await?;
     create_projects_indexes(db).await?;
     create_work_logs_indexes(db).await?;
     log::info!("Indexes created successfully.");
+    Ok(())
+}
+
+/// auth_tokensコレクションのインデックス作成
+async fn create_auth_indexes(db: &Database) -> Result<()> {
+    let tokens_collection = db.collection::<AuthToken>("auth_tokens");
+
+    // access_token にインデックスを作成
+    let access_token_index = mongodb::IndexModel::builder()
+        .keys(doc! { "access_token": 1 })
+        .options(
+            IndexOptions::builder()
+                .unique(true)
+                .name("idx_access_token".to_string())
+                .build(),
+        )
+        .build();
+
+    tokens_collection
+        .create_index(access_token_index, None)
+        .await?;
+
+    // refresh_token にインデックスを作成
+    let refresh_token_index = mongodb::IndexModel::builder()
+        .keys(doc! { "refresh_token": 1 })
+        .options(
+            IndexOptions::builder()
+                .unique(true)
+                .name("idx_refresh_token".to_string())
+                .build(),
+        )
+        .build();
+
+    tokens_collection
+        .create_index(refresh_token_index, None)
+        .await?;
+
     Ok(())
 }
 
