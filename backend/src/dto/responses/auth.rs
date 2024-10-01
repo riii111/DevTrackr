@@ -1,34 +1,23 @@
 use crate::models::auth::AuthToken;
-use crate::utils::serializer::{serialize_bson_datetime, serialize_object_id};
-use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::Serialize;
 use utoipa::ToSchema;
 
 #[derive(Serialize, Debug, ToSchema)]
 pub struct AuthResponse {
-    #[serde(serialize_with = "serialize_object_id")]
-    #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
-    pub user_id: ObjectId,
     pub access_token: String,
     pub refresh_token: String,
     pub token_type: String,
-    #[serde(serialize_with = "serialize_bson_datetime")]
-    #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    pub expires_at: BsonDateTime,
-    #[serde(serialize_with = "serialize_bson_datetime")]
-    #[schema(value_type = String, example = "2023-04-20T12:34:56Z")]
-    pub refresh_expires_at: BsonDateTime,
+    #[schema(value_type = String, example = "3600")]
+    pub expires_in: i64,
 }
 
 impl From<AuthToken> for AuthResponse {
     fn from(token: AuthToken) -> Self {
         Self {
-            user_id: token.user_id,
             access_token: token.access_token,
             refresh_token: token.refresh_token,
             token_type: "Bearer".to_string(),
-            expires_at: token.expires_at.into(),
-            refresh_expires_at: token.refresh_expires_at.into(),
+            expires_in: (token.expires_at - chrono::Utc::now()).num_seconds(),
         }
     }
 }
