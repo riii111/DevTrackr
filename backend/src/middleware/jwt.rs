@@ -8,7 +8,7 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 pub async fn validator(
     req: ServiceRequest,
     credentials: BearerAuth,
-) -> Result<ServiceRequest, Error> {
+) -> Result<ServiceRequest, (Error, ServiceRequest)> {
     let config = req
         .app_data::<actix_web::web::Data<Config>>()
         .map(|data| data.get_ref().clone())
@@ -19,7 +19,7 @@ pub async fn validator(
             req.extensions_mut().insert(claims);
             Ok(req)
         }
-        Err(_) => Err(ErrorUnauthorized("Invalid token")),
+        Err(_) => Err((ErrorUnauthorized("Invalid token"), req)),
     }
 }
 

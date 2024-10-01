@@ -122,11 +122,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
         })
     }
 
-    fn extract_token(&self, auth_header: &str) -> Result<String, AppError> {
-        let parts: Vec<&str> = auth_header.split_whitespace().collect();
-        if parts.len() != 2 || parts[0] != "Bearer" {
-            return Err(AppError::Unauthorized("無効な認証ヘッダーです".to_string()));
-        }
-        Ok(parts[1].to_string())
+    /// 認証ヘッダーからトークンを抽出
+    fn extract_token(&self, auth_header: &str) -> String {
+        auth_header.trim_start_matches("Bearer ").to_string()
     }
 }

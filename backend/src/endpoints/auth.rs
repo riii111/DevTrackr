@@ -82,7 +82,7 @@ async fn logout(
         .headers()
         .get("Authorization")
         .and_then(|header| header.to_str().ok())
-        .ok_or_else(|| AppError::Unauthorized("認証ヘッダーがありません".to_string()))?;
+        .unwrap_or_default(); // ミドルウェアが既に認証済なので、ヘッダーは存在する前提で進める
 
     auth_usecase.logout(auth_header).await?;
     Ok(HttpResponse::Ok().finish())
