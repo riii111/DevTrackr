@@ -7,7 +7,6 @@ pub struct UserInDB {
     #[schema(value_type = String)]
     pub id: ObjectId,
     pub email: String,
-    #[serde(skip_serializing)]
     pub password_hash: String,
     pub name: String,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
