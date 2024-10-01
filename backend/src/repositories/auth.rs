@@ -16,6 +16,7 @@ pub trait AuthRepository {
     ) -> Result<UserInDB, RepositoryError>;
     async fn save_auth_token(&self, auth_token: &AuthToken) -> Result<(), RepositoryError>;
     async fn delete_auth_token(&self, token: &str) -> Result<bool, RepositoryError>;
+    async fn delete_refresh_token(&self, token: &str) -> Result<bool, RepositoryError>;
     async fn find_auth_token(&self, token: &str) -> Result<Option<AuthToken>, RepositoryError>;
 }
 
@@ -78,6 +79,16 @@ impl AuthRepository for MongoAuthRepository {
         let result = self
             .tokens_collection
             .delete_one(doc! { "access_token": token }, None)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        Ok(result.deleted_count > 0)
+    }
+
+    async fn delete_refresh_token(&self, token: &str) -> Result<bool, RepositoryError> {
+        let result = self
+            .tokens_collection
+            .delete_one(doc! { "refresh_token": token }, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
 
