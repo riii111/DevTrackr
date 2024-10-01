@@ -15,6 +15,9 @@ pub struct AuthResponse {
     #[serde(serialize_with = "serialize_bson_datetime")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub expires_at: BsonDateTime,
+    #[serde(serialize_with = "serialize_bson_datetime")]
+    #[schema(value_type = String, example = "2023-04-20T12:34:56Z")]
+    pub refresh_expires_at: BsonDateTime,
 }
 
 impl From<AuthToken> for AuthResponse {
@@ -25,6 +28,7 @@ impl From<AuthToken> for AuthResponse {
             refresh_token: token.refresh_token,
             token_type: "Bearer".to_string(),
             expires_at: token.expires_at.into(),
+            refresh_expires_at: token.refresh_expires_at.into(),
         }
     }
 }
