@@ -83,6 +83,9 @@ async fn register(
         (status = 200, description = "ログアウトに成功"),
         (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[post("/logout")]
