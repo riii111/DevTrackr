@@ -100,7 +100,7 @@ async fn logout(
     )
 )]
 #[post("/refresh")]
-async fn refresh_token(
+async fn refresh(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     refresh_token_dto: web::Json<AuthRefresh>,
 ) -> Result<impl Responder, AppError> {

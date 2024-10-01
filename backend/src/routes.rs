@@ -3,12 +3,13 @@ use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Scope};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::endpoints::{companies, projects, work_logs};
+use crate::endpoints::{auth, companies, projects, work_logs};
 
 pub fn app(cfg: &mut web::ServiceConfig) {
     // ルーティング全体
     cfg.service(crate::routes::index)
         .service(health_check)
+        .service(auth_scope())
         .service(projects_scope())
         .service(work_logs_scope())
         .service(companies_scope())
@@ -16,6 +17,14 @@ pub fn app(cfg: &mut web::ServiceConfig) {
             SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
         )
         .default_service(web::route().to(not_found));
+}
+
+fn auth_scope() -> Scope {
+    web::scope("/auth")
+        .service(auth::login)
+        .service(auth::logout)
+        .service(auth::refresh)
+        .service(auth::register)
 }
 
 fn projects_scope() -> Scope {
