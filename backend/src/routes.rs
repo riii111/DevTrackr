@@ -1,30 +1,22 @@
-use crate::config::api_doc::ApiDoc;
-use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Scope};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
+use actix_web::{get, web, HttpResponse, Responder, Scope};
 
 use crate::endpoints::{auth, companies, projects, work_logs};
 
-pub fn app(cfg: &mut web::ServiceConfig) {
-    // ルーティング全体
-    cfg.service(crate::routes::index)
-        .service(health_check)
-        .service(auth_scope())
+// 認証が不要な公開APIのスコープを定義
+pub fn public_auth_scope() -> Scope {
+    web::scope("/auth")
+        .service(auth::login)
+        .service(auth::register)
+        .service(auth::refresh)
+}
+
+// 認証が必要な保護されたAPIのスコープを定義
+pub fn protected_scope() -> Scope {
+    web::scope("")
+        .service(web::scope("/auth").service(auth::logout))
         .service(projects_scope())
         .service(work_logs_scope())
         .service(companies_scope())
-        .service(
-            SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
-        )
-        .default_service(web::route().to(not_found));
-}
-
-fn auth_scope() -> Scope {
-    web::scope("/auth")
-        .service(auth::login)
-        .service(auth::logout)
-        .service(auth::refresh)
-        .service(auth::register)
 }
 
 fn projects_scope() -> Scope {
@@ -60,8 +52,4 @@ pub async fn index() -> impl Responder {
 async fn health_check() -> impl Responder {
     log::info!("ヘルスチェックエンドポイントにアクセスがありました");
     HttpResponse::Ok().body("Healthy")
-}
-
-async fn not_found(_req: HttpRequest) -> impl Responder {
-    HttpResponse::NotFound().json("リソースが見つかりません")
 }

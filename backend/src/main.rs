@@ -1,7 +1,8 @@
+use crate::config::api_doc::ApiDoc;
 use crate::config::di;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db;
 use dotenv::dotenv;
@@ -10,6 +11,8 @@ use std::env;
 use std::io::Result;
 use std::sync::Arc;
 use std::time::Duration;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod config;
 mod dto;
@@ -27,8 +30,8 @@ async fn main() -> Result<()> {
     dotenv().ok();
 
     // ロガーの設定
-    std::env::set_var("RUST_LOG", "info,actix_web=debug");
-    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    std::env::set_var("RUST_LOG", "debug,actix_web=debug");
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
@@ -103,12 +106,21 @@ async fn main() -> Result<()> {
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
     let auth_usecase = di::init_auth_usecase(&db);
+    let auth_usecase_clone = di::init_auth_usecase(&db);
 
     // JWT認証のミドルウェアを設定
     let auth = HttpAuthentication::bearer(move |req, credentials| {
-        let auth_usecase = auth_usecase.clone();
+        let auth_usecase_clone = auth_usecase.clone();
         Box::pin(async move {
-            middleware::jwt::validator(req, credentials, web::Data::new(auth_usecase)).await
+            // リクエストパスをログに出力
+            log::debug!("Request path: {}", req.path());
+
+            // APIドキュメント参照時はJWT認証の対象外
+            if req.path().starts_with("/api-docs") {
+                log::debug!("Skipping authentication for Swagger UI");
+                return Ok(req);
+            }
+            middleware::jwt::validator(req, credentials, web::Data::new(auth_usecase_clone)).await
         })
     });
 
@@ -130,11 +142,23 @@ async fn main() -> Result<()> {
                     )
                     .build(),
             )
-            .wrap(auth.clone())
+            .service(
+                SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
+            .service(
+                web::scope("/api")
+                    .service(routes::public_auth_scope())
+                    .service(
+                        web::scope("")
+                            .wrap(auth.clone())
+                            .service(routes::protected_scope()),
+                    )
+                    .default_service(web::route().to(not_found)),
+            )
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
-            .configure(routes::app)
+            .app_data(web::Data::new(auth_usecase_clone.clone()))
     })
     .bind(format!(
         "0.0.0.0:{}",
@@ -142,4 +166,8 @@ async fn main() -> Result<()> {
     ))?
     .run()
     .await
+}
+
+async fn not_found(_req: HttpRequest) -> impl Responder {
+    HttpResponse::NotFound().json("リソースが見つかりません")
 }

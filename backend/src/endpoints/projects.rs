@@ -11,7 +11,7 @@ use validator::Validate;
 
 #[utoipa::path(
     get,
-    path = "/projects",
+    path = "/api/projects",
     params(
         ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
         ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
@@ -94,7 +94,7 @@ pub async fn get_projects(
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}",
+    path = "/api/projects/{id}",
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -130,7 +130,7 @@ pub async fn get_project_by_id(
 
 #[utoipa::path(
     post,
-    path = "/projects",
+    path = "/api/projects",
     request_body = ProjectCreate,
     responses(
         (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
@@ -157,7 +157,7 @@ pub async fn create_project(
 
 #[utoipa::path(
     put,
-    path = "/projects/{id}",
+    path = "/api/projects/{id}",
     request_body = ProjectUpdate,
     responses(
         (status = 204, description = "プロジェクトの更新に成功"),

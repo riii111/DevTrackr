@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
-    path = "/companies",
+    path = "/api/companies",
     responses(
         (status = 200, description = "企業の取得に成功", body = Vec<CompanyResponse>),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
@@ -33,7 +33,7 @@ pub async fn get_all_companies(
 
 #[utoipa::path(
     get,
-    path = "/companies/{id}",
+    path = "/api/companies/{id}",
     responses(
         (status = 200, description = "企業の取得に成功", body = CompanyResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -65,7 +65,7 @@ pub async fn get_company_by_id(
 
 #[utoipa::path(
     post,
-    path = "/companies",
+    path = "/api/companies",
     request_body = CompanyCreate,
     responses(
         (status = 201, description = "企業の作成に成功", body = CompanyCreatedResponse),
@@ -92,7 +92,7 @@ pub async fn create_company(
 
 #[utoipa::path(
     put,
-    path = "/companies/{id}",
+    path = "/api/companies/{id}",
     request_body = CompanyUpdate,
     responses(
         (status = 204, description = "企業の更新に成功"),

@@ -9,7 +9,7 @@ use validator::Validate;
 
 #[utoipa::path(
     post,
-    path = "/login",
+    path = "/api/auth/login",
     request_body = AuthLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
@@ -31,6 +31,9 @@ async fn login(
     let auth_response = auth_usecase
         .login(&login_dto.email, &login_dto.password)
         .await?;
+
+    log::info!("Login successful");
+
     let refresh_token = auth_response.refresh_token.clone();
     let mut response = HttpResponse::Ok().json(auth_response);
     set_refresh_token_cookie(&mut response, &refresh_token);
@@ -39,7 +42,7 @@ async fn login(
 
 #[utoipa::path(
     post,
-    path = "/register",
+    path = "/api/auth/register",
     request_body = AuthCreate,
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthResponse),
@@ -73,7 +76,7 @@ async fn register(
 
 #[utoipa::path(
     post,
-    path = "/logout",
+    path = "/api/auth/logout",
     responses(
         (status = 200, description = "ログアウトに成功"),
         (status = 401, description = "認証失敗", body = ErrorResponse),
@@ -97,7 +100,7 @@ async fn logout(
 
 #[utoipa::path(
     post,
-    path = "/refresh",
+    path = "/api/auth/refresh",
     request_body = AuthRefresh,
     responses(
         (status = 200, description = "トークンのリフレッシュに成功", body = AuthResponse),

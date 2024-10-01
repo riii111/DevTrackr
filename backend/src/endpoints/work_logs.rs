@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
-    path = "/work_logs",
+    path = "/api/work_logs",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = Vec<WorkLogsResponse>)
     )
@@ -39,7 +39,7 @@ pub async fn get_all_work_logs(
 
 #[utoipa::path(
     get,
-    path = "/work_logs/{id}",
+    path = "/api/work_logs/{id}",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = WorkLogsResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -71,7 +71,7 @@ pub async fn get_work_logs_by_id(
 
 #[utoipa::path(
     post,
-    path = "/work_logs",
+    path = "/api/work_logs",
     request_body = WorkLogsCreate,
     responses(
         (status = 201, description = "勤怠の作成に成功", body = WorkLogsCreatedResponse),
@@ -98,7 +98,7 @@ pub async fn create_work_logs(
 
 #[utoipa::path(
     put,
-    path = "/work_logs/{id}",
+    path = "/api/work_logs/{id}",
     request_body = WorkLogsUpdate,
     responses(
         (status = 204, description = "勤怠の更新に成功"),
