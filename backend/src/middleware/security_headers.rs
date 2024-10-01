@@ -77,7 +77,7 @@ where
 
             // HSTSの設定
             let enable_hsts =
-                std::env::var("ENABLE_HSTS").unwrap_or_else(|_| "false".to_string()) == "true";
+                std::env::var("SECURE_MODE").unwrap_or_else(|_| "false".to_string()) == "true";
             if enable_hsts {
                 res.headers_mut().insert(
                     HeaderName::from_static("strict-transport-security"),

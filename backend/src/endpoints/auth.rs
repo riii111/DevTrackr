@@ -2,6 +2,7 @@ use crate::errors::app_error::AppError;
 use crate::models::auth::{AuthCreate, AuthLogin, AuthRefresh};
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
+use crate::utils::cookie_util::set_refresh_token_cookie;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use std::sync::Arc;
 use validator::Validate;
@@ -30,7 +31,10 @@ async fn login(
     let auth_response = auth_usecase
         .login(&login_dto.email, &login_dto.password)
         .await?;
-    Ok(HttpResponse::Ok().json(auth_response))
+    let refresh_token = auth_response.refresh_token.clone();
+    let mut response = HttpResponse::Ok().json(auth_response);
+    set_refresh_token_cookie(&mut response, &refresh_token);
+    Ok(response)
 }
 
 #[utoipa::path(
@@ -61,7 +65,10 @@ async fn register(
             &register_dto.name,
         )
         .await?;
-    Ok(HttpResponse::Created().json(auth_response))
+    let refresh_token = auth_response.refresh_token.clone();
+    let mut response = HttpResponse::Created().json(auth_response);
+    set_refresh_token_cookie(&mut response, &refresh_token);
+    Ok(response)
 }
 
 #[utoipa::path(
