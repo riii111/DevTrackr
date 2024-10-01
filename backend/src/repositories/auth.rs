@@ -18,6 +18,10 @@ pub trait AuthRepository {
     async fn delete_auth_token(&self, token: &str) -> Result<bool, RepositoryError>;
     async fn delete_refresh_token(&self, token: &str) -> Result<bool, RepositoryError>;
     async fn find_auth_token(&self, token: &str) -> Result<Option<AuthToken>, RepositoryError>;
+    async fn find_auth_token_by_refresh_token(
+        &self,
+        refresh_token: &str,
+    ) -> Result<Option<AuthToken>, RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
@@ -98,6 +102,16 @@ impl AuthRepository for MongoAuthRepository {
     async fn find_auth_token(&self, token: &str) -> Result<Option<AuthToken>, RepositoryError> {
         self.tokens_collection
             .find_one(doc! { "access_token": token }, None)
+            .await
+            .map_err(RepositoryError::DatabaseError)
+    }
+
+    async fn find_auth_token_by_refresh_token(
+        &self,
+        refresh_token: &str,
+    ) -> Result<Option<AuthToken>, RepositoryError> {
+        self.tokens_collection
+            .find_one(doc! { "refresh_token": refresh_token }, None)
             .await
             .map_err(RepositoryError::DatabaseError)
     }

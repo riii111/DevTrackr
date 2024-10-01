@@ -64,6 +64,7 @@ pub fn create_refresh_token(
     )
 }
 
+// 各トークンを検証し、有効な場合はClaimsを返す関数
 pub fn verify_token(token: &str, secret: &[u8]) -> Result<Claims, jsonwebtoken::errors::Error> {
     let validation = Validation::default();
     let token_data = decode::<Claims>(token, &DecodingKey::from_secret(secret), &validation)?;

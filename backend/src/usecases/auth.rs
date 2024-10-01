@@ -3,6 +3,7 @@ use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthToken;
 use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
+use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
 use chrono::{Duration, Utc};
 use std::env;
@@ -117,13 +118,68 @@ impl<R: AuthRepository> AuthUseCase<R> {
         }
     }
 
+    /// アクセストークンの有効期限を検証
+    pub async fn verify_access_token(&self, access_token: &str) -> Result<Claims, AppError> {
+        let claims = jwt::verify_token(access_token, &self.jwt_secret)
+            .map_err(|_| AppError::Unauthorized("無効なアクセストークンです".to_string()))?;
+
+        // DBからトークンを取得
+        let auth_token = self
+            .repository
+            .find_auth_token(access_token)
+            .await
+            .map_err(|_| {
+                AppError::InternalServerError("アクセストークンの検証に失敗しました".to_string())
+            })?
+            .ok_or_else(|| {
+                AppError::Unauthorized("アクセストークンが見つかりません".to_string())
+            })?;
+
+        // 現在時刻と有効期限を比較
+        if Utc::now() > auth_token.expires_at {
+            return Err(AppError::Unauthorized(
+                "アクセストークンの有効期限が切れています".to_string(),
+            ));
+        }
+
+        Ok(claims)
+    }
+
+    /// リフレッシュトークンの有効期限を検証
+    pub async fn verify_refresh_token(&self, refresh_token: &str) -> Result<Claims, AppError> {
+        let claims = jwt::verify_token(refresh_token, &self.jwt_secret)
+            .map_err(|_| AppError::Unauthorized("無効なリフレッシュトークンです".to_string()))?;
+
+        // DBからリフレッシュトークンを取得
+        let auth_token = self
+            .repository
+            .find_auth_token_by_refresh_token(refresh_token)
+            .await
+            .map_err(|_| {
+                AppError::InternalServerError(
+                    "リフレッシュトークンの検証に失敗しました".to_string(),
+                )
+            })?
+            .ok_or_else(|| {
+                AppError::Unauthorized("リフレッシュトークンが見つかりません".to_string())
+            })?;
+
+        // リフレッシュトークンの有効期限を比較
+        if Utc::now() > auth_token.refresh_expires_at {
+            return Err(AppError::Unauthorized(
+                "リフレッシュトークンの有効期限が切れています".to_string(),
+            ));
+        }
+
+        Ok(claims)
+    }
+
     /// トークンのリフレッシュ処理
     ///
     /// - リフレッシュトークンを検証
     /// - 新しい認証トークンを生成して保存
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthToken, AppError> {
-        let claims = jwt::verify_token(refresh_token, &self.jwt_secret)
-            .map_err(|_| AppError::Unauthorized("無効なリフレッシュトークンです".to_string()))?;
+        let claims = self.verify_refresh_token(refresh_token).await?;
 
         let auth_token = self.create_auth_token(&claims.sub)?;
         self.repository
