@@ -2,6 +2,7 @@ use crate::config::di;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db;
 use dotenv::dotenv;
 use env_logger::Env;
@@ -21,7 +22,7 @@ mod routes;
 mod usecases;
 mod utils;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> Result<()> {
     dotenv().ok();
 
@@ -87,6 +88,9 @@ async fn main() -> Result<()> {
         );
     }
 
+    // JWT認証のミドルウェアを設定
+    let auth = HttpAuthentication::bearer(middleware::jwt::validator);
+
     // データベースの初期化
     let db = db::init_db().await.expect("Database Initialization Failed");
 
@@ -120,6 +124,7 @@ async fn main() -> Result<()> {
                     )
                     .build(),
             )
+            .wrap(auth.clone())
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
