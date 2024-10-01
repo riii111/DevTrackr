@@ -17,6 +17,12 @@ pub enum AppError {
     #[error("不正なリクエストです: {0}")]
     BadRequest(String),
 
+    #[error("認証エラー: {0}")]
+    Unauthorized(String),
+
+    #[error("アクセス権限がありません: {0}")]
+    Forbidden(String),
+
     #[error("データベース接続エラー")]
     DatabaseConnectionError,
 
@@ -64,6 +70,8 @@ impl AppError {
         match self {
             AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
             AppError::DatabaseConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -110,6 +118,14 @@ impl actix_web::ResponseError for AppError {
             })),
             AppError::BadRequest(_) => HttpResponse::BadRequest().json(json!({
                 "error": "不正なリクエスト",
+                "details": [self.error_message()]
+            })),
+            AppError::Unauthorized(_) => HttpResponse::Unauthorized().json(json!({
+                "error": "認証エラー",
+                "details": [self.error_message()]
+            })),
+            AppError::Forbidden(_) => HttpResponse::Forbidden().json(json!({
+                "error": "アクセス権限がありません",
                 "details": [self.error_message()]
             })),
             AppError::DatabaseConnectionError => HttpResponse::InternalServerError().json(json!({

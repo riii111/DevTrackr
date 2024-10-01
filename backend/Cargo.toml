@@ -12,6 +12,7 @@ actix-rt = "2.10.0"
 # cookie-sessionを使用する場合はfeaturesにcookie-sessionを指定する必要があるので注意
 actix-session = { version = "0.7.0", features = ["redis-rs-tls-session"] }
 actix-web = "4.8.0"
+actix-web-httpauth = "0.8.2"
 anyhow = "1.0.86"
 async-trait = "0.1.82"
 bcrypt = "0.15.1"
