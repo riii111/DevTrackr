@@ -6,7 +6,6 @@ use crate::usecases::auth::AuthUseCase;
 use crate::usecases::companies::CompanyUseCase;
 use crate::usecases::projects::ProjectUseCase;
 use crate::usecases::work_logs::WorkLogsUseCase;
-use dotenv::dotenv;
 use mongodb::Database;
 use std::env;
 use std::sync::Arc;
