@@ -1,3 +1,4 @@
+use crate::dto::responses::auth::AuthResponse;
 use crate::errors::app_error::AppError;
 use crate::models::auth::{AuthCreate, AuthLogin, AuthRefresh};
 use crate::repositories::auth::MongoAuthRepository;
@@ -28,12 +29,13 @@ async fn login(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let auth_response = auth_usecase
+    let auth_token = auth_usecase
         .login(&login_dto.email, &login_dto.password)
         .await?;
 
     log::info!("Login successful");
 
+    let auth_response: AuthResponse = auth_token.into();
     let refresh_token = auth_response.refresh_token.clone();
     let mut response = HttpResponse::Ok().json(auth_response);
     set_refresh_token_cookie(&mut response, &refresh_token);
@@ -119,8 +121,10 @@ async fn refresh(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let auth_response = auth_usecase
+    let auth_token = auth_usecase
         .refresh_token(&refresh_token_dto.refresh_token)
         .await?;
+
+    let auth_response: AuthResponse = auth_token.into();
     Ok(HttpResponse::Ok().json(auth_response))
 }

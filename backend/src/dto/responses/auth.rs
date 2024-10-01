@@ -7,7 +7,7 @@ pub struct AuthResponse {
     pub access_token: String,
     pub refresh_token: String,
     pub token_type: String,
-    #[schema(value_type = String, example = "3600")]
+    #[schema(value_type = i64, example = "3600")]
     pub expires_in: i64,
 }
 
