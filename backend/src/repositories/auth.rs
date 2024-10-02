@@ -3,7 +3,7 @@ use crate::models::auth::AuthToken;
 use crate::models::user::UserInDB;
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
-use mongodb::{Collection, Database};
+use mongodb::{error::Error as MongoError, Collection, Database};
 
 #[async_trait]
 pub trait AuthRepository {
@@ -13,7 +13,7 @@ pub trait AuthRepository {
         email: &str,
         password_hash: &str,
         name: &str,
-    ) -> Result<UserInDB, RepositoryError>;
+    ) -> Result<ObjectId, RepositoryError>;
     async fn save_auth_token(&self, auth_token: &AuthToken) -> Result<(), RepositoryError>;
     async fn delete_auth_token(&self, token: &str) -> Result<bool, RepositoryError>;
     async fn delete_refresh_token(&self, token: &str) -> Result<bool, RepositoryError>;
@@ -52,9 +52,9 @@ impl AuthRepository for MongoAuthRepository {
         email: &str,
         password_hash: &str,
         name: &str,
-    ) -> Result<UserInDB, RepositoryError> {
-        let user = UserInDB {
-            id: ObjectId::new(),
+    ) -> Result<ObjectId, RepositoryError> {
+        let user_in_db = UserInDB {
+            id: None,
             email: email.to_string(),
             password_hash: password_hash.to_string(),
             name: name.to_string(),
@@ -62,12 +62,17 @@ impl AuthRepository for MongoAuthRepository {
             updated_at: None,
         };
 
-        self.users_collection
-            .insert_one(&user, None)
+        let result = self
+            .users_collection
+            .insert_one(&user_in_db, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
-
-        Ok(user)
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or(RepositoryError::DatabaseError(MongoError::custom(
+                "挿入されたドキュメントのIDが無効です",
+            )))
     }
 
     async fn save_auth_token(&self, auth_token: &AuthToken) -> Result<(), RepositoryError> {

@@ -4,8 +4,9 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct UserInDB {
-    #[schema(value_type = String)]
-    pub id: ObjectId,
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
+    pub id: Option<ObjectId>,
     pub email: String,
     pub password_hash: String,
     pub name: String,

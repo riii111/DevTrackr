@@ -39,7 +39,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
             .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
 
         if verify_password(password, &user.password_hash) {
-            let auth_token = self.create_auth_token(&user.id.to_string())?;
+            let auth_token = self.create_auth_token(&user.id.unwrap().to_string())?;
             self.repository
                 .save_auth_token(&auth_token)
                 .await
@@ -66,7 +66,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     ) -> Result<AuthToken, AppError> {
         let password_hash =
             hash_password(password).map_err(|e| AppError::InternalServerError(e.to_string()))?;
-        let user = self
+        let user_id = self
             .repository
             .create_user(email, &password_hash, name)
             .await
@@ -75,7 +75,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?;
 
-        let auth_token = self.create_auth_token(&user.id.to_string())?;
+        let auth_token = self.create_auth_token(&user_id.to_string())?;
         self.repository
             .save_auth_token(&auth_token)
             .await
