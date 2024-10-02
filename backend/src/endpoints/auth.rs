@@ -33,8 +33,8 @@ async fn login(
         .login(&login_dto.email, &login_dto.password)
         .await?;
 
+    let refresh_token = auth_token.refresh_token.clone();
     let auth_response: AuthResponse = auth_token.into();
-    let refresh_token = auth_response.refresh_token.clone();
     let mut response = HttpResponse::Ok().json(auth_response);
     set_refresh_token_cookie(&mut response, &refresh_token);
     Ok(response)

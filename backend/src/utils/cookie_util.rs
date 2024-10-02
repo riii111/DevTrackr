@@ -8,7 +8,7 @@ pub fn set_refresh_token_cookie(response: &mut HttpResponse, refresh_token: &str
     let cookie = Cookie::build("refresh_token", refresh_token.to_owned())
         .path("/auth/refresh")
         .secure(secure_mode)
-        .http_only(true)
+        .http_only(true) // JSからアクセスできないようにする
         .same_site(actix_web::cookie::SameSite::Strict)
         .finish();
     response.add_cookie(&cookie).unwrap();
