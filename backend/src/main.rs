@@ -4,7 +4,7 @@ use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_httpauth::middleware::HttpAuthentication;
-use config::db;
+use config::db_index;
 use dotenv::dotenv;
 use env_logger::Env;
 use log;
@@ -95,10 +95,12 @@ async fn main() -> Result<()> {
     }
 
     // データベースの初期化
-    let db = db::init_db().await.expect("Database Initialization Failed");
+    let db = db_index::init_db()
+        .await
+        .expect("Database Initialization Failed");
 
     // インデックスの作成
-    if let Err(e) = db::create_indexes(&db).await {
+    if let Err(e) = db_index::create_indexes(&db).await {
         log::error!("インデックスの作成に失敗しました: {}", e);
     }
 
