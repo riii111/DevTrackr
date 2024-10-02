@@ -10,8 +10,8 @@ services:
   #       - ./frontend:/app
   #       - /app/node_modules
   #       - /app/.next
-  #     environment:
-  #       - NODE_ENV=${NODE_ENV:-development}
+  #     env_file:
+  #       - .env
   #     command: yarn dev
   #     networks:
   #       - devtrackr-network
@@ -37,19 +37,8 @@ services:
       - /usr/src/app/target
     networks:
       - mynet
-    environment:
-      - DATABASE_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27018/${MONGO_INITDB_DATABASE}?authSource=admin
-      - RUST_LOG=${RUST_LOG:-debug}
-      - HOST=0.0.0.0
-      - RATE_LIMIT_DURATION=${RATE_LIMIT_DURATION}
-      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
-    #   interval: 21s
-    #   timeout: 5s
-    #   retries: 3
-    #   start_period: 40s
+    env_file:
+      - .env
     depends_on:
       - mongo
       - redis
@@ -82,6 +71,8 @@ services:
       - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE:-devtrackr}
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    # env_file:
+    #   - .env
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -107,6 +98,8 @@ services:
       ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
       ME_CONFIG_REQUEST_SIZE: 100kb
       ME_CONFIG_SITE_GRIDFS: "true" # GridFS(MongoDBのファイルStorage)を有効化. 大きなファイルを保存できる
+    # env_file:
+    #   - .env
     depends_on:
       mongo:
         condition: service_healthy # 完全に起動し、認証の準備が出来てから接続を試みる

@@ -17,14 +17,20 @@ pub enum AppError {
     #[error("不正なリクエストです: {0}")]
     BadRequest(String),
 
-    #[error("データベース接続エラー")]
-    DatabaseConnectionError,
+    #[error("認証エラー: {0}")]
+    Unauthorized(String),
+
+    #[error("アクセス権限がありません: {0}")]
+    Forbidden(String),
 
     #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
 
     #[error("内部サーバーエラー: {0}")]
     InternalServerError(String),
+
+    #[error("ユニーク制約違反: {0}")]
+    DuplicateError(String),
 }
 
 // エラーレスポンスの構造体
@@ -64,8 +70,10 @@ impl AppError {
         match self {
             AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::DuplicateError(_) => StatusCode::BAD_REQUEST,
+            AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
-            AppError::DatabaseConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -104,6 +112,10 @@ impl actix_web::ResponseError for AppError {
                     "details": error_messages
                 }))
             }
+            AppError::DuplicateError(_) => HttpResponse::BadRequest().json(json!({
+                "error": "ユニーク制約違反",
+                "details": [self.error_message()]
+            })),
             AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
                 "error": "リソースが見つかりません",
                 "details": [self.error_message()]
@@ -112,8 +124,12 @@ impl actix_web::ResponseError for AppError {
                 "error": "不正なリクエスト",
                 "details": [self.error_message()]
             })),
-            AppError::DatabaseConnectionError => HttpResponse::InternalServerError().json(json!({
-                "error": "データベース接続エラー",
+            AppError::Unauthorized(_) => HttpResponse::Unauthorized().json(json!({
+                "error": "認証エラー",
+                "details": [self.error_message()]
+            })),
+            AppError::Forbidden(_) => HttpResponse::Forbidden().json(json!({
+                "error": "アクセス権限がありません",
                 "details": [self.error_message()]
             })),
             AppError::DatabaseError(error) => HttpResponse::InternalServerError().json(json!({

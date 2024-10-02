@@ -11,7 +11,7 @@ use validator::Validate;
 
 #[utoipa::path(
     get,
-    path = "/projects",
+    path = "/api/projects",
     params(
         ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
         ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
@@ -24,7 +24,10 @@ use validator::Validate;
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = Vec<ProjectResponse>),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
-    )
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
 )]
 #[get("")]
 pub async fn get_projects(
@@ -94,7 +97,7 @@ pub async fn get_projects(
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}",
+    path = "/api/projects/{id}",
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -103,6 +106,9 @@ pub async fn get_projects(
     ),
     params(
         ("id" = String, Path, description = "プロジェクトID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[get("/{id}")]
@@ -130,12 +136,15 @@ pub async fn get_project_by_id(
 
 #[utoipa::path(
     post,
-    path = "/projects",
+    path = "/api/projects",
     request_body = ProjectCreate,
     responses(
         (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[post("")]
@@ -157,7 +166,7 @@ pub async fn create_project(
 
 #[utoipa::path(
     put,
-    path = "/projects/{id}",
+    path = "/api/projects/{id}",
     request_body = ProjectUpdate,
     responses(
         (status = 204, description = "プロジェクトの更新に成功"),
@@ -167,6 +176,9 @@ pub async fn create_project(
     ),
     params(
         ("id" = String, Path, description = "プロジェクトID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[put("/{id}")]

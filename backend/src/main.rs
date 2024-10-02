@@ -1,15 +1,22 @@
+use crate::config::api_doc::ApiDoc;
 use crate::config::di;
-use actix_web::cookie::Key;
-use actix_web::{middleware::Logger, web, App, HttpServer};
-use config::db;
+use actix_session::{storage::RedisSessionStore, SessionMiddleware};
+use actix_web::cookie::{time::Duration as CookieDuration, Key};
+use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web_httpauth::middleware::HttpAuthentication;
+use config::db_index;
 use dotenv::dotenv;
 use env_logger::Env;
+use log;
 use std::env;
 use std::io::Result;
 use std::sync::Arc;
 use std::time::Duration;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod config;
+mod constants;
 mod dto;
 mod endpoints;
 mod errors;
@@ -20,17 +27,15 @@ mod routes;
 mod usecases;
 mod utils;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> Result<()> {
     dotenv().ok();
 
     // ロガーの設定
-    std::env::set_var("RUST_LOG", "info,actix_web=debug");
-    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    std::env::set_var("RUST_LOG", "debug,actix_web=debug");
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
 
-    // セッションキーの生成
-    let key = Key::generate();
-    let message_framework = middleware::session::build_flash_messages_framework();
+    log::info!("Starting server...");
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
@@ -65,11 +70,38 @@ async fn main() -> Result<()> {
         Err(e) => log::error!("PINGコマンドの実行に失敗しました: {}", e),
     }
 
+    // Redisセッションストアの作成
+    let redis_store = RedisSessionStore::new(redis_url)
+        .await
+        .expect("Redisセッションストアの作成に失敗しました");
+    let session_ttl = Duration::from_secs(
+        env::var("SESSION_TTL")
+            .map_err(|e| log::warn!("SESSION_TTL環境変数の取得に失敗: {}", e))
+            .unwrap_or("3600".to_string())
+            .parse()
+            .map_err(|e| log::warn!("SESSION_TTLの解析に失敗: {}", e))
+            .unwrap_or(3600),
+    );
+    let session_key = Key::from(
+        env::var("SESSION_KEY")
+            .expect("SESSION_KEYが設定されていません")
+            .as_bytes(),
+    );
+    // セッションキーの長さをチェック
+    if session_key.master().len() < 64 {
+        panic!(
+            "SESSION_KEYは少なくとも64バイト(512ビット)の長さが必要です。現在の長さ: {} バイト",
+            session_key.master().len()
+        );
+    }
+
     // データベースの初期化
-    let db = db::init_db().await.expect("Database Initialization Failed");
+    let db = db_index::init_db()
+        .await
+        .expect("Database Initialization Failed");
 
     // インデックスの作成
-    if let Err(e) = db::create_indexes(&db).await {
+    if let Err(e) = db_index::create_indexes(&db).await {
         log::error!("インデックスの作成に失敗しました: {}", e);
     }
 
@@ -79,22 +111,68 @@ async fn main() -> Result<()> {
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
+    let auth_usecase = di::init_auth_usecase(&db);
+    let auth_usecase_clone = auth_usecase.clone();
+
+    // JWT認証のミドルウェアを設定
+    let jwt_auth_check = HttpAuthentication::bearer(move |req, credentials| {
+        let auth_usecase_clone = auth_usecase.clone();
+        Box::pin(async move {
+            middleware::jwt::validator(req, credentials, web::Data::new(auth_usecase_clone)).await
+        })
+    });
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(work_logs_usecase.clone()))
-            .app_data(web::Data::new(project_usecase.clone()))
-            .app_data(web::Data::new(company_usecase.clone()))
-            .configure(routes::app)
+            .wrap(middleware::csrf::csrf_middleware())
             .wrap(Logger::default())
-            .wrap(message_framework.clone())
-            .wrap(middleware::session::build_cookie_session_middleware(
-                key.clone(),
-            ))
+            .wrap(middleware::security_headers::SecurityHeaders)
+            .wrap(middleware::cors::cors_middleware())
             .wrap(middleware::rate_limit::RateLimiterMiddleware::new(
                 redis_client.clone(),
                 rate_limit_config.clone(),
             ))
+            .wrap(
+                SessionMiddleware::builder(redis_store.clone(), session_key.clone())
+                    .session_lifecycle(
+                        actix_session::config::PersistentSession::default()
+                            .session_ttl(CookieDuration::seconds(session_ttl.as_secs() as i64)),
+                    )
+                    .build(),
+            )
+            .service(
+                SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
+            .service(
+                web::scope("/api")
+                    .service(
+                        web::scope("/auth")
+                            .service(endpoints::auth::login)
+                            .service(endpoints::auth::register)
+                            .service(endpoints::auth::refresh)
+                            .service(
+                                // logoutのみ認証ミドルウェアを適用
+                                web::scope("")
+                                    .wrap(jwt_auth_check.clone())
+                                    .service(endpoints::auth::logout),
+                            ),
+                    )
+                    .service(
+                        // 認証ミドルウェアを適用
+                        web::scope("")
+                            .wrap(jwt_auth_check.clone())
+                            .service(routes::projects_scope())
+                            .service(routes::work_logs_scope())
+                            .service(routes::companies_scope()),
+                    ),
+            )
+            .service(web::scope("/").service(web::resource("").to(index)))
+            .service(web::scope("/health").service(web::resource("").to(health_check)))
+            .default_service(web::route().to(not_found))
+            .app_data(web::Data::new(work_logs_usecase.clone()))
+            .app_data(web::Data::new(project_usecase.clone()))
+            .app_data(web::Data::new(company_usecase.clone()))
+            .app_data(web::Data::new(auth_usecase_clone.clone()))
     })
     .bind(format!(
         "0.0.0.0:{}",
@@ -102,4 +180,17 @@ async fn main() -> Result<()> {
     ))?
     .run()
     .await
+}
+
+async fn not_found(_req: HttpRequest) -> impl Responder {
+    HttpResponse::NotFound().json("リソースが見つかりません")
+}
+
+pub async fn index(_req: HttpRequest) -> impl Responder {
+    HttpResponse::Ok().body("Hello, Actix Web!")
+}
+
+async fn health_check(_req: HttpRequest) -> impl Responder {
+    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
+    HttpResponse::Ok().body("Healthy")
 }

@@ -1,14 +1,17 @@
-use actix_session::storage::CookieSessionStore;
-use actix_session::SessionMiddleware;
-use actix_web::cookie::Key;
-use actix_web_flash_messages::storage::SessionMessageStore;
-use actix_web_flash_messages::FlashMessagesFramework;
+/* cookie-sessionを使う場合のコード(featuresにcookie-sessionを指定すること)  */
 
-pub fn build_cookie_session_middleware(key: Key) -> SessionMiddleware<CookieSessionStore> {
-    SessionMiddleware::builder(CookieSessionStore::default(), key).build()
-}
+// use actix_session::storage::CookieSessionStore;
+// use actix_session::SessionMiddleware;
+// use actix_web::cookie::{Key, SameSite};
 
-pub fn build_flash_messages_framework() -> FlashMessagesFramework {
-    let message_store = SessionMessageStore::default();
-    FlashMessagesFramework::builder(message_store).build()
-}
+// pub fn build_cookie_session_middleware(key: Key) -> SessionMiddleware<CookieSessionStore> {
+//     SessionMiddleware::builder(CookieSessionStore::default(), key)
+//         .cookie_secure(
+//             std::env::var("COOKIE_SECURE")
+//                 .expect("COOKIE_SECUREが設定されていません")
+//                 .parse()
+//                 .unwrap_or(false),
+//         )
+//         .cookie_same_site(SameSite::Lax)
+//         .build()
+// }

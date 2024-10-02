@@ -1,8 +1,10 @@
+use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::dto::responses::companies::{CompanyCreatedResponse, CompanyResponse};
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
-use crate::endpoints::{companies, projects, work_logs};
+use crate::endpoints::{auth, companies, projects, work_logs};
 use crate::errors::app_error::{AppError, ErrorResponse};
+use crate::models::auth::{AuthTokenCreate, AuthTokenInDB, AuthTokenLogin, AuthTokenRefresh};
 use crate::models::companies::{
     AnnualSales, Bonus, CompanyCommon, CompanyCreate, CompanyStatus, CompanyUpdate, ContractType,
 };
@@ -25,6 +27,10 @@ use utoipa::OpenApi;
         companies::create_company,
         companies::update_company_by_id,
         companies::get_all_companies,
+        auth::login,
+        auth::logout,
+        auth::refresh,
+        auth::register,
     ),
     components(
         schemas(
@@ -48,12 +54,37 @@ use utoipa::OpenApi;
             CompanyStatus,
             ContractType,
             CompanyCommon,
+            AuthTokenLogin,
+            AuthTokenInDB,
+            AuthTokenCreate,
+            AuthTokenRefresh,
+            AuthResponse,
+            AuthTokenCreatedResponse,
         )
     ),
     tags(
         (name = "projects", description = "プロジェクト関連のエンドポイント"),
         (name = "work_logs", description = "勤怠関連のエンドポイント"),
         (name = "companies", description = "企業関連のエンドポイント"),
-    )
+        (name = "auth", description = "認証関連のエンドポイント"),
+    ),
+    modifiers(&SecurityAddon)
 )]
 pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Default::default);
+        components.add_security_scheme(
+            "bearer_auth",
+            utoipa::openapi::security::SecurityScheme::Http(
+                utoipa::openapi::security::HttpBuilder::new()
+                    .scheme(utoipa::openapi::security::HttpAuthScheme::Bearer)
+                    .bearer_format("JWT")
+                    .build(),
+            ),
+        );
+    }
+}
