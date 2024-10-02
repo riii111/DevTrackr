@@ -24,7 +24,10 @@ use validator::Validate;
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = Vec<ProjectResponse>),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
-    )
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
 )]
 #[get("")]
 pub async fn get_projects(
@@ -103,6 +106,9 @@ pub async fn get_projects(
     ),
     params(
         ("id" = String, Path, description = "プロジェクトID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[get("/{id}")]
@@ -136,6 +142,9 @@ pub async fn get_project_by_id(
         (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[post("")]
@@ -167,6 +176,9 @@ pub async fn create_project(
     ),
     params(
         ("id" = String, Path, description = "プロジェクトID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[put("/{id}")]

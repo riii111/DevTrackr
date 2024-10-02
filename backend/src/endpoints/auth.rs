@@ -63,13 +63,15 @@ async fn register(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let auth_response = auth_usecase
+    let auth_token = auth_usecase
         .register(
             &register_dto.email,
             &register_dto.password,
             &register_dto.name,
         )
         .await?;
+
+    let auth_response: AuthResponse = auth_token.into();
     let refresh_token = auth_response.refresh_token.clone();
     let mut response = HttpResponse::Created().json(auth_response);
     set_refresh_token_cookie(&mut response, &refresh_token);

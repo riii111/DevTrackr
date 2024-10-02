@@ -15,6 +15,9 @@ use std::sync::Arc;
     path = "/api/work_logs",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = Vec<WorkLogsResponse>)
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[get("")]
@@ -48,6 +51,9 @@ pub async fn get_all_work_logs(
     ),
     params(
         ("id" = String, Path, description = "勤怠ID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[get("/{id}")]
@@ -77,6 +83,9 @@ pub async fn get_work_logs_by_id(
         (status = 201, description = "勤怠の作成に成功", body = WorkLogsCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[post("")]
@@ -108,6 +117,9 @@ pub async fn create_work_logs(
     ),
     params(
         ("id" = String, Path, description = "勤怠ID")
+    ),
+    security(
+        ("bearer_auth" = [])
     )
 )]
 #[put("/{id}")]
