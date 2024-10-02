@@ -21,3 +21,8 @@ impl From<AuthTokenInDB> for AuthResponse {
         }
     }
 }
+
+#[derive(Serialize, Debug, ToSchema)]
+pub struct AuthTokenCreatedResponse {
+    pub message: String,
+}

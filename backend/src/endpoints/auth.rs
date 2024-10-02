@@ -1,4 +1,4 @@
-use crate::dto::responses::auth::AuthResponse;
+use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::errors::app_error::AppError;
 use crate::models::auth::{AuthTokenCreate, AuthTokenLogin, AuthTokenRefresh};
 use crate::repositories::auth::MongoAuthRepository;
@@ -45,7 +45,7 @@ async fn login(
     path = "/api/auth/register",
     request_body = AuthTokenCreate,
     responses(
-        (status = 201, description = "ユーザー登録に成功", body = AuthResponse),
+        (status = 201, description = "ユーザー登録に成功", body = AuthTokenCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 409, description = "既に存在するユーザー", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
@@ -71,7 +71,9 @@ async fn register(
 
     let auth_response: AuthResponse = auth_token.into();
     let refresh_token = auth_response.refresh_token.clone();
-    let mut response = HttpResponse::Created().json(auth_response);
+    let mut response = HttpResponse::Created().json(AuthTokenCreatedResponse {
+        message: "ユーザー登録に成功しました".to_string(),
+    });
     set_refresh_token_cookie(&mut response, &refresh_token);
     Ok(response)
 }
