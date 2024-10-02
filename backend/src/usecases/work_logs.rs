@@ -1,7 +1,6 @@
-use crate::dto::requests::work_logs::{WorkLogsCreateRequest, WorkLogsUpdateRequest};
 use crate::errors::app_error::AppError;
 use crate::models::projects::ProjectUpdate;
-use crate::models::work_logs::WorkLogsInDB;
+use crate::models::work_logs::{WorkLogsCreate, WorkLogsInDB, WorkLogsUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::repositories::work_logs::WorkLogsRepository;
 use crate::usecases::projects::ProjectUseCase;
@@ -43,10 +42,7 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         Ok(self.repository.find_by_id(&object_id).await?)
     }
 
-    pub async fn create_work_logs(
-        &self,
-        work_logs: &WorkLogsCreateRequest,
-    ) -> Result<ObjectId, AppError> {
+    pub async fn create_work_logs(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, AppError> {
         let project_id_str = work_logs.project_id.to_string();
         // プロジェクトの取得と勤怠時間の作成を並行して実行
         let (project, inserted_id) = try_join!(
@@ -77,7 +73,7 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
     pub async fn update_work_logs(
         &self,
         id: &ObjectId,
-        work_logs: &WorkLogsUpdateRequest,
+        work_logs: &WorkLogsUpdate,
     ) -> Result<bool, AppError> {
         let project_id_str = work_logs.project_id.to_string();
 

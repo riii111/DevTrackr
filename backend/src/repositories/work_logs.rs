@@ -1,6 +1,5 @@
-use crate::dto::requests::work_logs::{WorkLogsCreateRequest, WorkLogsUpdateRequest};
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::work_logs::WorkLogsInDB;
+use crate::models::work_logs::{WorkLogsCreate, WorkLogsInDB, WorkLogsUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use futures::stream::TryStreamExt;
@@ -12,15 +11,12 @@ pub trait WorkLogsRepository {
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<WorkLogsInDB>, RepositoryError>;
 
-    async fn insert_one(
-        &self,
-        work_logs: &WorkLogsCreateRequest,
-    ) -> Result<ObjectId, RepositoryError>;
+    async fn insert_one(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, RepositoryError>;
 
     async fn update_one(
         &self,
         id: ObjectId,
-        work_logs: &WorkLogsUpdateRequest,
+        work_logs: &WorkLogsUpdate,
     ) -> Result<bool, RepositoryError>;
 }
 
@@ -64,10 +60,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
             .map_err(RepositoryError::DatabaseError)
     }
 
-    async fn insert_one(
-        &self,
-        work_logs: &WorkLogsCreateRequest,
-    ) -> Result<ObjectId, RepositoryError> {
+    async fn insert_one(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, RepositoryError> {
         let work_logs_in_db = WorkLogsInDB {
             id: None, // MongoDBにID生成を任せる
             project_id: work_logs.project_id,
@@ -94,7 +87,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
     async fn update_one(
         &self,
         id: ObjectId,
-        work_logs: &WorkLogsUpdateRequest,
+        work_logs: &WorkLogsUpdate,
     ) -> Result<bool, RepositoryError> {
         let mut update_doc = bson::to_document(&work_logs)
             .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
