@@ -1,6 +1,6 @@
-// lib/api/core.ts
 import { getSession } from "next-auth/react";
 import { toast } from "react-toastify";
+import { refreshAccessToken } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -18,10 +18,6 @@ class ApiError extends Error {
   }
 }
 
-async function refreshAccessToken() {
-  // TODO: リフレッシュトークンを使用してアクセストークンを更新する処理
-}
-
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const session = await getSession();
   const headers = new Headers(options.headers);
@@ -33,16 +29,24 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   let response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: "include", // Cookieを送信
   });
 
   if (response.status === HTTP_STATUS.UNAUTHORIZED) {
-    // 401エラーの場合、アクセストークンの更新を試みる
-    await refreshAccessToken();
-    // 更新されたトークンで再度リクエストを行う
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    try {
+      const newAccessToken = await refreshAccessToken();
+      headers.set("Authorization", `Bearer ${newAccessToken}`);
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+    } catch (error) {
+      toast.error(
+        "ログイン情報の有効期限が切れました。再度ログインしてください。"
+      );
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Session expired");
+    }
   }
 
   if (!response.ok) {
@@ -53,19 +57,8 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     } catch (e) {
       // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
     }
-
-    if (response.status === HTTP_STATUS.UNAUTHORIZED) {
-      // ログイン情報の有効期限切れの場合、スナックバーを表示
-      toast.error(
-        "ログイン情報の有効期限が切れました。再度ログインしてください。"
-      );
-    }
-
     throw new ApiError(response.status, errorMessage);
   }
 
   return response.json();
 }
-
-// 注: Next.jsではnext-authがCookieの管理を行うため、
-// このファイルではCookieの設定や取得は行わない

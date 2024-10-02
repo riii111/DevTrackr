@@ -1,7 +1,9 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const handler = NextAuth({
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -10,20 +12,22 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
-          {
-            method: "POST",
-            body: JSON.stringify(credentials),
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        const user = await res.json();
+        if (!credentials?.email || !credentials?.password) return null;
 
-        if (res.ok && user) {
-          return user;
-        }
-        return null;
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials),
+        });
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        return {
+          id: data.id,
+          email: credentials.email,
+          accessToken: data.access_token,
+        };
       },
     }),
   ],
@@ -39,6 +43,11 @@ const handler = NextAuth({
       return session;
     },
   },
-});
+  pages: {
+    signIn: "/auth/signin",
+  },
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
