@@ -1,7 +1,7 @@
 use crate::{
+    dto::requests::work_logs::{WorkLogsCreateRequest, WorkLogsUpdateRequest},
     dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse},
     errors::app_error::AppError,
-    models::work_logs::{WorkLogsCreate, WorkLogsUpdate},
     repositories::work_logs::MongoWorkLogsRepository,
     usecases::work_logs::WorkLogsUseCase,
 };
@@ -78,7 +78,7 @@ pub async fn get_work_logs_by_id(
 #[utoipa::path(
     post,
     path = "/api/work_logs",
-    request_body = WorkLogsCreate,
+    request_body = WorkLogsCreateRequest,
     responses(
         (status = 201, description = "勤怠の作成に成功", body = WorkLogsCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -91,7 +91,7 @@ pub async fn get_work_logs_by_id(
 #[post("")]
 pub async fn create_work_logs(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
-    work_logs: web::Json<WorkLogsCreate>,
+    work_logs: web::Json<WorkLogsCreateRequest>,
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_work_logs!!");
 
@@ -108,7 +108,7 @@ pub async fn create_work_logs(
 #[utoipa::path(
     put,
     path = "/api/work_logs/{id}",
-    request_body = WorkLogsUpdate,
+    request_body = WorkLogsUpdateRequest,
     responses(
         (status = 204, description = "勤怠の更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -126,7 +126,7 @@ pub async fn create_work_logs(
 pub async fn update_work_logs_by_id(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     path: web::Path<String>,
-    work_logs: web::Json<WorkLogsUpdate>,
+    work_logs: web::Json<WorkLogsUpdateRequest>,
 ) -> Result<HttpResponse, AppError> {
     info!("called update_work_logs_by_id!!");
 
