@@ -7,6 +7,7 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db;
 use dotenv::dotenv;
 use env_logger::Env;
+use log;
 use std::env;
 use std::io::Result;
 use std::sync::Arc;
@@ -32,6 +33,8 @@ async fn main() -> Result<()> {
     // ロガーの設定
     std::env::set_var("RUST_LOG", "debug,actix_web=debug");
     env_logger::init_from_env(Env::default().default_filter_or("debug"));
+
+    log::info!("Starting server...");
 
     // RedisClientの作成
     let redis_url = env::var("REDIS_URL").expect("REDIS_URLが設定されていません");
@@ -106,20 +109,12 @@ async fn main() -> Result<()> {
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
     let auth_usecase = di::init_auth_usecase(&db);
-    let auth_usecase_clone = di::init_auth_usecase(&db);
+    let auth_usecase_clone = auth_usecase.clone();
 
     // JWT認証のミドルウェアを設定
-    let auth = HttpAuthentication::bearer(move |req, credentials| {
+    let jwt_auth_check = HttpAuthentication::bearer(move |req, credentials| {
         let auth_usecase_clone = auth_usecase.clone();
         Box::pin(async move {
-            // リクエストパスをログに出力
-            log::debug!("Request path: {}", req.path());
-
-            // APIドキュメント参照時はJWT認証の対象外
-            if req.path().starts_with("/api-docs") {
-                log::debug!("Skipping authentication for Swagger UI");
-                return Ok(req);
-            }
             middleware::jwt::validator(req, credentials, web::Data::new(auth_usecase_clone)).await
         })
     });
@@ -147,14 +142,29 @@ async fn main() -> Result<()> {
             )
             .service(
                 web::scope("/api")
-                    .service(routes::public_auth_scope())
                     .service(
+                        web::scope("/auth")
+                            .service(endpoints::auth::login)
+                            .service(endpoints::auth::register)
+                            .service(endpoints::auth::refresh)
+                            .service(
+                                // logoutのみ認証ミドルウェアを適用
+                                web::scope("")
+                                    .wrap(jwt_auth_check.clone())
+                                    .service(endpoints::auth::logout),
+                            ),
+                    )
+                    .service(
+                        // 認証ミドルウェアを適用
                         web::scope("")
-                            .wrap(auth.clone())
-                            .service(routes::protected_scope()),
+                            .wrap(jwt_auth_check.clone())
+                            .service(routes::projects_scope())
+                            .service(routes::work_logs_scope())
+                            .service(routes::companies_scope()),
                     )
                     .default_service(web::route().to(not_found)),
             )
+            .service(routes::health_check)
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
