@@ -61,7 +61,7 @@ async fn register(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let auth_token = auth_usecase
+    let _ = auth_usecase
         .register(
             &register_dto.email,
             &register_dto.password,
@@ -69,12 +69,9 @@ async fn register(
         )
         .await?;
 
-    let auth_response: AuthResponse = auth_token.into();
-    let refresh_token = auth_response.refresh_token.clone();
-    let mut response = HttpResponse::Created().json(AuthTokenCreatedResponse {
+    let response = HttpResponse::Created().json(AuthTokenCreatedResponse {
         message: "ユーザー登録に成功しました".to_string(),
     });
-    set_refresh_token_cookie(&mut response, &refresh_token);
     Ok(response)
 }
 
