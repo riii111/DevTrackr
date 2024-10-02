@@ -16,6 +16,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 mod config;
+mod constants;
 mod dto;
 mod endpoints;
 mod errors;

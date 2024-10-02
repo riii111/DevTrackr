@@ -3,6 +3,7 @@ use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database}
 
 use crate::models::auth::AuthTokenInDB;
 use crate::models::projects::ProjectInDB;
+use crate::models::user::UserInDB;
 use crate::models::work_logs::WorkLogsInDB;
 
 pub async fn init_db() -> Result<Database> {
@@ -17,6 +18,7 @@ pub async fn init_db() -> Result<Database> {
 pub async fn create_indexes(db: &Database) -> Result<()> {
     log::info!("Creating indexes...");
     create_auth_indexes(db).await?;
+    create_users_indexes(db).await?;
     create_projects_indexes(db).await?;
     create_work_logs_indexes(db).await?;
     log::info!("Indexes created successfully.");
@@ -27,13 +29,13 @@ pub async fn create_indexes(db: &Database) -> Result<()> {
 async fn create_auth_indexes(db: &Database) -> Result<()> {
     let tokens_collection = db.collection::<AuthTokenInDB>("auth_tokens");
 
-    // access_token にインデックスを作成
+    // access_tokenにユニークインデックスを作成
     let access_token_index = mongodb::IndexModel::builder()
         .keys(doc! { "access_token": 1 })
         .options(
             IndexOptions::builder()
                 .unique(true)
-                .name("idx_access_token".to_string())
+                .name("idx_access_token_unique".to_string())
                 .build(),
         )
         .build();
@@ -42,13 +44,13 @@ async fn create_auth_indexes(db: &Database) -> Result<()> {
         .create_index(access_token_index, None)
         .await?;
 
-    // refresh_token にインデックスを作成
+    // refresh_tokenにユニークインデックスを作成
     let refresh_token_index = mongodb::IndexModel::builder()
         .keys(doc! { "refresh_token": 1 })
         .options(
             IndexOptions::builder()
                 .unique(true)
-                .name("idx_refresh_token".to_string())
+                .name("idx_refresh_token_unique".to_string())
                 .build(),
         )
         .build();
@@ -57,6 +59,25 @@ async fn create_auth_indexes(db: &Database) -> Result<()> {
         .create_index(refresh_token_index, None)
         .await?;
 
+    Ok(())
+}
+
+/// usersコレクションのインデックス作成
+async fn create_users_indexes(db: &Database) -> Result<()> {
+    let collection = db.collection::<UserInDB>("users");
+
+    // emailにユニークインデックスを作成
+    let email_index = mongodb::IndexModel::builder()
+        .keys(doc! { "email": 1 })
+        .options(
+            IndexOptions::builder()
+                .unique(true)
+                .name("idx_email_unique".to_string())
+                .build(),
+        )
+        .build();
+
+    collection.create_index(email_index, None).await?;
     Ok(())
 }
 

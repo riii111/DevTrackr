@@ -1,3 +1,4 @@
+use crate::constants::mongo_error_codes::mongodb_error_codes;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
 use crate::models::user::UserInDB;
@@ -61,17 +62,26 @@ impl AuthRepository for MongoAuthRepository {
             updated_at: None,
         };
 
-        let result = self
-            .users_collection
-            .insert_one(&user_in_db, None)
-            .await
-            .map_err(RepositoryError::DatabaseError)?;
-        result
-            .inserted_id
-            .as_object_id()
-            .ok_or(RepositoryError::DatabaseError(MongoError::custom(
-                "挿入されたドキュメントのIDが無効です",
-            )))
+        match self.users_collection.insert_one(&user_in_db, None).await {
+            Ok(result) => result
+                .inserted_id
+                .as_object_id()
+                .ok_or(RepositoryError::DatabaseError(MongoError::custom(
+                    "挿入されたドキュメントのIDが無効です",
+                ))),
+            Err(e) => {
+                if let mongodb::error::ErrorKind::Write(write_failure) = e.kind.as_ref() {
+                    if let mongodb::error::WriteFailure::WriteError(write_error) = write_failure {
+                        if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
+                            return Err(RepositoryError::DuplicateError(
+                                "メールアドレスが既に使用されています".to_string(),
+                            ));
+                        }
+                    }
+                }
+                Err(RepositoryError::DatabaseError(e))
+            }
+        }
     }
 
     async fn save_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError> {

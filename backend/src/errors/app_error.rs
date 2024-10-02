@@ -31,6 +31,9 @@ pub enum AppError {
 
     #[error("内部サーバーエラー: {0}")]
     InternalServerError(String),
+
+    #[error("ユニーク制約違反: {0}")]
+    DuplicateError(String),
 }
 
 // エラーレスポンスの構造体
@@ -70,6 +73,7 @@ impl AppError {
         match self {
             AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::DuplicateError(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
@@ -112,6 +116,10 @@ impl actix_web::ResponseError for AppError {
                     "details": error_messages
                 }))
             }
+            AppError::DuplicateError(_) => HttpResponse::BadRequest().json(json!({
+                "error": "ユニーク制約違反",
+                "details": [self.error_message()]
+            })),
             AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
                 "error": "リソースが見つかりません",
                 "details": [self.error_message()]
