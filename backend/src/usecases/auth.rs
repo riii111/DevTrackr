@@ -92,27 +92,18 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// - アクセストークンとリフレッシュトークンを削除
     pub async fn logout(&self, auth_header: &str) -> Result<(), AppError> {
         let token = self.extract_token(auth_header);
-        // アクセストークンの削除
-        let deleted_access =
-            self.repository
-                .delete_auth_token(&token)
-                .await
-                .map_err(|e| match e {
-                    RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                    RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-                })?;
 
-        // リフレッシュトークンの削除
-        let deleted_refresh = self
+        // アクセストークンをキーに削除
+        let result = self
             .repository
-            .delete_refresh_token(&token)
+            .delete_auth_tokens(&token)
             .await
             .map_err(|e| match e {
                 RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
                 RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
             })?;
 
-        if deleted_access || deleted_refresh {
+        if result {
             Ok(())
         } else {
             Err(AppError::NotFound("トークンが見つかりません".to_string()))
