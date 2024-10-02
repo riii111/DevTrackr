@@ -1,6 +1,6 @@
 use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::errors::app_error::AppError;
-use crate::models::auth::{AuthTokenCreate, AuthTokenLogin, AuthTokenRefresh};
+use crate::models::auth::{AuthTokenCreate, AuthTokenLogin};
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use crate::utils::cookie_util::set_refresh_token_cookie;
@@ -105,10 +105,8 @@ async fn logout(
 #[utoipa::path(
     post,
     path = "/api/auth/refresh",
-    request_body = AuthTokenRefresh,
     responses(
         (status = 200, description = "トークンのリフレッシュに成功", body = AuthResponse),
-        (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
         (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
@@ -116,17 +114,23 @@ async fn logout(
 #[post("/refresh")]
 async fn refresh(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
-    refresh_token_dto: web::Json<AuthTokenRefresh>,
+    req: HttpRequest,
 ) -> Result<impl Responder, AppError> {
-    // バリデーションの実行
-    refresh_token_dto
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    // クッキーからリフレッシュトークンを取得
+    let refresh_token = req
+        .cookie("refresh_token")
+        .ok_or_else(|| AppError::Unauthorized("リフレッシュトークンが見つかりません".to_string()))?
+        .value()
+        .to_string();
 
-    let auth_token = auth_usecase
-        .refresh_token(&refresh_token_dto.refresh_token)
-        .await?;
+    let auth_token = auth_usecase.refresh_token(&refresh_token).await?;
+    let refresh_token = auth_token.refresh_token.clone();
 
     let auth_response: AuthResponse = auth_token.into();
-    Ok(HttpResponse::Ok().json(auth_response))
+    let mut response = HttpResponse::Ok().json(auth_response);
+
+    // 新しいリフレッシュトークンをクッキーにセット
+    set_refresh_token_cookie(&mut response, &refresh_token);
+
+    Ok(response)
 }

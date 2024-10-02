@@ -4,7 +4,7 @@ use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
 use crate::endpoints::{auth, companies, projects, work_logs};
 use crate::errors::app_error::{AppError, ErrorResponse};
-use crate::models::auth::{AuthTokenCreate, AuthTokenInDB, AuthTokenLogin, AuthTokenRefresh};
+use crate::models::auth::{AuthTokenCreate, AuthTokenInDB, AuthTokenLogin};
 use crate::models::companies::{
     AnnualSales, Bonus, CompanyCommon, CompanyCreate, CompanyStatus, CompanyUpdate, ContractType,
 };
@@ -57,7 +57,6 @@ use utoipa::OpenApi;
             AuthTokenLogin,
             AuthTokenInDB,
             AuthTokenCreate,
-            AuthTokenRefresh,
             AuthResponse,
             AuthTokenCreatedResponse,
         )

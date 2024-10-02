@@ -30,12 +30,6 @@ pub struct AuthTokenLogin {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
-pub struct AuthTokenRefresh {
-    #[validate(length(min = 10))]
-    pub refresh_token: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
 pub struct AuthTokenInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
