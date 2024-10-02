@@ -20,9 +20,12 @@ pub fn init_work_logs_usecase(
 }
 
 // project
-pub fn init_project_usecase(db: &Database) -> Arc<ProjectUseCase<MongoProjectRepository>> {
+pub fn init_project_usecase(
+    db: &Database,
+    company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
+) -> Arc<ProjectUseCase<MongoProjectRepository>> {
     let project_repository = Arc::new(MongoProjectRepository::new(db));
-    Arc::new(ProjectUseCase::new(project_repository))
+    Arc::new(ProjectUseCase::new(project_repository, company_usecase))
 }
 
 // company

@@ -106,8 +106,9 @@ async fn main() -> Result<()> {
     }
 
     // 各ユースケースの初期化
-    let project_usecase = di::init_project_usecase(&db);
     let company_usecase = di::init_company_usecase(&db);
+    let company_usecase_clone = company_usecase.clone();
+    let project_usecase = di::init_project_usecase(&db, company_usecase_clone);
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);

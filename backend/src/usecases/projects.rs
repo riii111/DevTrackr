@@ -1,16 +1,25 @@
 use crate::errors::app_error::AppError;
 use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectInDB, ProjectUpdate};
+use crate::repositories::companies::MongoCompanyRepository;
 use crate::repositories::projects::ProjectRepository;
+use crate::usecases::companies::CompanyUseCase;
 use bson::oid::ObjectId;
 use std::sync::Arc;
 
 pub struct ProjectUseCase<R: ProjectRepository> {
     repository: Arc<R>,
+    company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
 }
 
 impl<R: ProjectRepository> ProjectUseCase<R> {
-    pub fn new(repository: Arc<R>) -> Self {
-        Self { repository }
+    pub fn new(
+        repository: Arc<R>,
+        company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
+    ) -> Self {
+        Self {
+            repository,
+            company_usecase,
+        }
     }
 
     /// プロジェクトを検索し、条件に一致するプロジェクトを取得する。
@@ -35,6 +44,12 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
     }
 
     pub async fn create_project(&self, project: ProjectCreate) -> Result<ObjectId, AppError> {
+        self.company_usecase
+            .get_company_by_id(&project.company_id.to_string())
+            .await?
+            .ok_or_else(|| {
+                AppError::NotFound("プロジェクトに関連する企業が見つかりません".to_string())
+            })?;
         Ok(self.repository.insert_one(project).await?)
     }
 
@@ -49,6 +64,12 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
                 "更新対象のプロジェクトが見つかりません".to_string(),
             ));
         }
+        self.company_usecase
+            .get_company_by_id(&project.company_id.to_string())
+            .await?
+            .ok_or_else(|| {
+                AppError::NotFound("プロジェクトに関連する企業が見つかりません".to_string())
+            })?;
 
         Ok(self.repository.update_one(*id, project).await?)
     }
