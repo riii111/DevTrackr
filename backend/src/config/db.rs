@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database};
 
-use crate::models::auth::AuthToken;
+use crate::models::auth::AuthTokenInDB;
 use crate::models::projects::ProjectInDB;
 use crate::models::work_logs::WorkLogsInDB;
 
@@ -25,7 +25,7 @@ pub async fn create_indexes(db: &Database) -> Result<()> {
 
 /// auth_tokensコレクションのインデックス作成
 async fn create_auth_indexes(db: &Database) -> Result<()> {
-    let tokens_collection = db.collection::<AuthToken>("auth_tokens");
+    let tokens_collection = db.collection::<AuthTokenInDB>("auth_tokens");
 
     // access_token にインデックスを作成
     let access_token_index = mongodb::IndexModel::builder()

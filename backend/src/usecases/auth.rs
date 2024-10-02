@@ -1,10 +1,11 @@
 use crate::errors::app_error::AppError;
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::auth::AuthToken;
+use crate::models::auth::AuthTokenInDB;
 use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
+use bson::DateTime as BsonDateTime;
 use chrono::{Duration, Utc};
 use std::env;
 use std::sync::Arc;
@@ -27,7 +28,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// - メールアドレスでユーザーを検索
     /// - パスワードを検証
     /// - 認証トークンを生成して保存
-    pub async fn login(&self, email: &str, password: &str) -> Result<AuthToken, AppError> {
+    pub async fn login(&self, email: &str, password: &str) -> Result<AuthTokenInDB, AppError> {
         let user = self
             .repository
             .find_user_by_email(email)
@@ -63,7 +64,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
         email: &str,
         password: &str,
         name: &str,
-    ) -> Result<AuthToken, AppError> {
+    ) -> Result<AuthTokenInDB, AppError> {
         let password_hash =
             hash_password(password).map_err(|e| AppError::InternalServerError(e.to_string()))?;
         let user_id = self
@@ -178,7 +179,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     ///
     /// - リフレッシュトークンを検証
     /// - 新しい認証トークンを生成して保存
-    pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthToken, AppError> {
+    pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthTokenInDB, AppError> {
         let claims = self.verify_refresh_token(refresh_token).await?;
 
         let auth_token = self.create_auth_token(&claims.sub)?;
@@ -196,7 +197,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     ///
     /// - アクセストークンとリフレッシュトークンを生成
     /// - 環境変数から有効期限を取得
-    fn create_auth_token(&self, user_id: &str) -> Result<AuthToken, AppError> {
+    fn create_auth_token(&self, user_id: &str) -> Result<AuthTokenInDB, AppError> {
         let access_token = jwt::create_access_token(user_id, &self.jwt_secret)
             .map_err(|e| AppError::InternalServerError(e.to_string()))?;
         let refresh_token = jwt::create_refresh_token(user_id, &self.jwt_secret)
@@ -214,12 +215,15 @@ impl<R: AuthRepository> AuthUseCase<R> {
 
         let expires_at = Utc::now() + Duration::hours(access_token_exp);
         let refresh_expires_at = Utc::now() + Duration::days(refresh_token_exp);
-        Ok(AuthToken {
+        Ok(AuthTokenInDB {
+            id: None,
             user_id: user_id.parse().unwrap(),
             access_token,
             refresh_token,
             expires_at,
             refresh_expires_at,
+            created_at: BsonDateTime::now(),
+            updated_at: None,
         })
     }
 

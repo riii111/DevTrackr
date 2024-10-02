@@ -1,5 +1,5 @@
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::auth::AuthToken;
+use crate::models::auth::AuthTokenInDB;
 use crate::models::user::UserInDB;
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
@@ -14,19 +14,19 @@ pub trait AuthRepository {
         password_hash: &str,
         name: &str,
     ) -> Result<ObjectId, RepositoryError>;
-    async fn save_auth_token(&self, auth_token: &AuthToken) -> Result<(), RepositoryError>;
+    async fn save_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
     async fn delete_auth_token(&self, token: &str) -> Result<bool, RepositoryError>;
     async fn delete_refresh_token(&self, token: &str) -> Result<bool, RepositoryError>;
-    async fn find_auth_token(&self, token: &str) -> Result<Option<AuthToken>, RepositoryError>;
+    async fn find_auth_token(&self, token: &str) -> Result<Option<AuthTokenInDB>, RepositoryError>;
     async fn find_auth_token_by_refresh_token(
         &self,
         refresh_token: &str,
-    ) -> Result<Option<AuthToken>, RepositoryError>;
+    ) -> Result<Option<AuthTokenInDB>, RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
     users_collection: Collection<UserInDB>,
-    tokens_collection: Collection<AuthToken>,
+    tokens_collection: Collection<AuthTokenInDB>,
 }
 
 impl MongoAuthRepository {
@@ -75,7 +75,7 @@ impl AuthRepository for MongoAuthRepository {
             )))
     }
 
-    async fn save_auth_token(&self, auth_token: &AuthToken) -> Result<(), RepositoryError> {
+    async fn save_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError> {
         self.tokens_collection
             .insert_one(auth_token, None)
             .await
@@ -104,7 +104,7 @@ impl AuthRepository for MongoAuthRepository {
         Ok(result.deleted_count > 0)
     }
 
-    async fn find_auth_token(&self, token: &str) -> Result<Option<AuthToken>, RepositoryError> {
+    async fn find_auth_token(&self, token: &str) -> Result<Option<AuthTokenInDB>, RepositoryError> {
         self.tokens_collection
             .find_one(doc! { "access_token": token }, None)
             .await
@@ -114,7 +114,7 @@ impl AuthRepository for MongoAuthRepository {
     async fn find_auth_token_by_refresh_token(
         &self,
         refresh_token: &str,
-    ) -> Result<Option<AuthToken>, RepositoryError> {
+    ) -> Result<Option<AuthTokenInDB>, RepositoryError> {
         self.tokens_collection
             .find_one(doc! { "refresh_token": refresh_token }, None)
             .await

@@ -1,4 +1,4 @@
-use crate::models::auth::AuthToken;
+use crate::models::auth::AuthTokenInDB;
 use serde::Serialize;
 use utoipa::ToSchema;
 
@@ -11,8 +11,8 @@ pub struct AuthResponse {
     pub expires_in: i64,
 }
 
-impl From<AuthToken> for AuthResponse {
-    fn from(token: AuthToken) -> Self {
+impl From<AuthTokenInDB> for AuthResponse {
+    fn from(token: AuthTokenInDB) -> Self {
         Self {
             access_token: token.access_token,
             refresh_token: token.refresh_token,

@@ -1,6 +1,6 @@
 use crate::dto::responses::auth::AuthResponse;
 use crate::errors::app_error::AppError;
-use crate::models::auth::{AuthCreate, AuthLogin, AuthRefresh};
+use crate::models::auth::{AuthTokenCreate, AuthTokenLogin, AuthTokenRefresh};
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use crate::utils::cookie_util::set_refresh_token_cookie;
@@ -11,7 +11,7 @@ use validator::Validate;
 #[utoipa::path(
     post,
     path = "/api/auth/login",
-    request_body = AuthLogin,
+    request_body = AuthTokenLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -22,7 +22,7 @@ use validator::Validate;
 #[post("/login")]
 async fn login(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
-    login_dto: web::Json<AuthLogin>,
+    login_dto: web::Json<AuthTokenLogin>,
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
     login_dto
@@ -43,7 +43,7 @@ async fn login(
 #[utoipa::path(
     post,
     path = "/api/auth/register",
-    request_body = AuthCreate,
+    request_body = AuthTokenCreate,
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -54,7 +54,7 @@ async fn login(
 #[post("/register")]
 async fn register(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
-    register_dto: web::Json<AuthCreate>,
+    register_dto: web::Json<AuthTokenCreate>,
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
     register_dto
@@ -106,7 +106,7 @@ async fn logout(
 #[utoipa::path(
     post,
     path = "/api/auth/refresh",
-    request_body = AuthRefresh,
+    request_body = AuthTokenRefresh,
     responses(
         (status = 200, description = "トークンのリフレッシュに成功", body = AuthResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -117,7 +117,7 @@ async fn logout(
 #[post("/refresh")]
 async fn refresh(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
-    refresh_token_dto: web::Json<AuthRefresh>,
+    refresh_token_dto: web::Json<AuthTokenRefresh>,
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
     refresh_token_dto
