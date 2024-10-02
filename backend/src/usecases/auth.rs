@@ -1,5 +1,4 @@
 use crate::errors::app_error::AppError;
-use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
 use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
@@ -32,22 +31,12 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let user = self
             .repository
             .find_user_by_email(email)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?
+            .await?
             .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
 
         if verify_password(password, &user.password_hash) {
             let auth_token = self.create_auth_token(&user.id.unwrap().to_string())?;
-            self.repository
-                .save_auth_token(&auth_token)
-                .await
-                .map_err(|e| match e {
-                    RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                    RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-                })?;
+            self.repository.save_auth_token(&auth_token).await?;
             Ok(auth_token)
         } else {
             Err(AppError::Unauthorized("無効な認証情報です".to_string()))
@@ -70,20 +59,10 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let user_id = self
             .repository
             .create_user(email, &password_hash, name)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?;
+            .await?;
 
         let auth_token = self.create_auth_token(&user_id.to_string())?;
-        self.repository
-            .save_auth_token(&auth_token)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?;
+        self.repository.save_auth_token(&auth_token).await?;
         Ok(auth_token)
     }
 
@@ -94,14 +73,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let token = self.extract_token(auth_header);
 
         // アクセストークンをキーに削除
-        let result = self
-            .repository
-            .delete_auth_tokens(&token)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?;
+        let result = self.repository.delete_auth_tokens(&token).await?;
 
         if result {
             Ok(())
@@ -174,13 +146,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let claims = self.verify_refresh_token(refresh_token).await?;
 
         let auth_token = self.create_auth_token(&claims.sub)?;
-        self.repository
-            .save_auth_token(&auth_token)
-            .await
-            .map_err(|e| match e {
-                RepositoryError::ConnectionError => AppError::DatabaseConnectionError,
-                RepositoryError::DatabaseError(err) => AppError::DatabaseError(err),
-            })?;
+        self.repository.save_auth_token(&auth_token).await?;
         Ok(auth_token)
     }
 
