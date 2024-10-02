@@ -25,14 +25,3 @@ pub fn companies_scope() -> Scope {
         .service(companies::create_company)
         .service(companies::update_company_by_id)
 }
-
-#[get("/")]
-pub async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello, Actix Web!")
-}
-
-#[get("/health")]
-async fn health_check() -> impl Responder {
-    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
-    HttpResponse::Ok().body("Healthy")
-}

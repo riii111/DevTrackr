@@ -161,10 +161,11 @@ async fn main() -> Result<()> {
                             .service(routes::projects_scope())
                             .service(routes::work_logs_scope())
                             .service(routes::companies_scope()),
-                    )
-                    .default_service(web::route().to(not_found)),
+                    ),
             )
-            .service(routes::health_check)
+            .service(web::scope("/").service(web::resource("").to(index)))
+            .service(web::scope("/health").service(web::resource("").to(health_check)))
+            .default_service(web::route().to(not_found))
             .app_data(web::Data::new(work_logs_usecase.clone()))
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
@@ -180,4 +181,13 @@ async fn main() -> Result<()> {
 
 async fn not_found(_req: HttpRequest) -> impl Responder {
     HttpResponse::NotFound().json("リソースが見つかりません")
+}
+
+pub async fn index(_req: HttpRequest) -> impl Responder {
+    HttpResponse::Ok().body("Hello, Actix Web!")
+}
+
+async fn health_check(_req: HttpRequest) -> impl Responder {
+    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
+    HttpResponse::Ok().body("Healthy")
 }
