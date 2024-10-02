@@ -1,4 +1,4 @@
-use crate::dto::responses::auth::AuthResponse;
+use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::dto::responses::companies::{CompanyCreatedResponse, CompanyResponse};
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
@@ -58,7 +58,8 @@ use utoipa::OpenApi;
             AuthTokenInDB,
             AuthTokenCreate,
             AuthTokenRefresh,
-            AuthResponse
+            AuthResponse,
+            AuthTokenCreatedResponse,
         )
     ),
     tags(
