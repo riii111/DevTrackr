@@ -1,4 +1,4 @@
-use actix_web::{get, web, HttpResponse, Responder, Scope};
+use actix_web::{web, Scope};
 
 use crate::endpoints::{companies, projects, work_logs};
 
