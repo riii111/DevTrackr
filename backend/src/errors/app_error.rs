@@ -23,9 +23,6 @@ pub enum AppError {
     #[error("アクセス権限がありません: {0}")]
     Forbidden(String),
 
-    #[error("データベース接続エラー")]
-    DatabaseConnectionError,
-
     #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
 
@@ -77,7 +74,6 @@ impl AppError {
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
-            AppError::DatabaseConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -134,10 +130,6 @@ impl actix_web::ResponseError for AppError {
             })),
             AppError::Forbidden(_) => HttpResponse::Forbidden().json(json!({
                 "error": "アクセス権限がありません",
-                "details": [self.error_message()]
-            })),
-            AppError::DatabaseConnectionError => HttpResponse::InternalServerError().json(json!({
-                "error": "データベース接続エラー",
                 "details": [self.error_message()]
             })),
             AppError::DatabaseError(error) => HttpResponse::InternalServerError().json(json!({

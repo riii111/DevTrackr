@@ -5,9 +5,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum RepositoryError {
-    #[error("データベース接続エラー")]
-    ConnectionError,
-    #[error("データベース接続後のエラー: {0}")]
+    #[error("データベースエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
     #[error("ユニーク制約違反: {0}")]
     DuplicateError(String),
