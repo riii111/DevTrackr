@@ -1,6 +1,5 @@
-import { getSession } from "next-auth/react";
 import { toast } from "@/lib/hooks/use-toast";
-import { refreshAccessToken } from "./auth";
+import { useAuthApi } from "@/lib/hooks/useAuth";
 import { ApiResponse } from "@/types/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -23,14 +22,9 @@ export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const session = await getSession();
   const headers = new Headers(options.headers);
+  const { refreshAccessToken } = useAuthApi();
 
-  if (session?.accessToken) {
-    headers.set("Authorization", `Bearer ${session.accessToken}`);
-  }
-
-  // デフォルトでContent-Typeを設定
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -41,22 +35,31 @@ export async function fetchApi<T>(
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
-      credentials: "include", // Cookieを送信
+      credentials: "include",
       mode: "cors",
     });
 
     if (response.status === HTTP_STATUS.UNAUTHORIZED) {
-      const newAccessToken = await refreshAccessToken();
-      headers.set("Authorization", `Bearer ${newAccessToken}`);
-      response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers,
-        credentials: "include",
-      });
+      // try {
+      //   const newAccessToken = await refreshAccessToken();
+      //   headers.set("Authorization", `Bearer ${newAccessToken}`);
+      //   response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      //     ...options,
+      //     headers,
+      //     credentials: "include",
+      //   });
+      // } catch (refreshError) {
+      // TODO: リフレッシュトークン実行する処理を追加
+      window.location.href = "/auth";
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        "セッションが切れました。再度ログインしてください。"
+      );
+      // }
     }
 
     if (!response.ok) {
-      let errorMessage = "An error occurred";
+      let errorMessage = "エラーが発生しました";
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
