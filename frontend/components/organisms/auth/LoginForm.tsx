@@ -78,7 +78,7 @@ const LoginForm: React.FC = () => {
                     label="パスワード"
                     required={true}
                 />
-                <Button type="submit" className="w-full bg-black text-white" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-text-primary text-white hover:bg-secondary hover:text-accent" disabled={isLoading}>
                     {isLoading ? 'ログイン中...' : 'ログイン'}
                 </Button>
             </div>

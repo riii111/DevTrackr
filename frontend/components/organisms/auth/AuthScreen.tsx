@@ -7,10 +7,10 @@ import ClientAlert from "@/components/organisms/auth/ClientAlert";
 
 const AuthScreen = () => {
     return (
-        <div className="min-h-screen bg-white bg-opacity-30 flex items-center justify-center p-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md bg-white-34 backdrop-blur-sm">
                 <CardHeader>
-                    <CardTitle className="text-2xl font-bold text-center text-black">DevTrackr</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-center text-primary">DevTrackr</CardTitle>
                     <CardDescription className="text-center text-text-secondary">ログインまたはアカウント登録をしてください</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -26,7 +26,7 @@ const AuthScreen = () => {
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-text-secondary">
-                        &copy; 2024 エンジニア向けダッシュボード All rights reserved.
+                        &copy; 2024 Engineer Dashboard All rights reserved.
                     </p>
                 </CardFooter>
             </Card>
