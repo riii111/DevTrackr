@@ -22,6 +22,17 @@ const LoginForm: React.FC = () => {
         event.preventDefault();
         setIsLoading(true);
 
+        // エラーメッセージをクリアするイベントを発火
+        window.dispatchEvent(new CustomEvent('clearAuthError'));
+
+        // フォームフィールドの customValidity をクリア
+        const formElements = event.currentTarget.elements;
+        Array.from(formElements).forEach((element) => {
+            if (element instanceof HTMLInputElement) {
+                element.setCustomValidity('');
+            }
+        });
+
         const formData = new FormData(event.currentTarget);
         const rawData = {
             email: formData.get('email') as string,
