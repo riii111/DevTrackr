@@ -1,59 +1,53 @@
-import useSWR from "swr";
 import { fetchApi } from "@/lib/api/core";
-import { User } from "@/types/user";
-import { ApiResponse } from "@/types/api";
+import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
+
+const AUTH_ENDPOINT = "/auth";
 
 export function useAuthApi() {
-  const endpoint = "/auth";
-
-  const loginMutation = async (email: string, password: string) => {
-    const response = await fetchApi<User>(`${endpoint}/login`, {
+  const loginMutation = async (
+    email: string,
+    password: string
+  ): Promise<AuthResponse> => {
+    const response = await fetchApi<AuthResponse>(`${AUTH_ENDPOINT}/login`, {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
     return response.data;
   };
 
-  const logoutMutation = async () => {
-    await fetchApi(`${endpoint}/logout`, { method: "POST" });
+  const logoutMutation = async (): Promise<void> => {
+    await fetchApi(`${AUTH_ENDPOINT}/logout`, { method: "POST" });
   };
 
   const registerMutation = async (
     username: string,
     email: string,
     password: string
-  ) => {
-    const response = await fetchApi<User>(`${endpoint}/register`, {
-      method: "POST",
-      body: JSON.stringify({ username, email, password }),
-    });
+  ): Promise<AuthTokenCreatedResponse> => {
+    const response = await fetchApi<AuthTokenCreatedResponse>(
+      `${AUTH_ENDPOINT}/register`,
+      {
+        method: "POST",
+        body: JSON.stringify({ username, email, password }),
+      }
+    );
     return response.data;
   };
 
-  const {
-    data: currentUser,
-    error: currentUserError,
-    mutate: mutateCurrentUser,
-  } = useSWR<ApiResponse<User>>(`${endpoint}/me`, fetchApi);
-
-  const refreshMutation = async () => {
-    const response = await fetchApi<User>(`${endpoint}/token/refresh`, {
-      method: "POST",
-    });
-    if (response.data) {
-      await mutateCurrentUser({ data: response.data });
-    }
-    return response.data;
-  };
+  // TODO: "/me"エンドポイントが実装されるまでコメントアウトまたは削除
+  // const {
+  //   data: currentUser,
+  //   error: currentUserError,
+  //   mutate: mutateCurrentUser,
+  // } = useSWR<ApiResponse<User>>(`${AUTH_ENDPOINT}/me`, fetchApi);
 
   return {
     loginMutation,
     logoutMutation,
     registerMutation,
-    refreshMutation,
-    currentUser: currentUser?.data,
-    isLoading: !currentUserError && !currentUser,
-    isError: currentUserError,
-    mutateCurrentUser,
+    // currentUser: currentUser?.data,
+    // isLoading: !currentUserError && !currentUser,
+    // isError: currentUserError,
+    // mutateCurrentUser,
   };
 }

@@ -1,5 +1,4 @@
 import { getSession } from "next-auth/react";
-import { toast } from "@/hooks/use-toast";
 import { toast } from "@/lib/hooks/use-toast";
 import { refreshAccessToken } from "./auth";
 import { ApiResponse } from "@/types/api";
@@ -31,14 +30,22 @@ export async function fetchApi<T>(
     headers.set("Authorization", `Bearer ${session.accessToken}`);
   }
 
-  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: "include", // Cookieを送信
-  });
+  // デフォルトでContent-Typeを設定
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
-  if (response.status === HTTP_STATUS.UNAUTHORIZED) {
-    try {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      credentials: "include", // Cookieを送信
+      mode: "cors",
+    });
+
+    if (response.status === HTTP_STATUS.UNAUTHORIZED) {
       const newAccessToken = await refreshAccessToken();
       headers.set("Authorization", `Bearer ${newAccessToken}`);
       response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -46,32 +53,35 @@ export async function fetchApi<T>(
         headers,
         credentials: "include",
       });
-    } catch (error) {
+    }
+
+    if (!response.ok) {
+      let errorMessage = "An error occurred";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
+      }
+      throw new ApiError(response.status, errorMessage);
+    }
+
+    const data: ApiResponse<T> = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description:
-          "ログイン情報の有効期限が切れました。再度ログインしてください。",
+        description: error.message,
       });
-      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Session expired");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "予期せぬエラーが発生しました。",
+      });
     }
+    throw error;
   }
-
-  if (!response.ok) {
-    let errorMessage = "An error occurred";
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch (e) {
-      // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
-    }
-    toast({
-      variant: "destructive",
-      title: "エラー",
-      description: errorMessage,
-    });
-    throw new ApiError(response.status, errorMessage);
-  }
-
-  return response.json();
 }
