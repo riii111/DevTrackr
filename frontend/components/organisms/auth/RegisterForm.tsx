@@ -72,6 +72,7 @@ const RegisterForm: React.FC = () => {
                     type="text"
                     label="名前"
                     placeholder="山田 太郎"
+                    required={true}
                 />
                 <FormField
                     id="email"
@@ -79,12 +80,14 @@ const RegisterForm: React.FC = () => {
                     type="email"
                     label="メールアドレス"
                     placeholder="your@email.com"
+                    required={true}
                 />
                 <FormField
                     id="password"
                     name="password"
                     type="password"
                     label="パスワード"
+                    required={true}
                 />
                 <Button type="submit" className="w-full bg-black text-white" disabled={isLoading}>
                     {isLoading ? 'アカウント登録中...' : 'アカウント登録'}
