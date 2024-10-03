@@ -1,5 +1,6 @@
 import { getSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
+import { toast } from "@/lib/hooks/use-toast";
 import { refreshAccessToken } from "./auth";
 import { ApiResponse } from "@/types/api";
 
