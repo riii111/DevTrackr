@@ -1,5 +1,5 @@
 import { getSession } from "next-auth/react";
-import { toast } from "react-toastify";
+import { toast } from "@/hooks/use-toast";
 import { refreshAccessToken } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -42,9 +42,12 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
         credentials: "include",
       });
     } catch (error) {
-      toast.error(
-        "ログイン情報の有効期限が切れました。再度ログインしてください。"
-      );
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description:
+          "ログイン情報の有効期限が切れました。再度ログインしてください。",
+      });
       throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Session expired");
     }
   }
@@ -57,6 +60,11 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     } catch (e) {
       // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
     }
+    toast({
+      variant: "destructive",
+      title: "エラー",
+      description: errorMessage,
+    });
     throw new ApiError(response.status, errorMessage);
   }
 
