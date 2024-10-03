@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/molecules/FormField';
+import { useAuthApi } from '@/lib/hooks/useAuth';
 
 const loginSchema = z.object({
     email: z.string().email('有効なメールアドレスを入力してください'),
@@ -15,6 +16,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { loginMutation } = useAuthApi();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -48,16 +50,12 @@ const LoginForm: React.FC = () => {
         }
     };
 
-    // TODO: APIの共通ロジック作って置き換える（別issue）
     const loginUser = async (data: LoginFormData) => {
-        const response = await fetch('https://your-api-url.com/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('ログインに失敗しました');
-        const responseData = await response.json();
-        localStorage.setItem('token', responseData.token);
+        try {
+            await loginMutation(data.email, data.password);
+        } catch (error) {
+            throw new Error('ログインに失敗しました');
+        }
     };
 
     return (
