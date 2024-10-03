@@ -15,7 +15,7 @@ pub struct AuthTokenCreate {
 
     #[validate(length(min = 1, message = "名前は1文字以上である必要があります"))]
     #[schema(example = "John Doe")]
-    pub name: String,
+    pub username: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]

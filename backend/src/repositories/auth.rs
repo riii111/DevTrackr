@@ -13,7 +13,7 @@ pub trait AuthRepository {
         &self,
         email: &str,
         password_hash: &str,
-        name: &str,
+        username: &str,
     ) -> Result<ObjectId, RepositoryError>;
     async fn save_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
     async fn delete_auth_tokens(&self, access_token: &str) -> Result<bool, RepositoryError>;
@@ -51,13 +51,13 @@ impl AuthRepository for MongoAuthRepository {
         &self,
         email: &str,
         password_hash: &str,
-        name: &str,
+        username: &str,
     ) -> Result<ObjectId, RepositoryError> {
         let user_in_db = UserInDB {
             id: None,
             email: email.to_string(),
             password_hash: password_hash.to_string(),
-            name: name.to_string(),
+            username: username.to_string(),
             created_at: BsonDateTime::now(),
             updated_at: None,
         };

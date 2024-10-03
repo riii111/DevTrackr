@@ -9,7 +9,7 @@ pub struct UserInDB {
     pub id: Option<ObjectId>,
     pub email: String,
     pub password_hash: String,
-    pub name: String,
+    pub username: String,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime, // 作成日時
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
