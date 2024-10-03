@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/molecules/FormField';
-import { useAuthApi } from '@/lib/hooks/useAuth';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
 
 const registerSchema = z.object({
     name: z.string().min(1, '名前を入力してください'),
@@ -14,11 +14,10 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-
 const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { registerMutation } = useAuthApi();
+    const { register } = useAuthApi();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -55,7 +54,7 @@ const RegisterForm: React.FC = () => {
 
     const registerUser = async (data: RegisterFormData) => {
         try {
-            await registerMutation(data.name, data.email, data.password);
+            await register(data.name, data.email, data.password);
         } catch (error) {
             throw new Error('アカウント登録に失敗しました');
         }

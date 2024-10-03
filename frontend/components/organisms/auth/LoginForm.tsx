@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/molecules/FormField';
-import { useAuthApi } from '@/lib/hooks/useAuth';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
 
 const loginSchema = z.object({
     email: z.string().email('有効なメールアドレスを入力してください'),
@@ -16,7 +16,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { loginMutation } = useAuthApi();
+    const { login } = useAuthApi();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -52,7 +52,7 @@ const LoginForm: React.FC = () => {
 
     const loginUser = async (data: LoginFormData) => {
         try {
-            await loginMutation(data.email, data.password);
+            await login(data.email, data.password);
         } catch (error) {
             throw new Error('ログインに失敗しました');
         }
