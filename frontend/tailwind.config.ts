@@ -18,7 +18,7 @@ const config: Config = {
         "white-34": "rgba(255, 255, 255, 0.34)",
       },
       colors: {
-        primary: "#3B82F6",
+        primary: "#1F2937",
         secondary: "#F3F4F6",
         accent: "#EC4899",
         background: "hsl(var(--background))",
