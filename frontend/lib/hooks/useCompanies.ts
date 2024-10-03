@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { fetchApi } from "@/lib/api/core";
-import { Company } from "@/lib/types/api";
+import { Company } from "@/types/company";
 
 export function useCompanies() {
   const { data, error, mutate } = useSWR<Company[]>("/companies", fetchApi);
