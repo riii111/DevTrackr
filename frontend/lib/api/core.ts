@@ -1,6 +1,7 @@
 import { getSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
 import { refreshAccessToken } from "./auth";
+import { ApiResponse } from "@/types/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -18,7 +19,10 @@ class ApiError extends Error {
   }
 }
 
-export async function fetchApi(endpoint: string, options: RequestInit = {}) {
+export async function fetchApi<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
   const session = await getSession();
   const headers = new Headers(options.headers);
 
