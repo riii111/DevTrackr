@@ -65,7 +65,7 @@ async fn register(
         .register(
             &register_dto.email,
             &register_dto.password,
-            &register_dto.name,
+            &register_dto.username,
         )
         .await?;
 

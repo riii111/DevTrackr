@@ -7,14 +7,22 @@ const ClientAlert = () => {
     const [generalError, setGeneralError] = useState<string | null>(null);
 
     useEffect(() => {
-        const handleError = (event: CustomEvent<Error>) => {
-            setGeneralError(event.detail.message);
+        const handleError = (event: Event) => {
+            const customEvent = event as CustomEvent<Error>;
+            setGeneralError(customEvent.detail.message);
         };
 
-        window.addEventListener('authError' as any, handleError as EventListener);
+        // エラーメッセージをクリアする関数
+        const handleClearError = () => {
+            setGeneralError(null);
+        };
+
+        window.addEventListener('authError', handleError);
+        window.addEventListener('clearAuthError', handleClearError);
 
         return () => {
-            window.removeEventListener('authError' as any, handleError as EventListener);
+            window.removeEventListener('authError', handleError);
+            window.removeEventListener('clearAuthError', handleClearError);
         };
     }, []);
 

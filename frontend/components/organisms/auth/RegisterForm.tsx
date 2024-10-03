@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/molecules/FormField';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
 
 const registerSchema = z.object({
     name: z.string().min(1, '名前を入力してください'),
@@ -13,14 +14,25 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-
 const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { register } = useAuthApi();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
+
+        // エラーメッセージをクリアするイベントを発火
+        window.dispatchEvent(new CustomEvent('clearAuthError'));
+
+        // フォームフィールドの customValidity をクリア
+        const formElements = event.currentTarget.elements;
+        Array.from(formElements).forEach((element) => {
+            if (element instanceof HTMLInputElement) {
+                element.setCustomValidity('');
+            }
+        });
 
         const formData = new FormData(event.currentTarget);
         const rawData = {
@@ -51,16 +63,12 @@ const RegisterForm: React.FC = () => {
         }
     };
 
-    // TODO: APIの共通ロジック作って置き換える（別issue）
     const registerUser = async (data: RegisterFormData) => {
-        const response = await fetch('https://your-api-url.com/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('アカウント登録に失敗しました');
-        const responseData = await response.json();
-        localStorage.setItem('token', responseData.token);
+        try {
+            await register(data.name, data.email, data.password);
+        } catch (error) {
+            throw new Error('アカウント登録に失敗しました');
+        }
     };
 
     return (

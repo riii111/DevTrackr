@@ -52,13 +52,13 @@ impl<R: AuthRepository> AuthUseCase<R> {
         &self,
         email: &str,
         password: &str,
-        name: &str,
+        username: &str,
     ) -> Result<AuthTokenInDB, AppError> {
         let password_hash =
             hash_password(password).map_err(|e| AppError::InternalServerError(e.to_string()))?;
         let user_id = self
             .repository
-            .create_user(email, &password_hash, name)
+            .create_user(email, &password_hash, username)
             .await?;
 
         let auth_token = self.create_auth_token(&user_id.to_string())?;
