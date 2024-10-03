@@ -1,46 +1,28 @@
-"use client";
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TabsContent } from "@/components/ui/tabs";
 import LoginForm from "@/components/organisms/auth/LoginForm";
 import RegisterForm from "@/components/organisms/auth/RegisterForm";
+import ClientTabs from "@/components/organisms/auth/ClientTabs";
+import ClientAlert from "@/components/organisms/auth/ClientAlert";
 
-const AuthScreen: React.FC = () => {
-    const [activeTab, setActiveTab] = useState("login");
-    const [generalError, setGeneralError] = useState<string | null>(null);
-
-    const handleError = (error: Error) => {
-        setGeneralError(error.message);
-    };
-
+const AuthScreen = () => {
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-md backdrop-blur-sm">
+        <div className="min-h-screen bg-white bg-opacity-30 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-white-34 backdrop-blur-sm">
                 <CardHeader>
-                    <CardTitle className="text-2xl font-bold text-center">
-                        DevTrackr
-                    </CardTitle>
+                    <CardTitle className="text-2xl font-bold text-center text-black">DevTrackr</CardTitle>
                     <CardDescription className="text-center text-text-secondary">ログインまたはアカウント登録をしてください</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="login">ログイン</TabsTrigger>
-                            <TabsTrigger value="register">アカウント登録</TabsTrigger>
-                        </TabsList>
+                    <ClientTabs>
                         <TabsContent value="login">
-                            <LoginForm onError={handleError} />
+                            <LoginForm />
                         </TabsContent>
                         <TabsContent value="register">
-                            <RegisterForm onError={handleError} />
+                            <RegisterForm />
                         </TabsContent>
-                    </Tabs>
-                    {generalError && (
-                        <Alert variant="destructive" className="mt-4">
-                            <AlertDescription>{generalError}</AlertDescription>
-                        </Alert>
-                    )}
+                    </ClientTabs>
+                    <ClientAlert />
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-text-secondary">
@@ -49,7 +31,7 @@ const AuthScreen: React.FC = () => {
                 </CardFooter>
             </Card>
         </div>
-    )
+    );
 };
 
 export default AuthScreen;

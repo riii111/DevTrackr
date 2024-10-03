@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -12,11 +13,8 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-interface RegisterFormProps {
-    onError: (error: Error) => void;
-}
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onError }) => {
+const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -46,7 +44,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onError }) => {
                     }
                 });
             } else if (error instanceof Error) {
-                onError(error);
+                window.dispatchEvent(new CustomEvent('authError', { detail: error }));
             }
         } finally {
             setIsLoading(false);
@@ -88,7 +86,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onError }) => {
                     type="password"
                     label="パスワード"
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-black text-white" disabled={isLoading}>
                     {isLoading ? 'アカウント登録中...' : 'アカウント登録'}
                 </Button>
             </div>

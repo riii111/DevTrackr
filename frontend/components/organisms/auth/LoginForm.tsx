@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -11,11 +12,7 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-interface LoginFormProps {
-    onError: (error: Error) => void;
-}
-
-const LoginForm: React.FC<LoginFormProps> = ({ onError }) => {
+const LoginForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -44,7 +41,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onError }) => {
                     }
                 });
             } else if (error instanceof Error) {
-                onError(error);
+                window.dispatchEvent(new CustomEvent('authError', { detail: error }));
             }
         } finally {
             setIsLoading(false);
