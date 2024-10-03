@@ -1,5 +1,4 @@
 import { toast } from "@/lib/hooks/use-toast";
-import { useAuthApi } from "@/lib/hooks/useAuth";
 import { ApiResponse } from "@/types/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -23,7 +22,6 @@ export async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const headers = new Headers(options.headers);
-  const { refreshAccessToken } = useAuthApi();
 
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
