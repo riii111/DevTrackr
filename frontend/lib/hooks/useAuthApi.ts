@@ -5,6 +5,9 @@ import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
 const AUTH_ENDPOINT = "/auth";
 
 export function useAuthApi() {
+  /**
+   * ユーザーログイン関数
+   */
   const login = useCallback(
     async (email: string, password: string): Promise<AuthResponse> => {
       const response = await fetchApi<AuthResponse>(`${AUTH_ENDPOINT}/login`, {
@@ -16,10 +19,16 @@ export function useAuthApi() {
     []
   );
 
+  /**
+   * ユーザーログアウト関数
+   */
   const logout = useCallback(async (): Promise<void> => {
     await fetchApi(`${AUTH_ENDPOINT}/logout`, { method: "POST" });
   }, []);
 
+  /**
+   * ユーザー登録関数
+   */
   const register = useCallback(
     async (
       username: string,
@@ -38,6 +47,9 @@ export function useAuthApi() {
     []
   );
 
+  /**
+   * アクセストークンリフレッシュ関数
+   */
   const refreshAccessToken = useCallback(async (): Promise<string> => {
     const response = await fetchApi<{ access_token: string }>(
       `${AUTH_ENDPOINT}/refresh`,
