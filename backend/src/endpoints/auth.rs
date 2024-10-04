@@ -3,7 +3,7 @@ use crate::errors::app_error::AppError;
 use crate::models::auth::{AuthTokenCreate, AuthTokenLogin};
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
-use crate::utils::cookie_util::set_refresh_token_cookie;
+use crate::utils::cookie_util::{set_access_token_cookie, set_refresh_token_cookie};
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use std::sync::Arc;
 use validator::Validate;
@@ -34,9 +34,11 @@ async fn login(
         .await?;
 
     let refresh_token = auth_token.refresh_token.clone();
+    let access_token = auth_token.access_token.clone();
     let auth_response: AuthResponse = auth_token.into();
     let mut response = HttpResponse::Ok().json(auth_response);
     set_refresh_token_cookie(&mut response, &refresh_token);
+    set_access_token_cookie(&mut response, &access_token);
     Ok(response)
 }
 
