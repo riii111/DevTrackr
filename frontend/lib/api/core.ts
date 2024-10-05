@@ -20,35 +20,70 @@ class ApiError extends Error {
 export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ data: T; headers: Headers }> {
+): Promise<ApiResponse<T>> {
   const headers = new Headers(options.headers);
 
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  const accessToken = localStorage.getItem('access_token');
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
+  let response: Response;
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      credentials: "include",
+      mode: "cors",
+    });
 
-  if (!response.ok) {
-    let errorMessage = "エラーが発生しました";
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch (e) {
-      // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
+    // TODO: リフレッシュトークン実行する処理を追加
+    // if (response.status === HTTP_STATUS.UNAUTHORIZED) {
+    // try {
+    //   const newAccessToken = await refreshAccessToken();
+    //   headers.set("Authorization", `Bearer ${newAccessToken}`);
+    //   response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    //     ...options,
+    //     headers,
+    //     credentials: "include",
+    //   });
+    // } catch (refreshError) {
+    // window.location.href = "/auth";
+    // throw new ApiError(
+    //   HTTP_STATUS.UNAUTHORIZED,
+    //   "セッションが切れました。再度ログインしてください。"
+    // );
+    // }
+    // }
+
+    if (!response.ok) {
+      let errorMessage = "エラーが発生しました";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
+      }
+      // TODO: 表示の仕方含めて動作確認チェックする
+      throw new ApiError(response.status, errorMessage);
     }
-    // TODO: 表示の仕方含めて動作確認チェックする
-    throw new ApiError(response.status, errorMessage);
-  }
 
-  const data: T = await response.json();
-  return { data, headers: response.headers };
+    const data: ApiResponse<T> = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error.message,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "予期せぬエラーが発生しました。",
+      });
+    }
+    throw error;
+  }
 }
