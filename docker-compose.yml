@@ -44,16 +44,11 @@ services:
       - redis
     deploy:
       replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.backend-api.entrypoints=web"
-        - "traefik.http.routers.backend-api.rule=Host(`api.localhost`)"
-        - "traefik.http.services.backend-api.loadbalancer.server.port=8088"
-        # - "traefik.http.routers.backend-api.middlewares=compress"
-        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.path=/health"
-        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.interval=5s"
-        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.timeout=5s"
-        # - "traefik.http.services.backend-api.loadbalancer.healthcheck.startupDelay=40s"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-api.entrypoints=web"
+      - "traefik.http.routers.backend-api.rule=Host(`localhost`)"
+      - "traefik.http.services.backend-api.loadbalancer.server.port=8088"
 
   redis:
     image: redis:6.2-alpine
