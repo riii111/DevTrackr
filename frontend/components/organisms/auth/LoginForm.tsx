@@ -41,12 +41,9 @@ const LoginForm: React.FC = () => {
 
         try {
             const validatedData = loginSchema.parse(rawData);
-            console.log('バリデーション成功:', validatedData);
             await loginUser(validatedData);
-            console.log('ログイン成功、ダッシュボードに遷移');
-            // router.push('/dashboard');
+            router.push('/dashboard');
         } catch (error) {
-            console.error('ログイン中にエラー発生:', error);
             if (error instanceof z.ZodError) {
                 // フォームバリデーションエラーの処理
                 error.errors.forEach(err => {
@@ -66,12 +63,8 @@ const LoginForm: React.FC = () => {
 
     const loginUser = async (data: LoginFormData) => {
         try {
-            const response = await login(data.email, data.password);
-            console.log('ログインレスポンス:', response);
-            // ログイン成功後にCookieを再確認
-            console.log('ログイン後のCookies:', document.cookie);
+            await login(data.email, data.password);
         } catch (error) {
-            console.error('ログインエラー:', error);
             throw new Error('ログインに失敗しました');
         }
     };

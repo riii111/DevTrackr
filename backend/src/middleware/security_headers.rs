@@ -57,7 +57,7 @@ where
             // スクリプトやスタイルのソースを制限. XSS攻撃対策
             res.headers_mut().insert(
                 HeaderName::from_static("content-security-policy"),
-                HeaderValue::from_static("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://api.localhost;"),
+                HeaderValue::from_static("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"),
             );
             // 他のサイトで、フレームとして表示されることを防ぐ. クリックジャッキング攻撃を防止
             res.headers_mut().insert(

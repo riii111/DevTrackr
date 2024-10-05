@@ -33,9 +33,6 @@ pub fn cors_middleware() -> Cors {
     // 許可ヘッダーの設定
     cors = cors.allowed_headers(&[header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE]);
 
-    // 公開ヘッダーの設定
-    cors = cors.expose_headers(&[header::SET_COOKIE]);
-
     // クレデンシャルのサポート
     cors = cors.supports_credentials();
 
