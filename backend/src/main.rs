@@ -141,9 +141,7 @@ async fn main() -> Result<()> {
                     )
                     .build(),
             )
-            .service(
-                SwaggerUi::new("/api-docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
-            )
+            .service(SwaggerUi::new("/docs/{_:.*}").url("/docs/openapi.json", ApiDoc::openapi()))
             .service(
                 web::scope("/api")
                     .service(
