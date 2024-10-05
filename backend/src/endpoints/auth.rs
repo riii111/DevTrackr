@@ -7,8 +7,6 @@ use crate::utils::cookie_util::{set_access_token_cookie, set_refresh_token_cooki
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use std::sync::Arc;
 use validator::Validate;
-use log::info;
-use chrono::Utc;
 
 #[utoipa::path(
     post,
@@ -37,15 +35,11 @@ async fn login(
 
     let refresh_token = auth_token.refresh_token.clone();
     let access_token = auth_token.access_token.clone();
-    // Debug用
-    let auth_response = AuthResponse {
-        token_type: "Bearer".to_string(),
-        access_token,
-        refresh_token,
-        expires_in: (auth_token.expires_at - Utc::now()).num_seconds(),
-    };
-
-    Ok(HttpResponse::Ok().json(auth_response))
+    let auth_response: AuthResponse = auth_token.into();
+    let mut response = HttpResponse::Ok().json(auth_response);
+    set_refresh_token_cookie(&mut response, &refresh_token);
+    set_access_token_cookie(&mut response, &access_token);
+    Ok(response)
 }
 
 #[utoipa::path(
