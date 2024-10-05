@@ -9,7 +9,7 @@ pub fn set_access_token_cookie(response: &mut HttpResponse, access_token: &str) 
         .path("/") // Cookieが有効になるパス
         .secure(secure_mode)
         .http_only(true) // JSからアクセスできないようにする
-        .same_site(actix_web::cookie::SameSite::Strict)
+        .same_site(actix_web::cookie::SameSite::Lax)
         .finish();
     response.add_cookie(&cookie).unwrap();
 }
@@ -21,7 +21,9 @@ pub fn set_refresh_token_cookie(response: &mut HttpResponse, refresh_token: &str
         .path("/") // Cookieが有効になるパス
         .secure(secure_mode)
         .http_only(true) // JSからアクセスできないようにする
-        .same_site(actix_web::cookie::SameSite::Strict)
+        .same_site(actix_web::cookie::SameSite::Lax)
         .finish();
     response.add_cookie(&cookie).unwrap();
 }
+
+// TODO: 設定値をあとで戻す
