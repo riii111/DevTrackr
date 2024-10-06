@@ -32,10 +32,10 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         navigation: {
-          bg: "#1F2937",
+          bg: "#1F2937", // ナビゲーションバーの背景色
         },
         main: {
-          bg: "#EBDFD7",
+          bg: "#EBDFD7", // メイン画面の背景色
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",

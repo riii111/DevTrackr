@@ -6,11 +6,10 @@ import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { MdRateReview } from "react-icons/md";
 import { MdDashboardCustomize } from "react-icons/md";
 
-import NavigationBar from "@/components/molecules/NavigationBar";
-
+import { ScrollArea } from "@/components/ui/scroll-area";
+import ActiveLink from "@/components/atoms/core/ActiveLink";
 
 const LayoutDashboardNavigation = () => {
-
     const dashboard = [
         {
             name: "ダッシュボード",
@@ -44,13 +43,25 @@ const LayoutDashboardNavigation = () => {
         },
     ];
 
-    const menus = {
-        // ダッシュボードでは、カテゴリタイトルは不要.
-        "": dashboard,
-    }
-
     return (
-        <NavigationBar menus={menus} title={{ name: "DevTrackr", icon: <MdDashboardCustomize /> }} />
+        <nav className="h-full w-1/5 bg-text-primary shadow flex flex-col border-secondary">
+            <h2 className="text-secondary mb-4 gap-4 text-2xl flex items-center py-6 px-4">
+                <MdDashboardCustomize className="text-accent" />
+                <span className="text-white">DevTrackr</span>
+            </h2>
+            <ScrollArea className="flex-1 px-2">
+                <div className="space-y-2">
+                    {dashboard.map((item) => (
+                        <ActiveLink
+                            key={item.path}
+                            href={item.path}
+                            name={item.name}
+                            icon={item.icon}
+                        />
+                    ))}
+                </div>
+            </ScrollArea>
+        </nav>
     );
 };
 

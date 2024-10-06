@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface ActiveLinkProps {
     href: string;
@@ -14,16 +16,21 @@ const ActiveLink = ({ href, name, icon }: ActiveLinkProps) => {
     const isActive = pathname === href;
 
     return (
-        <Link
-            href={href}
-            className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-white text-[#E65F2B]' : 'hover:bg-[#B9BECA]'
-                }`}
+        <Button
+            variant="ghost"
+            className={cn(
+                "w-full justify-start gap-2 text-lg",
+                isActive
+                    ? "bg-white text-accent"
+                    : "text-white hover:bg-secondary/10 hover:text-accent"
+            )}
+            asChild
         >
-            <span className={`${isActive ? 'text-accent' : 'text-white group-hover:text-accent'
-                } transition-colors`}>{icon}</span>
-            <span className={`${isActive ? 'text-accent' : 'text-white group-hover:text-accent'
-                } transition-colors`}>{name}</span>
-        </Link>
+            <Link href={href}>
+                <span className="transition-colors">{icon}</span>
+                <span className="transition-colors">{name}</span>
+            </Link>
+        </Button>
     );
 };
 
