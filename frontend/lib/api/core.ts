@@ -34,6 +34,7 @@ export async function fetchApi<T>(
       ...options,
       headers,
       credentials: "include",
+      cache: "no-cache",
       mode: "cors",
     });
 

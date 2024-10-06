@@ -1,4 +1,5 @@
 # DevTrackr
+
 エンジニア用ダッシュボード（作成途中）。作業工数の提出時に使うかも。
 
 ## アプリケーション構成
@@ -16,17 +17,17 @@
 - データベース: MongoDB
 - プロキシ: Traefik
 
-
-
 ## 構築
+
 `make build`
 
 `make up`
 
 ## アクセス先
-1. http://api.localhost/api-docs/#/
+
+1. <http://localhost/docs/#/>
    バックエンド（APIドキュメント）
-2. http://db-admin.localhost/
+2. <http://db-admin.localhost/>
    MongoDB Express（MongoDBのGUI）
-3. http://traefik.localhost/
+3. <http://traefik.localhost/>
    Traefikのダッシュボード
