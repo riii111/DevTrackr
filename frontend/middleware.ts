@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
         if (response.ok) {
           const newResponse = NextResponse.next();
-          // 新しいアクセストークンをCookieにセット（必要に応じて）
+          // TODO: 再度見直し. バックエンド側でセットしてるけど反映されないのでセットしている.
           newResponse.cookies.set("access_token", await response.text(), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
