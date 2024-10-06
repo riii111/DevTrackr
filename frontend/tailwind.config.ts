@@ -15,7 +15,7 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       backgroundColor: {
-        "white-34": "rgba(255, 255, 255, 0.34)",
+        "main-translucent": "rgba(255, 255, 255, 0.3)", // 半透明の白色背景
       },
       colors: {
         primary: "#1F2937",
@@ -30,6 +30,12 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        navigation: {
+          bg: "#1F2937",
+        },
+        main: {
+          bg: "#EBDFD7",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",

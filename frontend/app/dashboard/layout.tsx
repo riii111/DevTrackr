@@ -10,7 +10,7 @@ export default async function DashboardLayout({
 
   return (
     <DrawerProvider>
-      <div className="flex h-screen bg-[#EBDFD7]">
+      <div className="flex h-screen bg-main-bg">
         <LayoutDashboardNavigation />
         <div className="flex flex-col flex-grow overflow-hidden">
           <LayoutDashboardHeader />

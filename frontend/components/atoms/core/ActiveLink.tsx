@@ -16,7 +16,7 @@ const ActiveLink = ({ href, name, icon }: ActiveLinkProps) => {
     return (
         <Link
             href={href}
-            className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-white text-[#E65F2B]' : 'hover:bg-gray-300'
+            className={`flex items-center gap-4 rounded-md group ${isActive ? 'bg-white text-[#E65F2B]' : 'hover:bg-[#B9BECA]'
                 }`}
         >
             <span className={`${isActive ? 'text-accent' : 'text-white group-hover:text-accent'
