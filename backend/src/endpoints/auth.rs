@@ -10,7 +10,7 @@ use validator::Validate;
 
 #[utoipa::path(
     post,
-    path = "/api/auth/login",
+    path = "/api/auth/login/",
     request_body = AuthTokenLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
@@ -19,7 +19,7 @@ use validator::Validate;
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
-#[post("/login")]
+#[post("/login/")]
 async fn login(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     login_dto: web::Json<AuthTokenLogin>,
@@ -44,7 +44,7 @@ async fn login(
 
 #[utoipa::path(
     post,
-    path = "/api/auth/register",
+    path = "/api/auth/register/",
     request_body = AuthTokenCreate,
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthTokenCreatedResponse),
@@ -53,7 +53,7 @@ async fn login(
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
-#[post("/register")]
+#[post("/register/")]
 async fn register(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     register_dto: web::Json<AuthTokenCreate>,
@@ -79,7 +79,7 @@ async fn register(
 
 #[utoipa::path(
     post,
-    path = "/api/auth/logout",
+    path = "/api/auth/logout/",
     responses(
         (status = 200, description = "ログアウトに成功"),
         (status = 401, description = "認証失敗", body = ErrorResponse),
@@ -89,7 +89,7 @@ async fn register(
         ("bearer_auth" = [])
     )
 )]
-#[post("/logout")]
+#[post("/logout/")]
 async fn logout(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
@@ -106,14 +106,14 @@ async fn logout(
 
 #[utoipa::path(
     post,
-    path = "/api/auth/refresh",
+    path = "/api/auth/refresh/",
     responses(
         (status = 200, description = "トークンのリフレッシュに成功", body = AuthResponse),
         (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
-#[post("/refresh")]
+#[post("/refresh/")]
 async fn refresh(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,

@@ -11,7 +11,7 @@ use validator::Validate;
 
 #[utoipa::path(
     get,
-    path = "/api/projects",
+    path = "/api/projects/",
     params(
         ("title" = Option<String>, Query, description = "プロジェクトのタイトル（部分一致）"),
         ("status" = Option<String>, Query, description = "プロジェクトのステータス"),
@@ -29,7 +29,7 @@ use validator::Validate;
         ("bearer_auth" = [])
     ),
 )]
-#[get("")]
+#[get("/")]
 pub async fn get_projects(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     query: web::Query<ProjectQuery>,
@@ -97,7 +97,7 @@ pub async fn get_projects(
 
 #[utoipa::path(
     get,
-    path = "/api/projects/{id}",
+    path = "/api/projects/{id}/",
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -111,7 +111,7 @@ pub async fn get_projects(
         ("bearer_auth" = [])
     )
 )]
-#[get("/{id}")]
+#[get("/{id}/")]
 pub async fn get_project_by_id(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     id: web::Path<String>,
@@ -136,7 +136,7 @@ pub async fn get_project_by_id(
 
 #[utoipa::path(
     post,
-    path = "/api/projects",
+    path = "/api/projects/",
     request_body = ProjectCreate,
     responses(
         (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
@@ -147,7 +147,7 @@ pub async fn get_project_by_id(
         ("bearer_auth" = [])
     )
 )]
-#[post("")]
+#[post("/")]
 pub async fn create_project(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     project: web::Json<ProjectCreate>,
@@ -166,7 +166,7 @@ pub async fn create_project(
 
 #[utoipa::path(
     put,
-    path = "/api/projects/{id}",
+    path = "/api/projects/{id}/",
     request_body = ProjectUpdate,
     responses(
         (status = 204, description = "プロジェクトの更新に成功"),
@@ -181,7 +181,7 @@ pub async fn create_project(
         ("bearer_auth" = [])
     )
 )]
-#[put("/{id}")]
+#[put("/{id}/")]
 pub async fn update_project_by_id(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     path: web::Path<String>,

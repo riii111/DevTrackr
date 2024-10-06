@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 #[utoipa::path(
     get,
-    path = "/api/work_logs",
+    path = "/api/work_logs/",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = Vec<WorkLogsResponse>)
     ),
@@ -20,7 +20,7 @@ use std::sync::Arc;
         ("bearer_auth" = [])
     )
 )]
-#[get("")]
+#[get("/")]
 pub async fn get_all_work_logs(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
 ) -> Result<HttpResponse, AppError> {
@@ -42,7 +42,7 @@ pub async fn get_all_work_logs(
 
 #[utoipa::path(
     get,
-    path = "/api/work_logs/{id}",
+    path = "/api/work_logs/{id}/",
     responses(
         (status = 200, description = "勤怠の取得に成功", body = WorkLogsResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
@@ -56,7 +56,7 @@ pub async fn get_all_work_logs(
         ("bearer_auth" = [])
     )
 )]
-#[get("/{id}")]
+#[get("/{id}/")]
 pub async fn get_work_logs_by_id(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     id: web::Path<String>,
@@ -77,7 +77,7 @@ pub async fn get_work_logs_by_id(
 
 #[utoipa::path(
     post,
-    path = "/api/work_logs",
+    path = "/api/work_logs/",
     request_body = WorkLogsCreate,
     responses(
         (status = 201, description = "勤怠の作成に成功", body = WorkLogsCreatedResponse),
@@ -88,7 +88,7 @@ pub async fn get_work_logs_by_id(
         ("bearer_auth" = [])
     )
 )]
-#[post("")]
+#[post("/")]
 pub async fn create_work_logs(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     work_logs: web::Json<WorkLogsCreate>,
@@ -107,7 +107,7 @@ pub async fn create_work_logs(
 
 #[utoipa::path(
     put,
-    path = "/api/work_logs/{id}",
+    path = "/api/work_logs/{id}/",
     request_body = WorkLogsUpdate,
     responses(
         (status = 204, description = "勤怠の更新に成功"),
@@ -122,7 +122,7 @@ pub async fn create_work_logs(
         ("bearer_auth" = [])
     )
 )]
-#[put("/{id}")]
+#[put("/{id}/")]
 pub async fn update_work_logs_by_id(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     path: web::Path<String>,
