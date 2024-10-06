@@ -17,7 +17,6 @@ export async function middleware(request: NextRequest) {
     let accessToken = request.cookies.get("access_token");
 
     if (!accessToken || !accessToken.value) {
-      console.log("リフレッシュ！");
       try {
         // リフレッシュトークンを含むCookieを転送
         const response = await fetch(

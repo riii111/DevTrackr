@@ -25,5 +25,3 @@ pub fn set_refresh_token_cookie(response: &mut HttpResponse, refresh_token: &str
         .finish();
     response.add_cookie(&cookie).unwrap();
 }
-
-// TODO: 設定値をあとで戻す
