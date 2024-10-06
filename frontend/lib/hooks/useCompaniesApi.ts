@@ -1,16 +1,23 @@
 import useSWR from "swr";
-import { fetchApi } from "@/lib/api/core";
-import { Company } from "@/types/company";
+import { customFetch } from "@/lib/api/core";
+import {
+  Company,
+  GetCompaniesParams,
+  CreateCompanyRequest,
+  UpdateCompanyRequest,
+} from "@/types/company";
 import { ApiResponse } from "@/types/api";
 
-const ENDPOINT = "/companies";
+const ENDPOINT = "/companies/";
 
 export function useCompaniesApi() {
   const {
     data: companies,
     error: companiesError,
     mutate: mutateCompanies,
-  } = useSWR<ApiResponse<Company[]>>(ENDPOINT, fetchApi);
+  } = useSWR<ApiResponse<Company[]>>(ENDPOINT, (url: string) =>
+    customFetch<"GET", GetCompaniesParams, Company[]>(url, { method: "GET" })
+  );
 
   /**
    * 企業を作成する関数
@@ -26,12 +33,15 @@ export function useCompaniesApi() {
   };
 
   async function createCompanyMutation(
-    companyData: Partial<Company>
+    companyData: CreateCompanyRequest
   ): Promise<Company> {
-    const response = await fetchApi<Company>(`${ENDPOINT}`, {
-      method: "POST",
-      body: JSON.stringify(companyData),
-    });
+    const response = await customFetch<"POST", CreateCompanyRequest, Company>(
+      `${ENDPOINT}`,
+      {
+        method: "POST",
+        body: companyData,
+      }
+    );
     return response.data;
   }
 
@@ -40,12 +50,15 @@ export function useCompaniesApi() {
    */
   async function updateCompanyMutation(
     id: string,
-    companyData: Partial<Company>
+    companyData: UpdateCompanyRequest
   ): Promise<Company> {
-    const response = await fetchApi<Company>(`${ENDPOINT}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(companyData),
-    });
+    const response = await customFetch<"PUT", UpdateCompanyRequest, Company>(
+      `${ENDPOINT}/${id}/`,
+      {
+        method: "PUT",
+        body: companyData,
+      }
+    );
     return response.data;
   }
 
@@ -54,8 +67,11 @@ export function useCompaniesApi() {
    */
   function useCompany(id: string) {
     const { data, error, mutate } = useSWR<ApiResponse<Company>>(
-      `${ENDPOINT}/${id}`,
-      fetchApi
+      `${ENDPOINT}/${id}/`,
+      (url: string) =>
+        customFetch<"GET", Record<string, never>, Company>(url, {
+          method: "GET",
+        })
     );
     return {
       company: data?.data,

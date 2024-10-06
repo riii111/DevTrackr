@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { refreshAccessToken } from "@/lib/hooks/useAuthApi";
 
 const protectedRoutes = ["/dashboard"]; // 保護対象のルートをここに追加
 
@@ -20,7 +19,7 @@ export async function middleware(request: NextRequest) {
       try {
         // リフレッシュトークンを含むCookieを転送
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh/`,
           {
             method: "POST",
             headers: {

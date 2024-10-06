@@ -1,5 +1,6 @@
-import { fetchApi } from "@/lib/api/core";
+import { customFetch } from "@/lib/api/core";
 import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
+import { NextRequest } from "next/server";
 
 const AUTH_ENDPOINT = "/auth";
 
@@ -15,9 +16,13 @@ export function useAuthApi() {
    * ユーザーログイン関数
    */
   async function login(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetchApi<AuthResponse>(`${AUTH_ENDPOINT}/login`, {
+    const response = await customFetch<
+      "POST",
+      { email: string; password: string },
+      AuthResponse
+    >(`${AUTH_ENDPOINT}/login/`, {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     });
     return response.data;
   }
@@ -26,7 +31,7 @@ export function useAuthApi() {
    * ユーザーログアウト関数
    */
   async function logout(): Promise<void> {
-    await fetchApi(`${AUTH_ENDPOINT}/logout`, { method: "POST" });
+    await customFetch(`${AUTH_ENDPOINT}/logout/`, { method: "POST" });
   }
 
   /**
@@ -37,13 +42,14 @@ export function useAuthApi() {
     email: string,
     password: string
   ): Promise<AuthTokenCreatedResponse> {
-    const response = await fetchApi<AuthTokenCreatedResponse>(
-      `${AUTH_ENDPOINT}/register`,
-      {
-        method: "POST",
-        body: JSON.stringify({ username, email, password }),
-      }
-    );
+    const response = await customFetch<
+      "POST",
+      { username: string; email: string; password: string },
+      AuthTokenCreatedResponse
+    >(`${AUTH_ENDPOINT}/register/`, {
+      method: "POST",
+      body: { username, email, password },
+    });
     return response.data;
   }
 
@@ -56,11 +62,16 @@ export function useAuthApi() {
 }
 
 // ミドルウェアやcore.tsで使用するために個別にエクスポート
-export async function refreshAccessToken(): Promise<string> {
-  const response = await fetchApi<{ access_token: string }>(
-    `${AUTH_ENDPOINT}/refresh`,
+export async function refreshAccessToken(
+  request: NextRequest
+): Promise<string> {
+  const response = await customFetch<"POST", never, { access_token: string }>(
+    `${AUTH_ENDPOINT}/refresh/`,
     {
       method: "POST",
+      headers: {
+        Cookie: request.headers.get("cookie") || "",
+      },
     }
   );
   return response.data.access_token;
