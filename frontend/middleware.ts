@@ -7,11 +7,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // APIルートや公開ルートは許可
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/public") ||
-    pathname.startsWith("/auth")
-  ) {
+  if (pathname.startsWith("/api") || pathname.startsWith("/auth")) {
     return NextResponse.next();
   }
 
