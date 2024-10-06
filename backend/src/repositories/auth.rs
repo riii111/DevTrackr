@@ -18,10 +18,11 @@ pub trait AuthRepository {
     async fn save_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
     async fn delete_auth_tokens(&self, access_token: &str) -> Result<bool, RepositoryError>;
     async fn find_auth_token(&self, token: &str) -> Result<Option<AuthTokenInDB>, RepositoryError>;
-    async fn find_auth_token_by_refresh_token(
+    async fn find_by_refresh_token(
         &self,
         refresh_token: &str,
     ) -> Result<Option<AuthTokenInDB>, RepositoryError>;
+    async fn update_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
@@ -110,7 +111,7 @@ impl AuthRepository for MongoAuthRepository {
             .map_err(RepositoryError::DatabaseError)
     }
 
-    async fn find_auth_token_by_refresh_token(
+    async fn find_by_refresh_token(
         &self,
         refresh_token: &str,
     ) -> Result<Option<AuthTokenInDB>, RepositoryError> {
@@ -118,5 +119,23 @@ impl AuthRepository for MongoAuthRepository {
             .find_one(doc! { "refresh_token": refresh_token }, None)
             .await
             .map_err(RepositoryError::DatabaseError)
+    }
+
+    async fn update_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError> {
+        let filter = doc! { "refresh_token": &auth_token.refresh_token };
+        let update = doc! {
+            "$set": {
+                "access_token": &auth_token.access_token,
+                "expires_at": &auth_token.expires_at,
+                "updated_at": &auth_token.updated_at,
+            }
+        };
+
+        self.tokens_collection
+            .update_one(filter, update, None)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        Ok(())
     }
 }

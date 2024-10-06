@@ -37,8 +37,8 @@ async fn login(
     let access_token = auth_token.access_token.clone();
     let auth_response: AuthResponse = auth_token.into();
     let mut response = HttpResponse::Ok().json(auth_response);
-    set_refresh_token_cookie(&mut response, &refresh_token);
     set_access_token_cookie(&mut response, &access_token);
+    set_refresh_token_cookie(&mut response, &refresh_token);
     Ok(response)
 }
 
@@ -126,13 +126,12 @@ async fn refresh(
         .to_string();
 
     let auth_token = auth_usecase.refresh_token(&refresh_token).await?;
-    let refresh_token = auth_token.refresh_token.clone();
+    let access_token = auth_token.access_token.clone();
 
     let auth_response: AuthResponse = auth_token.into();
     let mut response = HttpResponse::Ok().json(auth_response);
 
-    // 新しいリフレッシュトークンをクッキーにセット
-    set_refresh_token_cookie(&mut response, &refresh_token);
-
+    // 新しいアクセストークンをクッキーにセット
+    set_access_token_cookie(&mut response, &access_token);
     Ok(response)
 }

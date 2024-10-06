@@ -100,7 +100,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
             })?;
 
         // 現在時刻と有効期限を比較
-        if Utc::now() > auth_token.expires_at {
+        if Utc::now() > auth_token.expires_at.into() {
             return Err(AppError::Unauthorized(
                 "アクセストークンの有効期限が切れています".to_string(),
             ));
@@ -112,25 +112,30 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// リフレッシュトークンの有効期限を検証
     pub async fn verify_refresh_token(&self, refresh_token: &str) -> Result<Claims, AppError> {
         let claims = jwt::verify_token(refresh_token, &self.jwt_secret)
-            .map_err(|_| AppError::Unauthorized("無効なリフレッシュトークンです".to_string()))?;
+            .map_err(|_| AppError::BadRequest("無効なリフレッシュトークンです".to_string()))?;
 
+        log::info!("refresh_token: {}", refresh_token);
         // DBからリフレッシュトークンを取得
         let auth_token = self
             .repository
-            .find_auth_token_by_refresh_token(refresh_token)
+            .find_by_refresh_token(refresh_token)
             .await
-            .map_err(|_| {
+            .map_err(|e| {
+                log::error!(
+                    "リフレッシュトークンの検証中にエラーが発生しました: {:?}",
+                    e
+                );
                 AppError::InternalServerError(
                     "リフレッシュトークンの検証に失敗しました".to_string(),
                 )
             })?
             .ok_or_else(|| {
-                AppError::Unauthorized("リフレッシュトークンが見つかりません".to_string())
+                AppError::BadRequest("リフレッシュトークンが見つかりません".to_string())
             })?;
 
         // リフレッシュトークンの有効期限を比較
-        if Utc::now() > auth_token.refresh_expires_at {
-            return Err(AppError::Unauthorized(
+        if Utc::now() > auth_token.refresh_expires_at.into() {
+            return Err(AppError::BadRequest(
                 "リフレッシュトークンの有効期限が切れています".to_string(),
             ));
         }
@@ -145,8 +150,33 @@ impl<R: AuthRepository> AuthUseCase<R> {
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthTokenInDB, AppError> {
         let claims = self.verify_refresh_token(refresh_token).await?;
 
-        let auth_token = self.create_auth_token(&claims.sub)?;
-        self.repository.save_auth_token(&auth_token).await?;
+        // 既存のAuthTokenInDBを取得
+        let mut auth_token = self
+            .repository
+            .find_by_refresh_token(refresh_token)
+            .await?
+            .ok_or_else(|| {
+                AppError::BadRequest("リフレッシュトークンが見つかりません".to_string())
+            })?;
+
+        // 新しいアクセストークンを生成
+        let new_access_token = jwt::create_access_token(&claims.sub, &self.jwt_secret)
+            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+
+        let access_token_exp = env::var("ACCESS_TOKEN_EXPIRY_HOURS")
+            .expect("ACCESS_TOKEN_EXPIRY_HOURSが設定されていません")
+            .parse::<i64>()
+            .expect("ACCESS_TOKEN_EXPIRY_HOURSは有効な整数である必要があります");
+
+        // アクセストークンと有効期限を更新
+        auth_token.access_token = new_access_token;
+        auth_token.expires_at =
+            BsonDateTime::from_chrono(Utc::now() + Duration::hours(access_token_exp));
+        auth_token.updated_at = Some(BsonDateTime::now());
+
+        // 更新されたトークンを保存
+        self.repository.update_auth_token(&auth_token).await?;
+
         Ok(auth_token)
     }
 
@@ -170,8 +200,10 @@ impl<R: AuthRepository> AuthUseCase<R> {
             .parse::<i64>()
             .expect("REFRESH_TOKEN_EXPIRY_DAYSは有効な整数である必要があります");
 
-        let expires_at = Utc::now() + Duration::hours(access_token_exp);
-        let refresh_expires_at = Utc::now() + Duration::days(refresh_token_exp);
+        let expires_at = BsonDateTime::from_chrono(Utc::now() + Duration::hours(access_token_exp));
+        let refresh_expires_at =
+            BsonDateTime::from_chrono(Utc::now() + Duration::days(refresh_token_exp));
+
         Ok(AuthTokenInDB {
             id: None,
             user_id: user_id.parse().unwrap(),

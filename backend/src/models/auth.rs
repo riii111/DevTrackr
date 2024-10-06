@@ -41,9 +41,9 @@ pub struct AuthTokenInDB {
     #[schema(value_type = String, example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")]
     pub refresh_token: String,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
-    pub expires_at: chrono::DateTime<chrono::Utc>,
+    pub expires_at: BsonDateTime,
     #[schema(value_type = String, example = "2023-04-20T12:34:56Z")]
-    pub refresh_expires_at: chrono::DateTime<chrono::Utc>,
+    pub refresh_expires_at: BsonDateTime,
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
