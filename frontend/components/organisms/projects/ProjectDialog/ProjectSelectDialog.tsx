@@ -32,29 +32,29 @@ interface Props {
 }
 
 const categoryButton = tv({
-    base: 'px-4 py-1 text-sm rounded-full',
+    base: 'px-4 py-1 text-sm rounded-full border',
     variants: {
         selected: {
-            true: 'bg-accent text-white border-accent',
-            false: 'bg-main-bg text-text-primary border-main-dark hover:bg-main-dark',
+            true: 'text-white font-medium hover:bg-text-primary',
+            false: 'text-text-secondary hover:bg-text-primary/70 hover:text-white/80',
         },
     },
 });
 
 const listItem = tv({
-    base: 'py-2 px-3 cursor-pointer hover:bg-main-dark text-text-primary rounded',
+    base: 'py-2 px-3 cursor-pointer text-text-primary rounded transition-colors duration-150',
     variants: {
         selected: {
-            true: 'bg-main-darker',
-            false: '',
+            true: 'bg-dialog-selected',
+            false: 'hover:bg-dialog-hover',
         },
     },
 });
 
 const MemoizedDialogHeader = React.memo(() => (
     <DialogHeader className="bg-dialog-header p-4 rounded-t-lg">
-        <DialogTitle>開発プロジェクトの選択</DialogTitle>
-        <DialogDescription className='text-text-secondary'>
+        <DialogTitle className="text-primary font-semibold">開発プロジェクトの選択</DialogTitle>
+        <DialogDescription className="text-text-secondary mt-1">
             以下のリストから開発プロジェクトを選択してください。
         </DialogDescription>
     </DialogHeader>
@@ -62,13 +62,13 @@ const MemoizedDialogHeader = React.memo(() => (
 MemoizedDialogHeader.displayName = 'MemoizedDialogHeader';
 
 const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm: () => void; isDisabled: boolean }) => (
-    <DialogFooter>
+    <DialogFooter className="border-t border-dialog-hover pt-4">
         <Button
             onClick={onConfirm}
             disabled={isDisabled}
-            className="bg-dialog-bg text-white hover:bg-dialog-bg disabled:bg-main-dark disabled:text-text-secondary shadow-none"
+            className="hover:text-accent-dark hover:bg-dialog-selected"
         >
-            <span className='text-primary hover:text-accent'>開発プロジェクトを追加→</span>
+            開発プロジェクトを追加→
         </Button>
     </DialogFooter>
 ));
@@ -93,9 +93,9 @@ const ProjectList = ({ projects, selectedProjectId, onSelectProject }: { project
                 onClick={() => onSelectProject(project.id)}
             >
                 <div className="flex justify-between items-center w-full">
-                    <span className="text-text-primary">{project.name}</span>
+                    <span className="text-primary">{project.name}</span>
                     {project.id === selectedProjectId && (
-                        <span className="text-accent">選択</span>
+                        <span className="text-accent-dark">選択</span>
                     )}
                 </div>
             </li>
@@ -117,7 +117,7 @@ const ProjectSelector = React.memo(({
     onSelectProject: (projectId: string) => void;
 }) => {
     return (
-        <div className="p-4 bg-main-bg">
+        <div className="p-4">
             <div className="flex space-x-2 pb-2">
                 {categoryGroupPreset.map((categoryPresets, key) => (
                     <CategoryButton
@@ -223,7 +223,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleDialogChange}>
-            <DialogContent className="sm:max-w-[640px] bg-dialog-bg text-text-primary border-none">
+            <DialogContent className="sm:max-w-[640px] bg-dialog-bg text-text-primary border-none shadow-lg">
                 <MemoizedDialogHeader />
                 <ProjectSelector
                     categoryGroupPreset={categoryGroupPreset}

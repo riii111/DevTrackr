@@ -97,7 +97,7 @@ const RegisterForm: React.FC = () => {
                     label="パスワード"
                     required={true}
                 />
-                <Button type="submit" className="w-full bg-text-primary text-white hover:bg-secondary hover:text-accent" disabled={isLoading}>
+                <Button type="submit" className="w-full hover:bg-secondary hover:text-accent" disabled={isLoading}>
                     {isLoading ? 'アカウント登録中...' : 'アカウント登録'}
                 </Button>
             </div>

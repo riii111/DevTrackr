@@ -83,11 +83,11 @@ export const ProjectDrawer = React.memo(() => {
                     <Sheet open={mainState.isOpen} onOpenChange={onUpdateModelValue}>
                         <SheetContent
                             side="right"
-                            className="p-0 w-full sm:max-w-full"
+                            className="p-0 w-full sm:max-w-full bg-dialog-bg text-primary"
                             style={{ width: containerWidth }}
                         >
                             <SheetHeader>
-                                <SheetTitle>プロジェクト詳細</SheetTitle>
+                                <SheetTitle className="text-primary font-bold">プロジェクト詳細</SheetTitle>
                                 <SheetDescription>プロジェクトの詳細情報を表示する</SheetDescription>
                             </SheetHeader>
                             <div className="flex h-screen">

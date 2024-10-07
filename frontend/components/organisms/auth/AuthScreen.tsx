@@ -8,7 +8,7 @@ import ClientAlert from "@/components/organisms/auth/ClientAlert";
 const AuthScreen = () => {
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-white-34 backdrop-blur-sm">
+            <Card className="w-full max-w-md backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center text-primary">DevTrackr</CardTitle>
                     <CardDescription className="text-center text-text-secondary">ログインまたはアカウント登録をしてください</CardDescription>

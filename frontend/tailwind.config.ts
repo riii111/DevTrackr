@@ -16,13 +16,15 @@ const config: Config = {
       },
       backgroundColor: {
         "main-translucent": "rgba(255, 255, 255, 0.3)", // 半透明の白色背景
+        "background-main": "#f4ede8",
+        "background-dialog": "#ffffff",
       },
       colors: {
         primary: "#1F2937",
         secondary: "#F3F4F6",
         accent: {
           DEFAULT: "#EC4899", // 既存のアクセントカラー
-          light: "#F472B6", // より明るいアクセントカラー
+          dark: "#bc397a", // より暗いアクセントカラー
         },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -38,13 +40,13 @@ const config: Config = {
           bg: "#1F2937", // ナビゲーションバーの背景色
         },
         dialog: {
-          bg: "#EBDFD7", // メイン画面と同じ背景色
-          header: "#DED2CA", // メイン背景色と少し暗い版の中間色
+          bg: "#ffffff", // ダイアログの背景色
+          header: "#ffffff", // ヘッダーの背景色
+          hover: "#f9f6f3", // ホバー時の背景色
+          selected: "#f9f6f3", // 選択された項目の背景色
         },
         main: {
           bg: "#EBDFD7", // メイン画面の背景色
-          dark: "#D1C5BD", // メイン背景色の少し暗い版（ダイアログ用）
-          darker: "#B7ACA5", // さらに暗い版（ダイアログヘッダー用）
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
