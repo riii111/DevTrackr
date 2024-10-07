@@ -16,7 +16,7 @@ interface NavigationBarProps {
 
 const NavigationBar = ({ menus, title }: NavigationBarProps) => {
     return (
-        <nav className="h-full w-1/5 bg-text-primary shadow flex flex-col border-secondary">
+        <nav className="h-full w-1/5 bg-navigation-bg shadow flex flex-col border-secondary">
             <h2 className="text-secondary mb-4 gap-4 text-2xl flex items-center py-6">
                 <span className="text-accent">{title.icon}</span>
                 <span className="text-white">{title.name}</span>

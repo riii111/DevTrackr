@@ -44,7 +44,7 @@ const LayoutDashboardNavigation = () => {
     ];
 
     return (
-        <nav className="h-full w-1/5 bg-text-primary shadow flex flex-col border-secondary">
+        <nav className="h-full w-1/5 bg-navigation-bg shadow flex flex-col border-secondary">
             <h2 className="text-secondary mb-4 gap-4 text-2xl flex items-center py-6 px-4">
                 <MdDashboardCustomize className="text-accent" />
                 <span className="text-white">DevTrackr</span>

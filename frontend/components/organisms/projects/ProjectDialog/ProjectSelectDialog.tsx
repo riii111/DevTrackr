@@ -35,26 +35,26 @@ const categoryButton = tv({
     base: 'px-4 py-1 text-sm rounded-full',
     variants: {
         selected: {
-            true: 'bg-primary text-white',
-            false: 'bg-secondary text-text-secondary',
+            true: 'bg-accent text-white border-accent',
+            false: 'bg-main-bg text-text-primary border-main-dark hover:bg-main-dark',
         },
     },
 });
 
 const listItem = tv({
-    base: 'py-2 px-3 cursor-pointer hover:bg-secondary text-text-primary',
+    base: 'py-2 px-3 cursor-pointer hover:bg-main-dark text-text-primary rounded',
     variants: {
         selected: {
-            true: 'bg-secondary',
+            true: 'bg-main-darker',
             false: '',
         },
     },
 });
 
 const MemoizedDialogHeader = React.memo(() => (
-    <DialogHeader>
+    <DialogHeader className="bg-dialog-header p-4 rounded-t-lg">
         <DialogTitle>開発プロジェクトの選択</DialogTitle>
-        <DialogDescription>
+        <DialogDescription className='text-text-secondary'>
             以下のリストから開発プロジェクトを選択してください。
         </DialogDescription>
     </DialogHeader>
@@ -63,8 +63,12 @@ MemoizedDialogHeader.displayName = 'MemoizedDialogHeader';
 
 const MemoizedDialogFooter = React.memo(({ onConfirm, isDisabled }: { onConfirm: () => void; isDisabled: boolean }) => (
     <DialogFooter>
-        <Button onClick={onConfirm} disabled={isDisabled} className="text-text-primary hover:bg-gray-100 bg-white shadow-none">
-            <span className='text-[#5883D3] hover:text-accent'>開発プロジェクトを追加→</span>
+        <Button
+            onClick={onConfirm}
+            disabled={isDisabled}
+            className="bg-dialog-bg text-white hover:bg-dialog-bg disabled:bg-main-dark disabled:text-text-secondary shadow-none"
+        >
+            <span className='text-primary hover:text-accent'>開発プロジェクトを追加→</span>
         </Button>
     </DialogFooter>
 ));
@@ -113,7 +117,7 @@ const ProjectSelector = React.memo(({
     onSelectProject: (projectId: string) => void;
 }) => {
     return (
-        <div className="p-4 bg-background">
+        <div className="p-4 bg-main-bg">
             <div className="flex space-x-2 pb-2">
                 {categoryGroupPreset.map((categoryPresets, key) => (
                     <CategoryButton
@@ -219,7 +223,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleDialogChange}>
-            <DialogContent className="sm:max-w-[640px]">
+            <DialogContent className="sm:max-w-[640px] bg-dialog-bg text-text-primary border-none">
                 <MemoizedDialogHeader />
                 <ProjectSelector
                     categoryGroupPreset={categoryGroupPreset}

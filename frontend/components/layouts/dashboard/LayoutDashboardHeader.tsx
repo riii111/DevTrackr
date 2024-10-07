@@ -12,7 +12,7 @@ const DynamicPageTitle = dynamic(() => import('@/components/molecules/PageTitle'
 
 const LayoutDashboardHeader = () => {
     return (
-        <header className="bg-[#EBDFD7] w-full h-16 border-b border-gray-400">
+        <header className="w-full h-16 border-b border-gray-400">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-full">
                 <DynamicPageTitle />
                 <div className="ml-auto">
