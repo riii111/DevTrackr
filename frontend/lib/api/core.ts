@@ -78,6 +78,8 @@ export async function customFetch<
     headers.set("Content-Type", "application/json");
   }
 
+  console.log("Request Headers:", Object.fromEntries(headers.entries())); // 追加
+
   const fetchOptions: RequestInit = {
     method,
     headers,
