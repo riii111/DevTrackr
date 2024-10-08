@@ -2,9 +2,9 @@ use crate::errors::app_error::AppError;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use actix_web::http::Method;
-use actix_web::{dev::ServiceRequest, web, Error as ActixError, HttpMessage};
+use actix_web::{dev::ServiceRequest, web, Error as ActixError};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use log;
+use log::debug;
 use std::sync::Arc;
 
 pub async fn validator(
@@ -18,12 +18,11 @@ pub async fn validator(
     }
 
     let token = credentials.token();
-    log::info!("token: {}", token);
-    log::info!("Authenticating request for path: {}", req.path());
+    debug!("Validating JWT token: {}", token);
 
     match auth_usecase.verify_access_token(token).await {
-        Ok(claims) => {
-            req.extensions_mut().insert(claims);
+        Ok(_) => {
+            debug!("Token validation succeeded");
             Ok(req)
         }
         Err(_) => Err((
