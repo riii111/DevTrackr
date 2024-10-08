@@ -1,6 +1,6 @@
 import { toast } from "@/lib/hooks/use-toast";
 import { ApiResponse } from "@/types/api";
-import { refreshAccessToken } from "@/lib/hooks/useAuthApi";
+import { getClientSideAuthHeader } from "@/lib/utils/cookies";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -49,9 +49,30 @@ export async function customFetch<
     cache = "no-cache",
   }: IFetchOptions<RequestInput, M>
 ): Promise<ApiResponse<RequestResult>> {
+  if (!API_BASE_URL) {
+    throw new Error("API_BASE_URL is not defined");
+  }
+
   // 末尾にスラッシュ追加する事でプロキシ・バックエンドなどのサーバー側のリダイレクトを回避し、パフォーマンスを僅かに向上させる
   let url = `${API_BASE_URL}${endpoint}${endpoint.endsWith("/") ? "" : "/"}`;
-  const headers = new Headers(optionHeaders);
+
+  async function getAuthHeader(): Promise<Record<string, string>> {
+    if (typeof window === "undefined") {
+      const { getServerSideAuthHeader } = await import(
+        "@/lib/utils/cookiesForServer"
+      );
+      return getServerSideAuthHeader();
+    } else {
+      return getClientSideAuthHeader();
+    }
+  }
+
+  const authHeader = await getAuthHeader();
+  console.log("authHeader", authHeader);
+  const headers = new Headers({
+    ...optionHeaders,
+    ...authHeader,
+  });
 
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -78,13 +99,7 @@ export async function customFetch<
   try {
     let response = await fetch(url, fetchOptions);
 
-    // 401エラーの場合、アクセストークンを更新して再リクエスト
-    if (response.status === 401) {
-      // アクセストークンの更新を試みる
-      const newAccessToken = await refreshAccessToken();
-      headers.set("Authorization", `Bearer ${newAccessToken}`);
-      response = await fetch(url, { ...fetchOptions, headers });
-    }
+    // TODO: 401エラーの場合、アクセストークンを更新して再リクエスト
 
     if (!response.ok) {
       let errorMessage = "エラーが発生しました";
@@ -101,17 +116,29 @@ export async function customFetch<
     return data;
   } catch (error) {
     if (error instanceof ApiError) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error.message,
-      });
+      if (typeof window !== "undefined") {
+        // クライアントサイドの場合のみtoastを使用
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: error.message,
+        });
+      } else {
+        // サーバーサイドの場合はコンソールにエラーを出力
+        console.error("API Error:", error.message);
+      }
     } else {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "予期せぬエラーが発生しました。",
-      });
+      if (typeof window !== "undefined") {
+        // クライアントサイドの場合のみtoastを使用
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "予期せぬエラーが発生しました。",
+        });
+      } else {
+        // サーバーサイドの場合はコンソールにエラーを出力
+        console.error("Unexpected Error:", error);
+      }
     }
     throw error;
   }
