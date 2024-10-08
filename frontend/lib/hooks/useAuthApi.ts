@@ -1,6 +1,5 @@
 import { customFetch } from "@/lib/api/core";
 import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
-import { NextRequest } from "next/server";
 
 const AUTH_ENDPOINT = "/auth";
 
@@ -62,16 +61,12 @@ export function useAuthApi() {
 }
 
 // ミドルウェアやcore.tsで使用するために個別にエクスポート
-export async function refreshAccessToken(
-  request: NextRequest
-): Promise<string> {
+export async function refreshAccessToken(headers: Headers): Promise<string> {
   const response = await customFetch<"POST", never, { access_token: string }>(
     `${AUTH_ENDPOINT}/refresh/`,
     {
       method: "POST",
-      headers: {
-        Cookie: request.headers.get("cookie") || "",
-      },
+      headers: headers,
     }
   );
   return response.data.access_token;
