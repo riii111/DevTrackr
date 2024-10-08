@@ -1,3 +1,4 @@
+use crate::errors::app_error::AppError;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use actix_web::http::Method;
@@ -26,7 +27,7 @@ pub async fn validator(
             Ok(req)
         }
         Err(_) => Err((
-            actix_web::error::ErrorUnauthorized("Invalid or expired token"),
+            AppError::Unauthorized("無効または期限切れのトークンです".to_string()).into(),
             req,
         )),
     }
