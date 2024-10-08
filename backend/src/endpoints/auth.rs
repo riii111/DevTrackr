@@ -14,8 +14,7 @@ use validator::Validate;
     request_body = AuthTokenLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
-        (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
-        (status = 401, description = "認証失敗", body = ErrorResponse),
+        (status = 422, description = "認証に失敗しました", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
@@ -29,17 +28,33 @@ async fn login(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let auth_token = auth_usecase
+    match auth_usecase
         .login(&login_dto.email, &login_dto.password)
-        .await?;
-
-    let refresh_token = auth_token.refresh_token.clone();
-    let access_token = auth_token.access_token.clone();
-    let auth_response: AuthResponse = auth_token.into();
-    let mut response = HttpResponse::Ok().json(auth_response);
-    set_access_token_cookie(&mut response, &access_token);
-    set_refresh_token_cookie(&mut response, &refresh_token);
-    Ok(response)
+        .await
+    {
+        Ok(auth_token) => {
+            // 成功時の処理
+            let auth_response: AuthResponse = AuthResponse::from(auth_token.clone());
+            let mut response = HttpResponse::Ok().json(auth_response);
+            set_access_token_cookie(&mut response, &auth_token.access_token);
+            set_refresh_token_cookie(&mut response, &auth_token.refresh_token);
+            Ok(response)
+        }
+        Err(e) => {
+            log::error!("認証に失敗しました: {}", e);
+            match e {
+                AppError::InternalServerError(_) => {
+                    Ok(HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "サーバーエラーが発生しました"
+                    })))
+                }
+                // 他者の個人情報を推測できないようにするため、他のエラーは422で統一
+                _ => Ok(HttpResponse::UnprocessableEntity().json(serde_json::json!({
+                    "error": "認証に失敗しました"
+                }))),
+            }
+        }
+    }
 }
 
 #[utoipa::path(
@@ -121,7 +136,7 @@ async fn refresh(
     // クッキーからリフレッシュトークンを取得
     let refresh_token = req
         .cookie("refresh_token")
-        .ok_or_else(|| AppError::Unauthorized("リフレッシュトークンが見つかりません".to_string()))?
+        .ok_or_else(|| AppError::BadRequest("リフレッシュトークンが見つかりません".to_string()))?
         .value()
         .to_string();
 

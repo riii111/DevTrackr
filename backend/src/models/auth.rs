@@ -29,7 +29,7 @@ pub struct AuthTokenLogin {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Validate, Clone)]
 pub struct AuthTokenInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]

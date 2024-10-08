@@ -5,5 +5,7 @@ pub fn hash_password(password: &str) -> Result<String, bcrypt::BcryptError> {
 }
 
 pub fn verify_password(password: &str, hash: &str) -> bool {
-    verify(password, hash).unwrap_or(false)
+    let result = verify(password, hash).unwrap_or(false);
+    log::info!("パスワード検証結果: {}", result);
+    result
 }

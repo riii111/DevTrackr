@@ -39,7 +39,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
             self.repository.save_auth_token(&auth_token).await?;
             Ok(auth_token)
         } else {
-            Err(AppError::Unauthorized("無効な認証情報です".to_string()))
+            Err(AppError::Forbidden("無効な認証情報です".to_string()))
         }
     }
 
