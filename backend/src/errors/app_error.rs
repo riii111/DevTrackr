@@ -11,9 +11,6 @@ pub enum AppError {
     #[error("バリデーションエラー: {0}")]
     ValidationError(ValidationErrors),
 
-    #[error("リソースが見つかりません: {0}")]
-    NotFound(String),
-
     #[error("不正なリクエストです: {0}")]
     BadRequest(String),
 
@@ -22,6 +19,9 @@ pub enum AppError {
 
     #[error("アクセス権限がありません: {0}")]
     Forbidden(String),
+
+    #[error("リソースが見つかりません: {0}")]
+    NotFound(String),
 
     #[error("データベース接続後のエラー: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
@@ -116,10 +116,6 @@ impl actix_web::ResponseError for AppError {
                 "error": "ユニーク制約違反",
                 "details": [self.error_message()]
             })),
-            AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
-                "error": "リソースが見つかりません",
-                "details": [self.error_message()]
-            })),
             AppError::BadRequest(_) => HttpResponse::BadRequest().json(json!({
                 "error": "不正なリクエスト",
                 "details": [self.error_message()]
@@ -130,6 +126,10 @@ impl actix_web::ResponseError for AppError {
             })),
             AppError::Forbidden(_) => HttpResponse::Forbidden().json(json!({
                 "error": "アクセス権限がありません",
+                "details": [self.error_message()]
+            })),
+            AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
+                "error": "リソースが見つかりません",
                 "details": [self.error_message()]
             })),
             AppError::DatabaseError(error) => HttpResponse::InternalServerError().json(json!({
