@@ -33,7 +33,6 @@ use validator::Validate;
 pub async fn get_projects(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     query: web::Query<ProjectQuery>,
-    req: actix_web::HttpRequest,
 ) -> Result<HttpResponse, AppError> {
     info!("called GET search_projects!!");
 
