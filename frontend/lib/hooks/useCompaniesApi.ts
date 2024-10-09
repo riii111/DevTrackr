@@ -1,4 +1,3 @@
-import useSWR from "swr";
 import { customFetch } from "@/lib/api/core";
 import {
   Company,
@@ -10,32 +9,34 @@ import {
 const ENDPOINT = "/companies/";
 
 export function useCompaniesApi() {
-  const {
-    data: companies,
-    error: companiesError,
-    mutate: mutateCompanies,
-  } = useSWR<Response>(ENDPOINT, (url: string) =>
-    customFetch<"GET", GetCompaniesParams, Company[]>(url, { method: "GET" })
-  );
+  return {
+    getCompanies,
+    createCompany,
+    updateCompany,
+    getCompany,
+  };
+
+  /**
+   * 企業一覧を取得する関数
+   */
+  async function getCompanies(): Promise<Company[]> {
+    const response = await customFetch<"GET", GetCompaniesParams, Company[]>(
+      ENDPOINT,
+      {
+        method: "GET",
+      }
+    );
+    return response;
+  }
 
   /**
    * 企業を作成する関数
    */
-  return {
-    createCompanyMutation,
-    updateCompanyMutation,
-    useCompany,
-    companies: companies,
-    isLoading: !companiesError && !companies,
-    isError: companiesError,
-    mutateCompanies,
-  };
-
-  async function createCompanyMutation(
+  async function createCompany(
     companyData: CreateCompanyRequest
   ): Promise<Company> {
     const response = await customFetch<"POST", CreateCompanyRequest, Company>(
-      `${ENDPOINT}`,
+      ENDPOINT,
       {
         method: "POST",
         body: companyData,
@@ -47,7 +48,7 @@ export function useCompaniesApi() {
   /**
    * 企業を更新する関数
    */
-  async function updateCompanyMutation(
+  async function updateCompany(
     id: string,
     companyData: UpdateCompanyRequest
   ): Promise<Company> {
@@ -62,21 +63,15 @@ export function useCompaniesApi() {
   }
 
   /**
-   * 企業を取得する関数
+   * 特定の企業を取得する関数
    */
-  function useCompany(id: string) {
-    const { data, error, mutate } = useSWR<Response>(
-      `${ENDPOINT}/${id}/`,
-      (url: string) =>
-        customFetch<"GET", Record<string, never>, Company>(url, {
-          method: "GET",
-        })
+  async function getCompany(id: string): Promise<Company> {
+    const response = await customFetch<"GET", Record<string, never>, Company>(
+      `${ENDPOINT}${id}/`,
+      {
+        method: "GET",
+      }
     );
-    return {
-      company: data,
-      isLoading: !error && !data,
-      isError: error,
-      mutate,
-    };
+    return response;
   }
 }
