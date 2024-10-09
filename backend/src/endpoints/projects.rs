@@ -37,11 +37,6 @@ pub async fn get_projects(
 ) -> Result<HttpResponse, AppError> {
     info!("called GET search_projects!!");
 
-    // デバッグ用：受け取ったヘッダ情報を出力
-    for (key, value) in req.headers() {
-        info!("Header: {}: {:?}", key, value);
-    }
-
     // クエリパラメータを ProjectFilter にマッピング
     let filter = ProjectFilter {
         title: query.title.clone(),
