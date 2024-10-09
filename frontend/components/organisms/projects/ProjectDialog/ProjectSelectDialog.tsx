@@ -12,16 +12,11 @@ import {
 } from '@/components/ui/dialog'
 import { useRouter } from "next/navigation";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
+import { Company } from "@/types/company";
 
 interface Project {
     id: string;
     name: string;
-}
-
-interface Company {
-    companyId: number;
-    companyName: string;
-    projects: Project[];
 }
 
 interface Props {
@@ -183,18 +178,10 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
         }
     }, [selectedProjectId, companies, drawerStore, router, onOpenChange]);
 
-    // TODO: ダミーの処理. 会社ごとに案件を表示させるように修正する.
     const categoryGroupPreset = useMemo(() => {
-        const presetCompanies = ["会社A", "会社B", "会社C"];
-
-        const allCompanyNames = Array.from(new Set([
-            ...presetCompanies,
-            ...companies.map(company => company.companyName)
-        ]));
-
-        return allCompanyNames.map((companyName) => ({
-            company: companyName,
-            items: companies.find(c => c.companyName === companyName)?.projects || []
+        return companies.map((company) => ({
+            company: company.company_name,
+            items: company.projects || []
         }));
     }, [companies]);
 
