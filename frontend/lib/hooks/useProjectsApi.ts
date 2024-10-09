@@ -1,4 +1,3 @@
-import useSWR from "swr";
 import { customFetch } from "@/lib/api/core";
 import {
   Project,
@@ -10,21 +9,25 @@ import { ApiResponse } from "@/types/api";
 const ENDPOINT = "/projects/";
 
 export function useProjectsApi() {
-  const { data, error, mutate } = useSWR<ApiResponse<Project[]>>(
-    ENDPOINT,
-    (url: string) =>
-      customFetch<"GET", Record<string, never>, Project[]>(url, {
-        method: "GET",
-      }),
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  return {
+    getProjects,
+    createProject,
+    updateProject,
+  };
+
+  /**
+   * プロジェクト一覧を取得する関数
+   */
+  async function getProjects(): Promise<ApiResponse<Project[]>> {
+    return customFetch<"GET", Record<string, never>, Project[]>(ENDPOINT, {
+      method: "GET",
+    });
+  }
 
   /**
    * プロジェクトを作成する関数
    */
-  async function createProjectMutation(
+  async function createProject(
     projectData: CreateProjectRequest
   ): Promise<{ id: string }> {
     const response = await customFetch<
@@ -36,14 +39,13 @@ export function useProjectsApi() {
       body: projectData,
     });
     // TODO: キャッシュ更新すべき？あとで要考慮
-    // await mutateProjects();
     return response.data;
   }
 
   /**
    * プロジェクトを更新する関数
    */
-  async function updateProjectMutation(
+  async function updateProject(
     id: string,
     projectData: UpdateProjectRequest
   ): Promise<Project> {
@@ -55,43 +57,6 @@ export function useProjectsApi() {
       }
     );
     // TODO: キャッシュ更新すべき？あとで要考慮
-    // await mutateProjects();
     return response.data;
   }
-
-  /**
-   * プロジェクトを取得する関数
-   */
-  function useProject(id: string) {
-    const { data, error, mutate } = useSWR<ApiResponse<Project>>(
-      `${ENDPOINT}${id}/`,
-      (url: string) =>
-        customFetch<"GET", Record<string, never>, Project>(url, {
-          method: "GET",
-        })
-    );
-    return {
-      project: data?.data,
-      isLoading: !error && !data,
-      isError: error,
-      mutate,
-    };
-  }
-
-  return {
-    projects: data?.data,
-    isLoading: !error && !data,
-    isError: error,
-    mutateProjects: mutate,
-    createProjectMutation,
-    updateProjectMutation,
-    useProject,
-  };
-}
-
-// サーバーサイドでプロジェクトを取得するための関数
-export async function getServerSideProjects(): Promise<ApiResponse<Project[]>> {
-  return customFetch<"GET", Record<string, never>, Project[]>(ENDPOINT, {
-    method: "GET",
-  });
 }
