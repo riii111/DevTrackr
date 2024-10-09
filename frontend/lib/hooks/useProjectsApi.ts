@@ -53,7 +53,7 @@ export function useProjectsApi() {
     projectData: UpdateProjectRequest
   ): Promise<Project> {
     const response = await customFetch<"PUT", UpdateProjectRequest, Project>(
-      `${ENDPOINT}${id}/`,
+      `${ENDPOINT}/${id}/`,
       {
         method: "PUT",
         body: projectData,
