@@ -70,7 +70,7 @@ export const ProjectDrawer = React.memo(() => {
     const onUpdateModelValue = useCallback((isOpen: boolean) => {
         if (!isOpen) {
             drawerStore.handleClose("main");
-            router.push("/dashboard/time-tracking");
+            router.push("/dashboard/projects");
         }
     }, [drawerStore, router])
 
@@ -116,7 +116,7 @@ export const ProjectDrawer = React.memo(() => {
                         onOpenChange={(open) => {
                             if (!open) {
                                 drawerStore.handleClose("main");
-                                router.push("/dashboard/time-tracking");
+                                router.push("/dashboard/projects");
                             }
                         }}
                         title="プロジェクト詳細"

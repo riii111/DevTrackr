@@ -172,7 +172,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
                 .find(project => project.id === selectedProjectId);
 
             if (projectDetails) {
-                router.push(`/dashboard/time-tracking?projectId=${projectDetails.id}`);
+                router.push(`/dashboard/projects?projectId=${projectDetails.id}`);
             }
 
             onOpenChange(false);
