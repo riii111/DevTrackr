@@ -6,7 +6,6 @@ import {
   CreateCompanyRequest,
   UpdateCompanyRequest,
 } from "@/types/company";
-import { ApiResponse } from "@/types/api";
 
 const ENDPOINT = "/companies/";
 
@@ -15,7 +14,7 @@ export function useCompaniesApi() {
     data: companies,
     error: companiesError,
     mutate: mutateCompanies,
-  } = useSWR<ApiResponse<Company[]>>(ENDPOINT, (url: string) =>
+  } = useSWR<Response>(ENDPOINT, (url: string) =>
     customFetch<"GET", GetCompaniesParams, Company[]>(url, { method: "GET" })
   );
 
@@ -26,7 +25,7 @@ export function useCompaniesApi() {
     createCompanyMutation,
     updateCompanyMutation,
     useCompany,
-    companies: companies?.data,
+    companies: companies,
     isLoading: !companiesError && !companies,
     isError: companiesError,
     mutateCompanies,
@@ -42,7 +41,7 @@ export function useCompaniesApi() {
         body: companyData,
       }
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -59,14 +58,14 @@ export function useCompaniesApi() {
         body: companyData,
       }
     );
-    return response.data;
+    return response;
   }
 
   /**
    * 企業を取得する関数
    */
   function useCompany(id: string) {
-    const { data, error, mutate } = useSWR<ApiResponse<Company>>(
+    const { data, error, mutate } = useSWR<Response>(
       `${ENDPOINT}/${id}/`,
       (url: string) =>
         customFetch<"GET", Record<string, never>, Company>(url, {
@@ -74,7 +73,7 @@ export function useCompaniesApi() {
         })
     );
     return {
-      company: data?.data,
+      company: data,
       isLoading: !error && !data,
       isError: error,
       mutate,

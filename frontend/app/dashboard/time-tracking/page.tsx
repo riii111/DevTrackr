@@ -6,12 +6,13 @@ const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
 
 export default async function TimeTrackingPage() {
     const { getProjects } = useProjectsApi();
-    const projectsData = await getProjects();
+    const projects = await getProjects();
+    console.dir(projects, { depth: null });
 
     return (
         <>
             <TimeTrackingClientComponents />
-            <TimeTrackingContent bgColor={bgColor} projects={projectsData.data} />
+            <TimeTrackingContent bgColor={bgColor} projects={projects} />
         </>
     );
 }

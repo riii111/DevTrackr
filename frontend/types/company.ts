@@ -1,5 +1,3 @@
-import { ApiResponse } from "./api";
-
 export interface GetCompaniesParams {
   id: string;
 }
@@ -48,9 +46,6 @@ export interface Bonus {
   amount: number;
   frequency: number;
 }
-
-export type GetCompaniesResponse = ApiResponse<Company[]>;
-export type GetCompanyResponse = ApiResponse<Company>;
 
 export interface CreateCompanyRequest {
   company_name: string;

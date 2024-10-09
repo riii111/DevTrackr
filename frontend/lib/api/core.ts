@@ -1,5 +1,4 @@
 import { toast } from "@/lib/hooks/use-toast";
-import { ApiResponse } from "@/types/api";
 import { getClientSideAuthHeader } from "@/lib/utils/cookies";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -48,7 +47,7 @@ export async function customFetch<
     params,
     cache = "no-cache",
   }: IFetchOptions<RequestInput, M>
-): Promise<ApiResponse<RequestResult>> {
+) {
   if (!API_BASE_URL) {
     throw new Error("API_BASE_URL is not defined");
   }
@@ -113,9 +112,7 @@ export async function customFetch<
       }
       throw new ApiError(response.status, errorMessage);
     }
-
-    const data: ApiResponse<RequestResult> = await response.json();
-    return data;
+    return response.json();
   } catch (error) {
     if (error instanceof ApiError) {
       if (typeof window !== "undefined") {

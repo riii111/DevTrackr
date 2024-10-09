@@ -1,5 +1,3 @@
-import { ApiResponse } from "./api";
-
 export interface Project {
   id: string;
   title: string;
