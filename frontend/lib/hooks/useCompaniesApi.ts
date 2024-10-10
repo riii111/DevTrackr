@@ -1,10 +1,12 @@
 import { customFetch } from "@/lib/api/core";
 import {
   Company,
-  GetCompaniesParams,
   CreateCompanyRequest,
   UpdateCompanyRequest,
+  CompanyResponse,
+  CompaniesResponse,
   CompaniesWithProjectsResponse,
+  CreateCompanyResponse,
 } from "@/types/company";
 
 const ENDPOINT = "/companies/";
@@ -22,9 +24,12 @@ export function useCompaniesApi() {
    * 企業一覧を取得する関数
    */
   async function getCompanies(): Promise<Company[]> {
-    const response = await customFetch<"GET", undefined, Company[]>(ENDPOINT, {
-      method: "GET",
-    });
+    const response = await customFetch<"GET", undefined, CompaniesResponse>(
+      ENDPOINT,
+      {
+        method: "GET",
+      }
+    );
     return response;
   }
 
@@ -43,17 +48,19 @@ export function useCompaniesApi() {
   }
 
   /**
+   * 企業を作成する
    */
   async function createCompany(
     companyData: CreateCompanyRequest
-  ): Promise<Company> {
-    const response = await customFetch<"POST", CreateCompanyRequest, Company>(
-      ENDPOINT,
-      {
-        method: "POST",
-        body: companyData,
-      }
-    );
+  ): Promise<CreateCompanyResponse> {
+    const response = await customFetch<
+      "POST",
+      CreateCompanyRequest,
+      CreateCompanyResponse
+    >(ENDPOINT, {
+      method: "POST",
+      body: companyData,
+    });
     return response;
   }
 
@@ -63,27 +70,24 @@ export function useCompaniesApi() {
   async function updateCompany(
     id: string,
     companyData: UpdateCompanyRequest
-  ): Promise<Company> {
-    const response = await customFetch<"PUT", UpdateCompanyRequest, Company>(
-      `${ENDPOINT}/${id}/`,
-      {
-        method: "PUT",
-        body: companyData,
-      }
-    );
-    return response;
+  ): Promise<void> {
+    await customFetch<"PUT", UpdateCompanyRequest, void>(`${ENDPOINT}/${id}/`, {
+      method: "PUT",
+      body: companyData,
+    });
   }
 
   /**
    * 特定の企業を取得する関数
    */
   async function getCompanyById(id: string): Promise<Company> {
-    const response = await customFetch<"GET", Record<string, never>, Company>(
-      `${ENDPOINT}${id}/`,
-      {
-        method: "GET",
-      }
-    );
+    const response = await customFetch<
+      "GET",
+      Record<string, never>,
+      CompanyResponse
+    >(`${ENDPOINT}${id}/`, {
+      method: "GET",
+    });
     return response;
   }
 }
