@@ -1,3 +1,5 @@
+import { Project } from "@/types/project";
+
 export interface GetCompaniesParams {
   id: string;
 }
@@ -45,6 +47,15 @@ export enum CompanyStatus {
 export interface Bonus {
   amount: number;
   frequency: number;
+}
+
+export interface CompanyWithProjects extends Company {
+  projects: Project[];
+}
+
+export interface CompaniesWithProjectsResponse {
+  companies: CompanyWithProjects[];
+  total: number;
 }
 
 export interface CreateCompanyRequest {
