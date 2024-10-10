@@ -1,3 +1,4 @@
+use crate::models::projects::ProjectInDB;
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use chrono::{NaiveDate, TimeZone, Utc};
 use chrono_tz::Asia::Tokyo;
@@ -167,6 +168,13 @@ pub struct CompanyInDB {
     pub created_at: BsonDateTime, // 作成日時
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct CompanyWithProjectsInDB {
+    pub company: CompanyInDB,
+    #[schema(value_type = Vec<ProjectInDB>)]
+    pub projects: Vec<ProjectInDB>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
