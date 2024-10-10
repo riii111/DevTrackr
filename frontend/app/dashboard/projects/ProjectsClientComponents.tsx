@@ -32,8 +32,8 @@ export default function ProjectsClientComponents({ companiesWithProjects }: Proj
                 <AtomsButtonWithIcon
                     icon={GoPlus}
                     text="プロジェクトを追加"
-                    iconColor='bg-#[5883D3]'
-                    textColor='bg-#[5883D3]'
+                    iconColor='text-primary font-semibold'
+                    textColor='text-primary font-semibold'
                     rounded={6}
                     loading={false}
                     disabled={false}
