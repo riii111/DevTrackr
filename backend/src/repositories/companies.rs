@@ -63,43 +63,29 @@ impl CompanyRepository for MongoCompanyRepository {
         &self,
     ) -> Result<Vec<CompanyWithProjectsInDB>, RepositoryError> {
         log::info!("called find_all_with_projects!!");
-        let pipeline = vec![
-            doc! {
-                "$lookup": {
-                    "from": "projects",
-                    "localField": "_id",
-                    "foreignField": "company_id",
-                    "as": "projects"
-                }
-            },
-            doc! {
-                "$project": {
-                    "company": "$$ROOT",  // 現在処理中のドキュメント全体
-                    "projects": 1
-                }
-            },
-        ];
+        let pipeline = vec![doc! {
+            "$lookup": {
+                "from": "projects",
+                "localField": "_id",
+                "foreignField": "company_id",
+                "as": "projects"
+            }
+        }];
 
         let mut cursor = self
             .collection
             .aggregate(pipeline, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
-
         let mut companies_with_projects = Vec::new();
 
-        while let Some(result) = cursor
-            .try_next()
-            .await
-            .map_err(RepositoryError::DatabaseError)?
-        {
-            let company: CompanyInDB = bson::from_document(
-                result
-                    .get_document("companies")
-                    .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?
-                    .clone(),
-            )
-            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?;
+        while let Some(result) = cursor.try_next().await.map_err(|e| {
+            log::error!("Error in find_all_with_projects: {}", e);
+            RepositoryError::DatabaseError(MongoError::custom(e.to_string()))
+        })? {
+            let company: CompanyInDB = bson::from_document(result.clone())
+                .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?;
+
             let projects: Vec<ProjectInDB> = result
                 .get_array("projects")
                 .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?
@@ -109,8 +95,6 @@ impl CompanyRepository for MongoCompanyRepository {
 
             companies_with_projects.push(CompanyWithProjectsInDB { company, projects });
         }
-
-        log::info!("companies_with_projects: {:?}", companies_with_projects);
 
         Ok(companies_with_projects)
     }
