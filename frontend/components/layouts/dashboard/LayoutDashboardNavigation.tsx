@@ -17,8 +17,8 @@ const LayoutDashboardNavigation = () => {
             icon: <LuLayoutDashboard />,
         },
         {
-            name: "勤怠",
-            path: "/dashboard/time-tracking",
+            name: "プロジェクト",
+            path: "/dashboard/projects",
             icon: <FaTasks />,
         },
         {

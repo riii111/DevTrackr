@@ -1,5 +1,4 @@
 import { toast } from "@/lib/hooks/use-toast";
-import { ApiResponse } from "@/types/api";
 import { getClientSideAuthHeader } from "@/lib/utils/cookies";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -37,7 +36,7 @@ class ApiError extends Error {
 // カスタムフェッチ関数
 export async function customFetch<
   M extends HttpMethod,
-  RequestInput extends Record<string, any> = Record<string, any>,
+  RequestInput extends Record<string, any> | undefined = Record<string, any>,
   RequestResult = unknown
 >(
   endpoint: string,
@@ -47,8 +46,13 @@ export async function customFetch<
     body,
     params,
     cache = "no-cache",
-  }: IFetchOptions<RequestInput, M>
-): Promise<ApiResponse<RequestResult>> {
+  }: IFetchOptions<
+    RequestInput extends Record<string, any>
+      ? RequestInput
+      : Record<string, never>,
+    M
+  >
+) {
   if (!API_BASE_URL) {
     throw new Error("API_BASE_URL is not defined");
   }
@@ -68,7 +72,6 @@ export async function customFetch<
   }
 
   const authHeader = await getAuthHeader();
-  console.log("authHeader", authHeader);
   const headers = new Headers({
     ...optionHeaders,
     ...authHeader,
@@ -77,8 +80,6 @@ export async function customFetch<
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-
-  console.log("Request Headers:", Object.fromEntries(headers.entries())); // 追加
 
   const fetchOptions: RequestInit = {
     method,
@@ -111,11 +112,8 @@ export async function customFetch<
       } catch (e) {
         // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
       }
-      throw new ApiError(response.status, errorMessage);
     }
-
-    const data: ApiResponse<RequestResult> = await response.json();
-    return data;
+    return response.json();
   } catch (error) {
     if (error instanceof ApiError) {
       if (typeof window !== "undefined") {

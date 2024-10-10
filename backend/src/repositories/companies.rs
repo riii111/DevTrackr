@@ -1,5 +1,8 @@
 use crate::errors::repositories_error::RepositoryError;
-use crate::models::companies::{CompanyCreate, CompanyInDB, CompanyUpdate};
+use crate::models::companies::{
+    CompanyCreate, CompanyInDB, CompanyUpdate, CompanyWithProjectsInDB,
+};
+use crate::models::projects::ProjectInDB;
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use futures::TryStreamExt;
@@ -8,6 +11,9 @@ use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, 
 #[async_trait]
 pub trait CompanyRepository {
     async fn find_all(&self) -> Result<Vec<CompanyInDB>, RepositoryError>;
+
+    async fn find_all_with_projects(&self)
+        -> Result<Vec<CompanyWithProjectsInDB>, RepositoryError>;
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, RepositoryError>;
 
@@ -51,6 +57,46 @@ impl CompanyRepository for MongoCompanyRepository {
         }
 
         Ok(companies)
+    }
+
+    async fn find_all_with_projects(
+        &self,
+    ) -> Result<Vec<CompanyWithProjectsInDB>, RepositoryError> {
+        log::info!("called find_all_with_projects!!");
+        let pipeline = vec![doc! {
+            "$lookup": {
+                "from": "projects",
+                "localField": "_id",
+                "foreignField": "company_id",
+                "as": "projects"
+            }
+        }];
+
+        let mut cursor = self
+            .collection
+            .aggregate(pipeline, None)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+        let mut companies_with_projects = Vec::new();
+
+        while let Some(result) = cursor.try_next().await.map_err(|e| {
+            log::error!("Error in find_all_with_projects: {}", e);
+            RepositoryError::DatabaseError(MongoError::custom(e.to_string()))
+        })? {
+            let company: CompanyInDB = bson::from_document(result.clone())
+                .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?;
+
+            let projects: Vec<ProjectInDB> = result
+                .get_array("projects")
+                .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e.to_string())))?
+                .iter()
+                .filter_map(|p| bson::from_bson(p.clone()).ok())
+                .collect();
+
+            companies_with_projects.push(CompanyWithProjectsInDB { company, projects });
+        }
+
+        Ok(companies_with_projects)
     }
 
     async fn find_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, RepositoryError> {

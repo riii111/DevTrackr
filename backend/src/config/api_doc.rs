@@ -1,5 +1,7 @@
 use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
-use crate::dto::responses::companies::{CompanyCreatedResponse, CompanyResponse};
+use crate::dto::responses::companies::{
+    CompaniesWithProjects, CompaniesWithProjectsResponse, CompanyCreatedResponse, CompanyResponse,
+};
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
 use crate::endpoints::{auth, companies, projects, work_logs};
@@ -27,6 +29,7 @@ use utoipa::OpenApi;
         companies::create_company,
         companies::update_company_by_id,
         companies::get_all_companies,
+        companies::get_all_companies_with_projects,
         auth::login,
         auth::logout,
         auth::refresh,
@@ -46,6 +49,8 @@ use utoipa::OpenApi;
             WorkLogsCreatedResponse,
             WorkLogsUpdate,
             CompanyResponse,
+            CompaniesWithProjects,
+            CompaniesWithProjectsResponse,
             CompanyCreate,
             CompanyCreatedResponse,
             CompanyUpdate,

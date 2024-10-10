@@ -1,4 +1,6 @@
-use crate::dto::responses::companies::{CompanyCreatedResponse, CompanyResponse};
+use crate::dto::responses::companies::{
+    CompaniesWithProjects, CompaniesWithProjectsResponse, CompanyCreatedResponse, CompanyResponse,
+};
 use crate::errors::app_error::AppError;
 use crate::models::companies::{CompanyCreate, CompanyUpdate};
 use crate::repositories::companies::MongoCompanyRepository;
@@ -32,6 +34,38 @@ pub async fn get_all_companies(
         .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
 
     Ok(HttpResponse::Ok().json(response))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/companies/with-projects/",
+    responses(
+        (status = 200, description = "企業の取得に成功", body = CompaniesWithProjectsResponse),
+        (status = 500, description = "サーバーエラー", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+)]
+#[get("/with-projects/")]
+pub async fn get_all_companies_with_projects(
+    usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
+) -> Result<HttpResponse, AppError> {
+    info!("called GET get_all_companies_with_projects!!");
+    let companies = usecase.get_all_companies_with_projects().await?;
+    let total = companies.len() as u64;
+    let response: Vec<CompaniesWithProjects> = companies
+        .into_iter()
+        .map(CompaniesWithProjects::try_from)
+        .collect::<Result<_, _>>()
+        .map_err(|e| AppError::InternalServerError(format!("データの変換に失敗しました: {}", e)))?;
+
+    let companies_with_projects_response = CompaniesWithProjectsResponse {
+        companies: response,
+        total,
+    };
+
+    Ok(HttpResponse::Ok().json(companies_with_projects_response))
 }
 
 #[utoipa::path(

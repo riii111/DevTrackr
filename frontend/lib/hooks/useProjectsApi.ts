@@ -1,97 +1,62 @@
-import useSWR from "swr";
 import { customFetch } from "@/lib/api/core";
 import {
   Project,
   CreateProjectRequest,
   UpdateProjectRequest,
+  ProjectsResponse,
+  CreateProjectResponse,
+  ProjectResponse,
 } from "@/types/project";
-import { ApiResponse } from "@/types/api";
 
-const ENDPOINT = "/projects/";
+const ENDPOINT = "/projects";
 
 export function useProjectsApi() {
-  const { data, error, mutate } = useSWR<ApiResponse<Project[]>>(
-    ENDPOINT,
-    (url: string) =>
-      customFetch<"GET", Record<string, never>, Project[]>(url, {
+  return {
+    getProjects,
+    createProject,
+    updateProject,
+  };
+
+  /**
+   * プロジェクト一覧を取得する関数
+   */
+  async function getProjects(): Promise<ProjectResponse> {
+    const response = await customFetch<"GET", undefined, ProjectResponse>(
+      ENDPOINT,
+      {
         method: "GET",
-      }),
-    {
-      revalidateOnFocus: false,
-    }
-  );
+      }
+    );
+    return response;
+  }
 
   /**
    * プロジェクトを作成する関数
    */
-  async function createProjectMutation(
+  async function createProject(
     projectData: CreateProjectRequest
-  ): Promise<{ id: string }> {
+  ): Promise<CreateProjectResponse> {
     const response = await customFetch<
       "POST",
       CreateProjectRequest,
-      { id: string }
+      CreateProjectResponse
     >(ENDPOINT, {
       method: "POST",
       body: projectData,
     });
-    // TODO: キャッシュ更新すべき？あとで要考慮
-    // await mutateProjects();
-    return response.data;
+    return response;
   }
 
   /**
    * プロジェクトを更新する関数
    */
-  async function updateProjectMutation(
+  async function updateProject(
     id: string,
     projectData: UpdateProjectRequest
-  ): Promise<Project> {
-    const response = await customFetch<"PUT", UpdateProjectRequest, Project>(
-      `${ENDPOINT}${id}/`,
-      {
-        method: "PUT",
-        body: projectData,
-      }
-    );
-    // TODO: キャッシュ更新すべき？あとで要考慮
-    // await mutateProjects();
-    return response.data;
+  ): Promise<void> {
+    await customFetch<"PUT", UpdateProjectRequest, void>(`${ENDPOINT}/${id}/`, {
+      method: "PUT",
+      body: projectData,
+    });
   }
-
-  /**
-   * プロジェクトを取得する関数
-   */
-  function useProject(id: string) {
-    const { data, error, mutate } = useSWR<ApiResponse<Project>>(
-      `${ENDPOINT}${id}/`,
-      (url: string) =>
-        customFetch<"GET", Record<string, never>, Project>(url, {
-          method: "GET",
-        })
-    );
-    return {
-      project: data?.data,
-      isLoading: !error && !data,
-      isError: error,
-      mutate,
-    };
-  }
-
-  return {
-    projects: data?.data,
-    isLoading: !error && !data,
-    isError: error,
-    mutateProjects: mutate,
-    createProjectMutation,
-    updateProjectMutation,
-    useProject,
-  };
-}
-
-// サーバーサイドでプロジェクトを取得するための関数
-export async function getServerSideProjects(): Promise<ApiResponse<Project[]>> {
-  return customFetch<"GET", Record<string, never>, Project[]>(ENDPOINT, {
-    method: "GET",
-  });
 }

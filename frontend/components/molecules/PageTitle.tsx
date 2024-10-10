@@ -8,7 +8,7 @@ const getPageTitle = (pathname: string) => {
 
   const dashboardTitleMap: { [key: string]: string } = {
     "dashboard": "ダッシュボード",
-    "time-tracking": "今日の勤怠・工数",
+    "projects": "開発プロジェクト一覧",
     "calendar": "カレンダー",
     "skill-analysis": "スキル分析",
     "revenue": "収益・時給管理",
@@ -37,7 +37,7 @@ const PageTitle = () => {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
 
-  return <h1 className="text-xl font-semibold text-text-primary">{pageTitle}</h1>;
+  return <h1 className="flex justify-start text-xl font-semibold text-text-primary">{pageTitle}</h1>;
 };
 
 export default PageTitle;

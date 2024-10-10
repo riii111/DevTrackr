@@ -1,11 +1,14 @@
-use crate::models::companies::{AnnualSales, Bonus, CompanyInDB, CompanyStatus, ContractType};
+use crate::dto::responses::projects::ProjectResponse;
+use crate::models::companies::{
+    AnnualSales, Bonus, CompanyInDB, CompanyStatus, CompanyWithProjectsInDB, ContractType,
+};
 use crate::utils::serializer::{
     serialize_bson_datetime, serialize_object_id, serialize_option_bson_datetime,
 };
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
+use chrono::NaiveDate;
 use serde::Serialize;
 use utoipa::ToSchema;
-use chrono::NaiveDate;
 
 #[derive(Serialize, Debug, ToSchema)]
 pub struct CompanyResponse {
@@ -72,5 +75,33 @@ pub struct CompanyCreatedResponse {
 impl From<ObjectId> for CompanyCreatedResponse {
     fn from(id: ObjectId) -> Self {
         Self { id }
+    }
+}
+
+#[derive(Serialize, Debug, ToSchema)]
+pub struct CompaniesWithProjects {
+    #[serde(flatten)]
+    pub company: CompanyResponse,
+    pub projects: Vec<ProjectResponse>,
+}
+
+#[derive(Serialize, Debug, ToSchema)]
+pub struct CompaniesWithProjectsResponse {
+    pub companies: Vec<CompaniesWithProjects>,
+    pub total: u64,
+}
+
+impl TryFrom<CompanyWithProjectsInDB> for CompaniesWithProjects {
+    type Error = &'static str;
+
+    fn try_from(db_company: CompanyWithProjectsInDB) -> Result<Self, Self::Error> {
+        let company = CompanyResponse::try_from(db_company.company)?;
+        let projects = db_company
+            .projects
+            .into_iter()
+            .map(ProjectResponse::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self { company, projects })
     }
 }

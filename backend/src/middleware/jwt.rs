@@ -18,7 +18,6 @@ pub async fn validator(
     }
 
     let token = credentials.token();
-    debug!("Validating JWT token: {}", token);
 
     match auth_usecase.verify_access_token(token).await {
         Ok(_) => {

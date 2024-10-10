@@ -1,5 +1,3 @@
-import { ApiResponse } from "./api";
-
 export interface Project {
   id: string;
   title: string;
@@ -48,4 +46,17 @@ export interface UpdateProjectRequest {
   hourly_pay?: number;
   status: ProjectStatus;
   total_working_time: number;
+}
+
+export interface ProjectsResponse {
+  projects: Project[];
+  // total: number;
+}
+
+export interface ProjectResponse {
+  project: Project;
+}
+
+export interface CreateProjectResponse {
+  id: string;
 }

@@ -4,3 +4,4 @@
 .vscode/
 .DS_Store
 Thumbs.db
+local_fixture.json

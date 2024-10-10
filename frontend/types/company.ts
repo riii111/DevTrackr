@@ -1,8 +1,4 @@
-import { ApiResponse } from "./api";
-
-export interface GetCompaniesParams {
-  id: string;
-}
+import { Project } from "@/types/project";
 
 export interface Company {
   id: string;
@@ -49,9 +45,11 @@ export interface Bonus {
   frequency: number;
 }
 
-export type GetCompaniesResponse = ApiResponse<Company[]>;
-export type GetCompanyResponse = ApiResponse<Company>;
+export interface CompanyWithProjects extends Company {
+  projects: Project[];
+}
 
+// リクエスト
 export interface CreateCompanyRequest {
   company_name: string;
   establishment_year: number;
@@ -84,4 +82,23 @@ export interface UpdateCompanyRequest {
   status: CompanyStatus;
   affiliation_start_date: string;
   affiliation_end_date?: string;
+}
+
+// レスポンス
+export interface CompaniesWithProjectsResponse {
+  companies: CompanyWithProjects[];
+  total: number;
+}
+
+export interface CreateCompanyResponse {
+  id: string;
+}
+
+export interface CompanyResponse {
+  company: Company;
+}
+
+export interface CompaniesResponse {
+  companies: Company[];
+  // total: number;
 }
