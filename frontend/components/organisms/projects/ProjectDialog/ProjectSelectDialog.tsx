@@ -1,16 +1,15 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
-    DialogFooter,
 } from '@/components/ui/dialog'
 import { useRouter } from "next/navigation";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 import { CompanyWithProjects } from "@/types/company";
 import { ProjectDialogHeader } from "@/components/organisms/projects/ProjectDialog/content/ProjectDialogHeader";
 import { ProjectSelector } from "@/components/organisms/projects/ProjectDialog/content/ProjectSelector";
+import { ProjectDialogFooter } from "@/components/organisms/projects/ProjectDialog/content/ProjectDialogFooter";
 
 interface Props {
     isOpen: boolean;
@@ -102,15 +101,10 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
                     onSelectProject={handleProjectSelect}
                     selectedProjectId={selectedProjectId}
                 />
-                <DialogFooter className="border-t border-dialog-hover pt-4">
-                    <Button
-                        onClick={handleSave}
-                        disabled={!selectedProjectId || isProcessing}
-                        className="hover:text-accent-dark hover:bg-dialog-selected"
-                    >
-                        開発プロジェクトを追加→
-                    </Button>
-                </DialogFooter>
+                <ProjectDialogFooter
+                    onSave={handleSave}
+                    isDisabled={!selectedProjectId || isProcessing}
+                />
             </DialogContent>
         </Dialog>
     );
