@@ -47,3 +47,16 @@ export interface UpdateProjectRequest {
   status: ProjectStatus;
   total_working_time: number;
 }
+
+export interface ProjectsResponse {
+  projects: Project[];
+  // total: number;
+}
+
+export interface ProjectResponse {
+  project: Project;
+}
+
+export interface CreateProjectResponse {
+  id: string;
+}
