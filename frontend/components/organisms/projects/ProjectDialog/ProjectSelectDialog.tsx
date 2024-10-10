@@ -12,16 +12,12 @@ import {
 } from '@/components/ui/dialog'
 import { useRouter } from "next/navigation";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
-import { Company } from "@/types/company";
-
-interface Project {
-    id: string;
-    name: string;
-}
+import { CompanyWithProjects } from "@/types/company";
+import { Project } from "@/types/project";
 
 interface Props {
     isOpen: boolean;
-    companies: Company[];
+    companiesWithProjects: CompanyWithProjects[];
     onOpenChange: (isOpen: boolean) => void;
     onClose: () => void;
 }
@@ -88,7 +84,7 @@ const ProjectList = ({ projects, selectedProjectId, onSelectProject }: { project
                 onClick={() => onSelectProject(project.id)}
             >
                 <div className="flex justify-between items-center w-full">
-                    <span className="text-primary">{project.name}</span>
+                    <span className="text-primary">{project.title}</span>
                     {project.id === selectedProjectId && (
                         <span className="text-accent-dark">選択</span>
                     )}
@@ -138,7 +134,7 @@ ProjectSelector.displayName = "ProjectSelector"
 
 export const ProjectSelectDialog: React.FC<Props> = React.memo(({
     isOpen,
-    companies = [],
+    companiesWithProjects = [],
     onOpenChange,
     onClose,
 }) => {
@@ -162,7 +158,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
 
             await drawerStore.handleOpen("main", { id: "event", type: "event" });
 
-            const projectDetails = companies
+            const projectDetails = companiesWithProjects
                 .flatMap(company => company.projects)
                 .find(project => project.id === selectedProjectId);
 
@@ -176,14 +172,14 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
         } finally {
             setIsProcessing(false);
         }
-    }, [selectedProjectId, companies, drawerStore, router, onOpenChange]);
+    }, [selectedProjectId, companiesWithProjects, drawerStore, router, onOpenChange]);
 
     const categoryGroupPreset = useMemo(() => {
-        return companies.map((company) => ({
+        return companiesWithProjects.map((company) => ({
             company: company.company_name,
             items: company.projects || []
         }));
-    }, [companies]);
+    }, [companiesWithProjects]);
 
     // ダイアログが開かれた時に選択状態をクリア
     useEffect(() => {

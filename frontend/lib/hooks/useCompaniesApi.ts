@@ -41,7 +41,7 @@ export function useCompaniesApi() {
       "GET",
       undefined,
       CompaniesWithProjectsResponse
-    >(`${ENDPOINT}/with-projects/`, {
+    >(`${ENDPOINT}with-projects/`, {
       method: "GET",
     });
     return response;
@@ -85,7 +85,7 @@ export function useCompaniesApi() {
       "GET",
       Record<string, never>,
       CompanyResponse
-    >(`${ENDPOINT}${id}/`, {
+    >(`${ENDPOINT}/${id}/`, {
       method: "GET",
     });
     return response;

@@ -8,7 +8,7 @@ import {
   ProjectResponse,
 } from "@/types/project";
 
-const ENDPOINT = "/projects/";
+const ENDPOINT = "/projects";
 
 export function useProjectsApi() {
   return {

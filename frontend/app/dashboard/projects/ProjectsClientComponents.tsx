@@ -5,7 +5,7 @@ import { useState } from "react";
 import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
-import { Company } from "@/types/company";
+import { CompanyWithProjects } from "@/types/company";
 
 const ProjectSelectDialog = dynamic(
     () => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog").then(mod => mod.ProjectSelectDialog),
@@ -19,10 +19,10 @@ const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/Proj
 });
 
 interface ProjectsClientComponentsProps {
-    companies: Company[];
+    companiesWithProjects: CompanyWithProjects[];
 }
 
-export default function ProjectsClientComponents({ companies }: ProjectsClientComponentsProps) {
+export default function ProjectsClientComponents({ companiesWithProjects }: ProjectsClientComponentsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const { drawerState } = useDrawerStore();
 
@@ -44,7 +44,7 @@ export default function ProjectsClientComponents({ companies }: ProjectsClientCo
                 isOpen={isOpen}
                 onOpenChange={setIsOpen}
                 onClose={() => setIsOpen(false)}
-                companies={companies}
+                companiesWithProjects={companiesWithProjects}
             />
             {drawerState.main.isOpen && <ProjectDrawer />}
         </>

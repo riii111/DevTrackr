@@ -5,12 +5,12 @@ import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
 const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
 
 export default async function ProjectListPage() {
-    const { getCompanies } = useCompaniesApi();
-    const companies = await getCompanies();
+    const { getCompaniesWithProjects } = useCompaniesApi();
+    const { companies } = await getCompaniesWithProjects();
 
     return (
         <>
-            <ProjectsClientComponents companies={companies} />
+            <ProjectsClientComponents companiesWithProjects={companies} />
             <ProjectsContent bgColor={bgColor} />
         </>
     );
