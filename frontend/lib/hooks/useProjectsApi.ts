@@ -18,12 +18,9 @@ export function useProjectsApi() {
    * プロジェクト一覧を取得する関数
    */
   async function getProjects(): Promise<Project[]> {
-    const response = await customFetch<"GET", Record<string, never>, Project[]>(
-      ENDPOINT,
-      {
-        method: "GET",
-      }
-    );
+    const response = await customFetch<"GET", undefined, Project[]>(ENDPOINT, {
+      method: "GET",
+    });
     return response;
   }
 
