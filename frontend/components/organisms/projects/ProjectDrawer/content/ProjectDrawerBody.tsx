@@ -13,7 +13,6 @@ interface Props {
 
 export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerType, selectedProjectId }) => {
     const drawerStore = useDrawerStore()
-    // const projectStore = useProjectStore()
     const subDrawer = useRef<HTMLDivElement>(null)
 
     const state = drawerStore.drawerState[drawerType]
@@ -46,31 +45,7 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
                     <p>プロジェクト名: 駐車場管理システム</p>
                     <p>技術スタック: Remix, FastAPI(MongoDB), CloudFlare</p>
                 </div>
-                // ) : (
-                //     <div className="p-4">プロジェクト情報が見つかりません。</div>
             )}
-            {/* <ProjectDrawerName drawerType={drawerType} /> */}
-            {/* <hr className="border-gray-300" /> */}
-            {/* {state.type === 'project' && (
-                <ProjectDrawerContentEvent
-                    key={`event-${state.id}`}
-                    drawerType={drawerType}
-                    event={projectStore.getItemByIdAndType({ type: 'event', id: state.id })}
-                />
-            )}
-            {state.type === 'task' && (
-                <ProjectDrawerContentTask
-                    key={`task-${state.id}`}
-                    drawerType={drawerType}
-                    task={projectStore.getItemByIdAndType({ type: 'task', id: state.id })}
-                />
-            )}
-            {state.type === 'todo' && (
-                <ProjectDrawerContentTodo
-                    key={`todo-${state.id}`}
-                    todo={projectStore.getItemByIdAndType({ type: 'todo', id: state.id })}
-                />
-            )} */}
         </div>
     )
 });
