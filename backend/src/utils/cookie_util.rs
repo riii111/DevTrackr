@@ -8,7 +8,7 @@ pub fn set_access_token_cookie(response: &mut HttpResponse, access_token: &str) 
     let cookie = Cookie::build("access_token", access_token.to_owned())
         .path("/") // Cookieが有効になるパス
         .secure(secure_mode)
-        .http_only(true) // JSからアクセスできないようにする
+        .http_only(false) // TODO: デバッグ用!!
         .same_site(actix_web::cookie::SameSite::Lax)
         .finish();
     response.add_cookie(&cookie).unwrap();
