@@ -6,10 +6,11 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Project, ProjectStatus } from "@/types/project";
+import { ProjectStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { MdChevronRight } from 'react-icons/md';
 import Link from 'next/link';
+import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
 
 // ステータスに応じた色を定義
 const statusColors = {
@@ -20,12 +21,12 @@ const statusColors = {
     [ProjectStatus.Cancelled]: "bg-red-100 text-red-800 hover:bg-red-100 hover:text-red-800",
 };
 
-interface ProjectTableProps {
-    projects: Project[];
-}
 
-export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
-    if (!projects || projects.length === 0) {
+export const ProjectTable: React.FC = async () => {
+    const { getProjects } = useProjectsApi();
+    const projects = await getProjects();
+
+    if (!projects || !Array.isArray(projects) || projects.length === 0) {
         return <p>プロジェクトがありません。</p>;
     }
 
@@ -56,7 +57,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                                     href={`/dashboard/projects?projectId=${project.id && typeof project.id === 'object' ? project.id.$oid : project.id}`}
                                     className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
-                                    <MdChevronRight className="h-5 w-5 text-gray-500 hover:text-blue-600" />
+                                    <MdChevronRight className="h-6 w-6 text-gray-500 hover:text-blue-600" />
                                 </Link>
                             </div>
                         </TableCell>
@@ -64,7 +65,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                         <TableCell>{project.skill_labels?.join(", ") || "-"}</TableCell>
                         <TableCell>{project.hourly_pay ? `¥${project.hourly_pay}` : "-"}</TableCell>
                         <TableCell>
-                            <Badge className={statusColors[project.status]}>
+                            <Badge className={statusColors[project.status as keyof typeof statusColors]}>
                                 {project.status}
                             </Badge>
                         </TableCell>

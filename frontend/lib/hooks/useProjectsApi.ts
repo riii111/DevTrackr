@@ -2,9 +2,9 @@ import { customFetch } from "@/lib/api/core";
 import {
   CreateProjectRequest,
   UpdateProjectRequest,
-  ProjectsResponse,
   CreateProjectResponse,
   ProjectResponse,
+  ProjectsResponse,
 } from "@/types/project";
 
 const ENDPOINT = "/projects";
