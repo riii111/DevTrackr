@@ -1,10 +1,10 @@
+use crate::api::endpoints::{auth, companies, projects, work_logs};
 use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::dto::responses::companies::{
     CompaniesWithProjects, CompaniesWithProjectsResponse, CompanyCreatedResponse, CompanyResponse,
 };
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
-use crate::endpoints::{auth, companies, projects, work_logs};
 use crate::errors::app_error::{AppError, ErrorResponse};
 use crate::models::auth::{AuthTokenCreate, AuthTokenInDB, AuthTokenLogin};
 use crate::models::companies::{

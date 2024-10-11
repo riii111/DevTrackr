@@ -15,15 +15,14 @@ use std::time::Duration;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+mod api;
 mod config;
 mod constants;
 mod dto;
-mod endpoints;
 mod errors;
 mod middleware;
 mod models;
 mod repositories;
-mod routes;
 mod usecases;
 mod utils;
 
@@ -146,23 +145,23 @@ async fn main() -> Result<()> {
                 web::scope("/api")
                     .service(
                         web::scope("/auth")
-                            .service(endpoints::auth::login)
-                            .service(endpoints::auth::register)
-                            .service(endpoints::auth::refresh)
+                            .service(api::endpoints::auth::login)
+                            .service(api::endpoints::auth::register)
+                            .service(api::endpoints::auth::refresh)
                             .service(
                                 // logoutのみ認証ミドルウェアを適用
                                 web::scope("")
                                     .wrap(jwt_auth_check.clone())
-                                    .service(endpoints::auth::logout),
+                                    .service(api::endpoints::auth::logout),
                             ),
                     )
                     .service(
                         // 認証ミドルウェアを適用
                         web::scope("")
                             .wrap(jwt_auth_check.clone())
-                            .service(routes::projects_scope())
-                            .service(routes::work_logs_scope())
-                            .service(routes::companies_scope()),
+                            .service(api::routes::projects_scope())
+                            .service(api::routes::work_logs_scope())
+                            .service(api::routes::companies_scope()),
                     ),
             )
             .service(web::scope("/").service(web::resource("").to(index)))

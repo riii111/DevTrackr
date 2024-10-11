@@ -1,6 +1,6 @@
 use actix_web::{web, Scope};
 
-use crate::endpoints::{companies, projects, work_logs};
+use crate::api::endpoints::{companies, projects, work_logs};
 
 pub fn projects_scope() -> Scope {
     web::scope("/projects")
