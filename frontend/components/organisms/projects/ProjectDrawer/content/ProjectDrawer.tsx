@@ -105,26 +105,6 @@ export const ProjectDrawer = React.memo(() => {
                             </div>
                         </SheetContent>
                     </Sheet>
-
-                    {/* <BaseDrawer
-                        isOpen={drawerStore.drawerState.main.isOpen}
-                        onOpenChange={(open) => {
-                            if (!open) {
-                                drawerStore.handleClose("main");
-                                router.push("/dashboard/projects");
-                            }
-                        }}
-                        title="プロジェクト詳細"
-                    >
-                        {selectedProject ? (
-                            <div className="p-4">
-                                <p className="mb-2">プロジェクトID: {selectedProject.id}</p>
-                                <p className="mb-2">プロジェクト名: {selectedProject.name}</p>
-                            </div>
-                        ) : (
-                            <div className="p-4">プロジェクト情報が見つかりません。</div>
-                        )}
-                    </BaseDrawer> */}
                 </div>
             </div>
         </div>
