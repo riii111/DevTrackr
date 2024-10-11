@@ -3,7 +3,8 @@
 import React, { useMemo, useRef } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
-
+import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import useSWR from "swr";
 
 interface Props {
     width?: number
@@ -11,9 +12,27 @@ interface Props {
     selectedProjectId?: string | null
 }
 
+
+function useProjectDetails(projectId: string | null) {
+    const { getProjectById } = useProjectsApi();
+
+    const { data, error, isLoading } = useSWR(
+        projectId ? `project-${projectId}` : null,
+        () => projectId ? getProjectById(projectId) : null
+    );
+
+    return {
+        project: data,
+        isLoading,
+        error
+    };
+}
+
+
 export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerType, selectedProjectId }) => {
     const drawerStore = useDrawerStore()
     const subDrawer = useRef<HTMLDivElement>(null)
+
 
     const state = drawerStore.drawerState[drawerType]
     const isSubDrawer = drawerType == "sub"
@@ -29,6 +48,8 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
 
     console.log("called ProjectDrawerBody")
 
+    const { project, isLoading, error } = useProjectDetails(selectedProjectId);
+
     return (
         <div
             ref={isSubDrawer ? subDrawer : undefined}
@@ -38,12 +59,17 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
                 drawerType={drawerType}
             />
             <hr className="border-gray-300" />
-            <span> ここにProjectDrawerNameが入ります</span>
-            {selectedProjectId && (
+            {isLoading && <p>読み込み中...</p>}
+            {error && <p>エラーが発生しました: {error.message}</p>}
+            {project && (
                 <div>
-                    <p>プロジェクトID: {selectedProjectId}</p>
-                    <p>プロジェクト名: 駐車場管理システム</p>
-                    <p>技術スタック: Remix, FastAPI(MongoDB), CloudFlare</p>
+                    <p>プロジェクトID: {project.id}</p>
+                    <p>プロジェクト名: {project.title}</p>
+                    <p>技術スタック: {project.skill_labels?.join(', ')}</p>
+                    <p>内容: {project.description}</p>
+                    <p>時給: {project.hourly_pay}</p>
+                    <p>ステータス: {project.status}</p>
+                    {/* プロジェクトの他の詳細情報を表示 */}
                 </div>
             )}
         </div>
