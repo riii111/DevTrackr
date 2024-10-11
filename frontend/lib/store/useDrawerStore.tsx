@@ -1,13 +1,13 @@
 "use client";
-import { createContext, useCallback, useReducer, useContext, useMemo } from "react";
+import { createContext, useCallback, useReducer, useContext, useMemo, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
 type DrawerType = "main" | "sub";
-type EventDataVariant = "event" | "task" | "todo";
+type DataVariant = "company" | "project" | "workLog";
 
 type DrawerAction =
-  | { type: "OPEN_DRAWER"; drawer: DrawerType; id: string; eventType: EventDataVariant }
+  | { type: "OPEN_DRAWER"; drawer: DrawerType; id: string; dataType: DataVariant }
   | { type: "CLOSE_DRAWER"; drawer: DrawerType }
   | { type: "ON_CLOSED"; drawer: DrawerType }
   | { type: "SET_FULL_SCREEN"; value: boolean }
@@ -24,7 +24,7 @@ const drawerReducer = (state: DrawerContextType, action: DrawerAction): DrawerCo
           [action.drawer]: {
             isOpen: true,
             id: action.id,
-            type: action.eventType,
+            dataType: action.dataType,
             drawerClosePromise: promisify,
             resolve,
           }
@@ -62,7 +62,7 @@ const drawerReducer = (state: DrawerContextType, action: DrawerAction): DrawerCo
 interface DrawerState {
   isOpen: boolean;
   id?: string;
-  type?: EventDataVariant;
+  dataType?: DataVariant;
   drawerClosePromise?: Promise<void>;
   resolve?: (value: void | PromiseLike<void>) => void;
 }
@@ -71,7 +71,7 @@ interface DrawerContextType {
   drawerState: Record<DrawerType, DrawerState>;
   handleOpen: (
     drawer: DrawerType,
-    { id, type }: { id: string; type: EventDataVariant }
+    { id, dataType }: { id: string; dataType: DataVariant }
   ) => Promise<void>;
   handleClose: (drawerType: DrawerType) => Promise<void>;
   onClosed: (drawer: DrawerType) => void;
@@ -116,7 +116,7 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   const handleOpen = useCallback(
     async (
       drawer: DrawerType,
-      { id, type }: { id: string; type: EventDataVariant }
+      { id, dataType }: { id: string; dataType: DataVariant }
     ) => {
       if (drawer === "sub" && !state.drawerState.main.isOpen) {
         throw new Error("mainドロワーが開いていません");
@@ -124,16 +124,14 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const { promisify, resolve } = createExternalPromise();
 
-      dispatch({ type: "OPEN_DRAWER", drawer, id, eventType: type });
+      dispatch({ type: "OPEN_DRAWER", drawer, id, dataType });
 
       if (drawer === "main" && router) {
         const params = new URLSearchParams(searchParams);
-        params.set(type + "Id", id);
+        params.set(dataType + "Id", id);
         await router.push(`${pathname}?${params.toString()}`);
-        // TODO:何かスナックバーを表示させる？しないなら非同期は不要.
       }
     },
-    // [drawerState, router, searchParams, pathname]
     [state.drawerState.main.isOpen, router, searchParams, pathname]
   );
 
@@ -144,9 +142,7 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (drawerType === "main") {
         const params = new URLSearchParams(searchParams);
-        params.delete("eventId");
-        params.delete("taskId");
-        params.delete("todoId");
+        params.delete("projectId");
         router.push(`${pathname}?${params.toString()}`);
       }
     },
