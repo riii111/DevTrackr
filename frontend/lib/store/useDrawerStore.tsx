@@ -110,61 +110,35 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // URLからドロワーの状態を同期する
   useEffect(() => {
-    // TODO: 種別あとで増えます
-    const projectId = searchParams.get('projectId');
+    const syncDrawerWithUrl = () => {
+      const projectId = searchParams.get('projectId');
+      if (projectId) {
+        dispatch({ type: "OPEN_DRAWER", drawer: 'main', id: projectId, dataType: 'project' });
+      } else {
+        dispatch({ type: "CLOSE_DRAWER", drawer: 'main' });
+      }
+    };
 
-    if (projectId) {
-      handleOpen('main', { id: projectId, dataType: 'project' });
-    } else {
-      handleClose('main');
-    }
+    syncDrawerWithUrl();
   }, [searchParams]);
 
-  /**
-   * ドロワーを開く関数
-   * ドロワーが完全に閉じるまでにタイムラグがあるため、
-   * 閉じたことを外部に通知するためのPromiseを、ドロワーが開いた段階で定義しておく
-   */
-  const handleOpen = useCallback(
-    async (
-      drawer: DrawerType,
-      { id, dataType }: { id: string; dataType: DataVariant }
-    ) => {
-      try {
-        if (drawer === "sub" && !state.drawerState.main.isOpen) {
-          throw new Error("mainドロワーが開いていません");
-        }
-
-        const { promisify, resolve } = createExternalPromise();
-
-        dispatch({ type: "OPEN_DRAWER", drawer, id, dataType });
-
-        if (drawer === "main" && router) {
-          const params = new URLSearchParams(searchParams);
-          params.set(dataType + "Id", id);
-          await router.push(`${pathname}?${params.toString()}`);
-        }
-      } catch (error) {
-        console.error('Failed to open drawer:', error);
-        throw error;
+  const openDrawerWithUrl = useCallback(
+    async (drawer: DrawerType, { id, dataType }: { id: string; dataType: DataVariant }) => {
+      if (drawer === "main") {
+        const params = new URLSearchParams(searchParams);
+        params.set(dataType + "Id", id);
+        await router.push(`${pathname}?${params.toString()}`);
       }
     },
-    [state.drawerState.main.isOpen, router, searchParams, pathname]
+    [router, searchParams, pathname]
   );
 
-  const handleClose = useCallback(
+  const closeDrawerWithUrl = useCallback(
     async (drawerType: DrawerType) => {
-      try {
-        dispatch({ type: 'CLOSE_DRAWER', drawer: drawerType });
-
-        if (drawerType === "main") {
-          const params = new URLSearchParams(searchParams);
-          params.delete("projectId");
-          await router.push(`${pathname}?${params.toString()}`);
-        }
-      } catch (error) {
-        console.error('Failed to close drawer:', error);
-        throw error;
+      if (drawerType === "main") {
+        const params = new URLSearchParams(searchParams);
+        params.delete("projectId");
+        await router.push(`${pathname}?${params.toString()}`);
       }
     },
     [router, searchParams, pathname]
@@ -182,20 +156,22 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'SET_FULL_SCREEN', value });
   }, []);
 
-
-
   const contextValue = useMemo(() => ({
     drawerState: state.drawerState,
-    handleOpen,
-    handleClose,
+    openDrawerWithUrl,
+    closeDrawerWithUrl,
     onClosed,
     isFullScreen: state.isFullScreen,
     setIsFullScreen,
-  }), [state, handleOpen, handleClose, onClosed, setIsFullScreen])
+  }), [state, openDrawerWithUrl, closeDrawerWithUrl, onClosed, setIsFullScreen])
 
   return (
     <DrawerContext.Provider
-      value={contextValue}
+      value={{
+        ...contextValue,
+        handleOpen: openDrawerWithUrl,
+        handleClose: closeDrawerWithUrl
+      }}
     >
       {children}
     </DrawerContext.Provider>
