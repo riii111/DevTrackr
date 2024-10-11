@@ -7,7 +7,6 @@ export const COOKIE_KEYS = {
 
 export function getClientSideCookie(key: string): string | undefined {
   const value = Cookies.get(key);
-  console.log(`Client-side cookie [${key}]:`, value); // 追加
   return value;
 }
 

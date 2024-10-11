@@ -1,6 +1,5 @@
 "use client";
 
-// import { BaseDrawer } from "@/components/organisms/projects/ProjectDrawer/BaseDrawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
@@ -11,8 +10,11 @@ const DRAWER_WIDTH = 640
 const MAIN_DRAWER_FULL_MIN_WIDTH = 1000
 const SUB_DRAWER_WIDTH = 520
 
+const windowResizeObserver = (setWindowWidth: React.Dispatch<React.SetStateAction<number>>) => {
+    setWindowWidth(window.innerWidth);
+};
+
 export const ProjectDrawer = React.memo(() => {
-    // export function ProjectDrawer() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const drawerStore = useDrawerStore();
@@ -20,7 +22,7 @@ export const ProjectDrawer = React.memo(() => {
     const subState = drawerStore.drawerState.sub
     const [windowWidth, setWindowWidth] = useState(0)
 
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const selectedProjectId = searchParams.get("projectId");
 
     const mainDrawerWidth = useMemo(() => {
         if (!drawerStore.isFullScreen) {
@@ -35,44 +37,21 @@ export const ProjectDrawer = React.memo(() => {
         return subState.isOpen ? windowWidth : mainDrawerWidth;
     }, [subState.isOpen, windowWidth, mainDrawerWidth]);
 
-
-    const windowResizeObserver = useCallback(() => {
-        setWindowWidth(window.innerWidth)
-    }, [])
-
-    // TODO: FullScreenとクエリパラメータ対応時にObserver実装する
     useEffect(() => {
-        windowResizeObserver();
-        window.addEventListener('resize', windowResizeObserver);
+        windowResizeObserver(setWindowWidth);
+        window.addEventListener('resize', () => windowResizeObserver(setWindowWidth));
 
         return () => {
-            window.removeEventListener('resize', windowResizeObserver);
+            window.removeEventListener('resize', () => windowResizeObserver(setWindowWidth));
         };
-    }, [windowResizeObserver]);
+    }, []);
 
-    useEffect(() => {
-        const projectId = searchParams.get("projectId");
-        if (projectId) {
-            // ここでプロジェクトIDを使用してプロジェクト情報を取得する
-            // 例: APIリクエストを送信してプロジェクト詳細を取得
-            setSelectedProjectId(projectId)
-            // fetchProjectDetails(projectId);
-        }
-    }, [searchParams]);
-
-    // const fetchProjectDetails = async (projectId: string) => {
-    // ここでAPIリクエストを実装し、プロジェクト詳細を取得
-    // 取得したデータでsetSelectedProjectを呼び出す
-    // 例: const projectData = await api.getProjectDetails(projectId);
-    // setSelectedProject(projectData);
-    // };
-
-    const onUpdateModelValue = useCallback((isOpen: boolean) => {
+    const onUpdateModelValue = (isOpen: boolean) => {
         if (!isOpen) {
             drawerStore.handleClose("main");
             router.push("/dashboard/projects");
         }
-    }, [drawerStore, router])
+    };
 
     console.log("called ProjectDrawer")
 
@@ -110,26 +89,6 @@ export const ProjectDrawer = React.memo(() => {
                             </div>
                         </SheetContent>
                     </Sheet>
-
-                    {/* <BaseDrawer
-                        isOpen={drawerStore.drawerState.main.isOpen}
-                        onOpenChange={(open) => {
-                            if (!open) {
-                                drawerStore.handleClose("main");
-                                router.push("/dashboard/projects");
-                            }
-                        }}
-                        title="プロジェクト詳細"
-                    >
-                        {selectedProject ? (
-                            <div className="p-4">
-                                <p className="mb-2">プロジェクトID: {selectedProject.id}</p>
-                                <p className="mb-2">プロジェクト名: {selectedProject.name}</p>
-                            </div>
-                        ) : (
-                            <div className="p-4">プロジェクト情報が見つかりません。</div>
-                        )}
-                    </BaseDrawer> */}
                 </div>
             </div>
         </div>

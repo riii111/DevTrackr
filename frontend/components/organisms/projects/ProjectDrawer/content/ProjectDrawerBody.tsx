@@ -1,9 +1,13 @@
 "use client"
 
-import React, { useMemo, useRef } from "react"
+import React, { useMemo, useRef, useCallback, useState } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
-
+import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import useSWR from "swr";
+import { ErrorAlert } from "@/components/organisms/projects/ProjectDrawer/content/ErrorAlert"
+import { ProjectDetails } from "@/components/organisms/projects/ProjectDrawer/ProjectDetails"
+import { LoadingSkeleton } from "@/components/organisms/projects/ProjectDrawer/content/LoadingSkeleton"
 
 interface Props {
     width?: number
@@ -11,9 +15,28 @@ interface Props {
     selectedProjectId?: string | null
 }
 
+function useProjectDetails(projectId: string | null) {
+    const { getProjectById } = useProjectsApi();
+
+    const fetchProject = useCallback(() => {
+        return projectId ? getProjectById(projectId) : null;
+    }, [projectId, getProjectById]);
+
+    const { data, error, isLoading } = useSWR(
+        projectId ? `project-${projectId}` : null,
+        fetchProject,
+        { revalidateOnFocus: false } // 閉じる際にも取得されるのを防ぐ
+    );
+
+    return {
+        project: data,
+        isLoading,
+        error
+    };
+}
+
 export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerType, selectedProjectId }) => {
     const drawerStore = useDrawerStore()
-    // const projectStore = useProjectStore()
     const subDrawer = useRef<HTMLDivElement>(null)
 
     const state = drawerStore.drawerState[drawerType]
@@ -30,47 +53,26 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
 
     console.log("called ProjectDrawerBody")
 
+    const { project, isLoading, error } = useProjectDetails(selectedProjectId ?? null);
+
+    const handleSave = (updatedProject: any) => {
+        // TODO: PUTリクエストを送信
+        console.log("Updated project:", updatedProject);
+    };
+
     return (
         <div
             ref={isSubDrawer ? subDrawer : undefined}
             style={drawerStyle}
-            className={`flex flex-col min-h-screen ${isSubDrawer ? 'shadow-inner transition-all duration-300' : ''}`}>
-            <ProjectDrawerToolbar
-                drawerType={drawerType}
-            />
+            className={`flex flex-col min-h-screen ${isSubDrawer ? 'shadow-inner transition-all duration-300' : ''}`}
+        >
+            <ProjectDrawerToolbar drawerType={drawerType} />
             <hr className="border-gray-300" />
-            <span> ここにProjectDrawerNameが入ります</span>
-            {selectedProjectId && (
-                <div>
-                    <p>プロジェクトID: {selectedProjectId}</p>
-                    <p>プロジェクト名: 駐車場管理システム</p>
-                    <p>技術スタック: Remix, FastAPI(MongoDB), CloudFlare</p>
-                </div>
-                // ) : (
-                //     <div className="p-4">プロジェクト情報が見つかりません。</div>
-            )}
-            {/* <ProjectDrawerName drawerType={drawerType} /> */}
-            {/* <hr className="border-gray-300" /> */}
-            {/* {state.type === 'project' && (
-                <ProjectDrawerContentEvent
-                    key={`event-${state.id}`}
-                    drawerType={drawerType}
-                    event={projectStore.getItemByIdAndType({ type: 'event', id: state.id })}
-                />
-            )}
-            {state.type === 'task' && (
-                <ProjectDrawerContentTask
-                    key={`task-${state.id}`}
-                    drawerType={drawerType}
-                    task={projectStore.getItemByIdAndType({ type: 'task', id: state.id })}
-                />
-            )}
-            {state.type === 'todo' && (
-                <ProjectDrawerContentTodo
-                    key={`todo-${state.id}`}
-                    todo={projectStore.getItemByIdAndType({ type: 'todo', id: state.id })}
-                />
-            )} */}
+            <div className="p-4">
+                {isLoading && <LoadingSkeleton />}
+                {error && <ErrorAlert error={error} />}
+                {project && <ProjectDetails project={project} onSave={handleSave} />}
+            </div>
         </div>
     )
 });

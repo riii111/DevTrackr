@@ -22,41 +22,15 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
 
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false)
 
-    // const data = useMemo(() => {
-    //     if (!state.id || !state.type) return undefined
-    //     return projectStore.getItemByIdAndType({
-    //         id: state.id,
-    //         type: state.type
-    //     })
-    // }, [state.id, state.type, projectStore])
 
-
-    // const computedDataTypeText = useMemo(() => {
-    //     switch (state.type) {
-    //         case 'project':
-    //             return 'プロジェクト'
-    //         case 'task':
-    //             return 'タスク'
-    //         case 'todo':
-    //             return 'ToDo'
-    //         default:
-    //             return ''
-    //     }
-    // }, [state.type])
     const computedDataTypeText = "プロジェクト"
 
     // TODO: 全画面表示対応
     const handleToggleFullScreen = () => {
         if (drawerType === "main") {
             drawerStore.setIsFullScreen(!drawerStore.isFullScreen)
-            // drawerStore.closeSubDrawer()
-            // } else {
-            // const { id: subId, type: subType } = drawerStore.drawerState.sub
-            // drawerStore.closeSubDrawer()
-            // drawerStore.openMainDrawer(subid, subType)
         }
     }
-    // const computedFullscreenCondition = drawerType === 'sub' || !drawerStore.isFullScreen
     const computedFullscreenCondition = !drawerStore.isFullScreen
     const computedFullscreenLabel = computedFullscreenCondition ? '全画面で表示' : '全画面表示を折りたたむ'
 
@@ -109,22 +83,6 @@ export function ProjectDrawerToolbar({ drawerType }: Props) {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            {/* <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-8 h-8 rounded-full"
-                            onClick={() => drawerStore.handleClose(drawerType)}
-                        >
-                            <RiCloseLine className="w-4 h-4 text-gray-500" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>閉じる</TooltipContent>
-                </Tooltip>
-            </TooltipProvider> */}
-
             <Dialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>

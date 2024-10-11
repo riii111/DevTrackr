@@ -1,11 +1,10 @@
 import { customFetch } from "@/lib/api/core";
 import {
-  Project,
   CreateProjectRequest,
   UpdateProjectRequest,
-  ProjectsResponse,
   CreateProjectResponse,
   ProjectResponse,
+  ProjectsResponse,
 } from "@/types/project";
 
 const ENDPOINT = "/projects";
@@ -13,6 +12,7 @@ const ENDPOINT = "/projects";
 export function useProjectsApi() {
   return {
     getProjects,
+    getProjectById,
     createProject,
     updateProject,
   };
@@ -20,9 +20,22 @@ export function useProjectsApi() {
   /**
    * プロジェクト一覧を取得する関数
    */
-  async function getProjects(): Promise<ProjectResponse> {
-    const response = await customFetch<"GET", undefined, ProjectResponse>(
+  async function getProjects(): Promise<ProjectsResponse> {
+    const response = await customFetch<"GET", undefined, ProjectsResponse>(
       ENDPOINT,
+      {
+        method: "GET",
+      }
+    );
+    return response;
+  }
+
+  /**
+   * 対象のプロジェクトの詳細を取得する関数
+   */
+  async function getProjectById(id: string): Promise<ProjectResponse> {
+    const response = await customFetch<"GET", undefined, ProjectResponse>(
+      `${ENDPOINT}/${id}`,
       {
         method: "GET",
       }

@@ -42,8 +42,6 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
         try {
             setIsProcessing(true);
 
-            await drawerStore.handleOpen("main", { id: "event", type: "event" });
-
             const projectDetails = companiesWithProjects
                 .flatMap(company => company.projects)
                 .find(project => project.id === selectedProjectId);
@@ -58,7 +56,7 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
         } finally {
             setIsProcessing(false);
         }
-    }, [selectedProjectId, companiesWithProjects, drawerStore, router, onOpenChange]);
+    }, [selectedProjectId, companiesWithProjects, router, onOpenChange]);
 
     const categoryGroupPreset = useMemo(() => {
         return companiesWithProjects.map((company) => ({

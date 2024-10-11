@@ -13,7 +13,7 @@ export const ProjectDialogFooter = React.memo(({ onSave, isDisabled }: ProjectDi
             <Button
                 onClick={onSave}
                 disabled={isDisabled}
-                className="hover:text-accent-dark hover:bg-dialog-selected"
+                className="hover:bg-text-primary/80"
             >
                 開発プロジェクトを追加→
             </Button>

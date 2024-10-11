@@ -62,7 +62,6 @@ impl CompanyRepository for MongoCompanyRepository {
     async fn find_all_with_projects(
         &self,
     ) -> Result<Vec<CompanyWithProjectsInDB>, RepositoryError> {
-        log::info!("called find_all_with_projects!!");
         let pipeline = vec![doc! {
             "$lookup": {
                 "from": "projects",
