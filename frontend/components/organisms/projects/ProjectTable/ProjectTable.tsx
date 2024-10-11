@@ -10,7 +10,7 @@ import { ProjectStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { MdChevronRight } from 'react-icons/md';
 import Link from 'next/link';
-import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import { Project } from "@/types/project";
 
 // ステータスに応じた色を定義
 const statusColors = {
@@ -21,12 +21,12 @@ const statusColors = {
     [ProjectStatus.Cancelled]: "bg-red-100 text-red-800 hover:bg-red-100 hover:text-red-800",
 };
 
+interface ProjectTableProps {
+    projects: Project[];
+}
 
-export const ProjectTable: React.FC = async () => {
-    const { getProjects } = useProjectsApi();
-    const projects = await getProjects();
-
-    if (!projects || !Array.isArray(projects) || projects.length === 0) {
+export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
+    if (!projects || projects.length === 0) {
         return <p>プロジェクトがありません。</p>;
     }
 
