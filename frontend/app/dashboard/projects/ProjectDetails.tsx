@@ -12,9 +12,11 @@ export default function ProjectDetails() {
     useEffect(() => {
         const projectId = searchParams.get('projectId');
         if (projectId) {
-            handleOpen('main', { id: projectId, dataType: 'project' });
+            handleOpen('main', { id: projectId, dataType: 'project' })
+                .catch(error => console.error('Failed to open drawer:', error));
         } else {
-            handleClose('main');
+            handleClose('main')
+                .catch(error => console.error('Failed to close drawer:', error));
         }
     }, [searchParams, handleOpen, handleClose]);
 

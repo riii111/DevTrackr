@@ -130,32 +130,41 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
       drawer: DrawerType,
       { id, dataType }: { id: string; dataType: DataVariant }
     ) => {
-      if (drawer === "sub" && !state.drawerState.main.isOpen) {
-        throw new Error("mainドロワーが開いていません");
-      }
+      try {
+        if (drawer === "sub" && !state.drawerState.main.isOpen) {
+          throw new Error("mainドロワーが開いていません");
+        }
 
-      const { promisify, resolve } = createExternalPromise();
+        const { promisify, resolve } = createExternalPromise();
 
-      dispatch({ type: "OPEN_DRAWER", drawer, id, dataType });
+        dispatch({ type: "OPEN_DRAWER", drawer, id, dataType });
 
-      if (drawer === "main" && router) {
-        const params = new URLSearchParams(searchParams);
-        params.set(dataType + "Id", id);
-        await router.push(`${pathname}?${params.toString()}`);
+        if (drawer === "main" && router) {
+          const params = new URLSearchParams(searchParams);
+          params.set(dataType + "Id", id);
+          await router.push(`${pathname}?${params.toString()}`);
+        }
+      } catch (error) {
+        console.error('Failed to open drawer:', error);
+        throw error;
       }
     },
     [state.drawerState.main.isOpen, router, searchParams, pathname]
   );
 
-
   const handleClose = useCallback(
     async (drawerType: DrawerType) => {
-      dispatch({ type: 'CLOSE_DRAWER', drawer: drawerType });
+      try {
+        dispatch({ type: 'CLOSE_DRAWER', drawer: drawerType });
 
-      if (drawerType === "main") {
-        const params = new URLSearchParams(searchParams);
-        params.delete("projectId");
-        router.push(`${pathname}?${params.toString()}`);
+        if (drawerType === "main") {
+          const params = new URLSearchParams(searchParams);
+          params.delete("projectId");
+          await router.push(`${pathname}?${params.toString()}`);
+        }
+      } catch (error) {
+        console.error('Failed to close drawer:', error);
+        throw error;
       }
     },
     [router, searchParams, pathname]
