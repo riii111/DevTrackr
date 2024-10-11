@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuthApi } from '@/lib/hooks/useAuthApi';
 import { useRouter } from 'next/navigation';
 
-const AccountMenu: React.FC = () => {
+const UserMenu: React.FC = () => {
     const { logout } = useAuthApi();
     const router = useRouter();
 
@@ -43,4 +43,4 @@ const AccountMenu: React.FC = () => {
     );
 };
 
-export default AccountMenu;
+export default UserMenu;

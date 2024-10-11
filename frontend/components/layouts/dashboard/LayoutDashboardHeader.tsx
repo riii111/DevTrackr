@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 
-const DynamicAccountMenu = dynamic(() => import('@/components/molecules/core/AccountMenu'), {
+const DynamicUserMenu = dynamic(() => import('@/components/molecules/core/UserMenu'), {
     ssr: false,
     loading: () => <div className="w-8 h-8 bg-main-bg rounded-full animate-pulse"></div>
 });
@@ -14,7 +14,7 @@ const LayoutDashboardHeader = () => {
     return (
         <header className="flex items-center justify-between px-4 py-2 border-b border-gray-400">
             <DynamicPageTitle />
-            <DynamicAccountMenu />
+            <DynamicUserMenu />
         </header>
     );
 };
