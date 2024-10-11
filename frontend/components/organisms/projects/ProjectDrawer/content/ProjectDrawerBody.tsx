@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useRef, useCallback } from "react"
+import React, { useMemo, useRef, useCallback, useState } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDrawerToolbar"
 import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
@@ -9,6 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { PencilIcon, CheckIcon, XIcon } from 'lucide-react'
 import { ProjectStatus } from "@/types/project"
 
 // ステータスに応じた色を定義
@@ -25,7 +29,6 @@ interface Props {
     drawerType: "main" | "sub"
     selectedProjectId?: string | null
 }
-
 
 function useProjectDetails(projectId: string | null) {
     const { getProjectById } = useProjectsApi();
@@ -47,11 +50,9 @@ function useProjectDetails(projectId: string | null) {
     };
 }
 
-
 export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerType, selectedProjectId }) => {
     const drawerStore = useDrawerStore()
     const subDrawer = useRef<HTMLDivElement>(null)
-
 
     const state = drawerStore.drawerState[drawerType]
     const isSubDrawer = drawerType == "sub"
@@ -69,6 +70,11 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
 
     const { project, isLoading, error } = useProjectDetails(selectedProjectId);
 
+    const handleSave = (updatedProject: any) => {
+        // ここでプロジェクトの更新処理を実装する
+        console.log("Updated project:", updatedProject);
+    };
+
     return (
         <div
             ref={isSubDrawer ? subDrawer : undefined}
@@ -80,7 +86,7 @@ export const ProjectDrawerBody: React.FC<Props> = React.memo(({ width, drawerTyp
             <div className="p-4">
                 {isLoading && <LoadingSkeleton />}
                 {error && <ErrorAlert error={error} />}
-                {project && <ProjectDetails project={project} />}
+                {project && <ProjectDetails project={project} onSave={handleSave} />}
             </div>
         </div>
     )
@@ -102,35 +108,136 @@ const ErrorAlert: React.FC<{ error: Error }> = ({ error }) => (
     </Alert>
 );
 
-const ProjectDetails: React.FC<{ project: any }> = ({ project }) => (
-    <Card>
-        <CardHeader className="flex justify-between items-center">
-            <CardTitle>{project.title}</CardTitle>
-            <Badge className={statusColors[project.status as keyof typeof statusColors]}>
-                {project.status}
-            </Badge>
-        </CardHeader>
-        <CardContent>
-            <dl className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                    <dt className="font-semibold">技術スタック</dt>
-                    <dd>{project.skill_labels?.join(', ')}</dd>
+interface ProjectDetailsProps {
+    project: any;
+    onSave: (updatedProject: any) => void;
+}
+
+export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedProject, setEditedProject] = useState(project);
+
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
+
+    const handleSave = () => {
+        onSave(editedProject);
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setEditedProject(project);
+        setIsEditing(false);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setEditedProject(prev => ({ ...prev, [name]: value }));
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-2xl font-bold">
+                    {isEditing ? (
+                        <Input
+                            name="title"
+                            value={editedProject.title}
+                            onChange={handleInputChange}
+                            className="text-2xl font-bold"
+                        />
+                    ) : (
+                        editedProject.title
+                    )}
+                </CardTitle>
+                <Badge className={statusColors[project.status as keyof typeof statusColors]}>
+                    {project.status}
+                </Badge>
+            </CardHeader>
+            <CardContent>
+                <dl className="space-y-4">
+                    <div>
+                        <dt className="font-semibold">技術スタック</dt>
+                        <dd>
+                            {isEditing ? (
+                                <Input
+                                    name="skill_labels"
+                                    value={editedProject.skill_labels?.join(', ')}
+                                    onChange={handleInputChange}
+                                />
+                            ) : (
+                                editedProject.skill_labels?.join(', ')
+                            )}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="font-semibold">内容</dt>
+                        <dd>
+                            {isEditing ? (
+                                <Textarea
+                                    name="description"
+                                    value={editedProject.description}
+                                    onChange={handleInputChange}
+                                    rows={3}
+                                />
+                            ) : (
+                                editedProject.description
+                            )}
+                        </dd>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <dt className="font-semibold">時給</dt>
+                            <dd>
+                                {isEditing ? (
+                                    <Input
+                                        name="hourly_pay"
+                                        type="number"
+                                        value={editedProject.hourly_pay}
+                                        onChange={handleInputChange}
+                                    />
+                                ) : (
+                                    `${editedProject.hourly_pay}円`
+                                )}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-semibold">総作業時間</dt>
+                            <dd>
+                                {isEditing ? (
+                                    <Input
+                                        name="total_working_time"
+                                        type="number"
+                                        value={editedProject.total_working_time}
+                                        onChange={handleInputChange}
+                                    />
+                                ) : (
+                                    `${editedProject.total_working_time}時間`
+                                )}
+                            </dd>
+                        </div>
+                    </div>
+                </dl>
+                <div className="mt-4 flex justify-end space-x-2">
+                    {isEditing ? (
+                        <>
+                            <Button onClick={handleSave} variant="default" className="text-white hover:bg-primary/80">
+                                <CheckIcon className="mr-2 h-4 w-4 text-white" /> 保存
+                            </Button>
+                            <Button onClick={handleCancel} variant="outline" className="text-white hover:bg-primary/80">
+                                <XIcon className="mr-2 h-4 w-4 text-white" /> キャンセル
+                            </Button>
+                        </>
+                    ) : (
+                        <Button onClick={handleEdit} variant="outline" className="text-white hover:bg-primary/80">
+                            <PencilIcon className="mr-2 h-4 w-4 text-white" /> 編集
+                        </Button>
+                    )}
                 </div>
-                <div className="col-span-2">
-                    <dt className="font-semibold">内容</dt>
-                    <dd>{project.description}</dd>
-                </div>
-                <div>
-                    <dt className="font-semibold">時給</dt>
-                    <dd>{project.hourly_pay}円</dd>
-                </div>
-                <div>
-                    <dt className="font-semibold">総作業時間</dt>
-                    <dd>{project.total_working_time}時間</dd>
-                </div>
-            </dl>
-        </CardContent>
-    </Card>
-);
+            </CardContent>
+        </Card>
+    );
+};
 
 ProjectDrawerBody.displayName = "ProjectDrawerBody"
