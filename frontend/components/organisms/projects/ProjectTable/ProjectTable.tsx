@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Project, ProjectStatus } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
+import { MdChevronRight } from 'react-icons/md';
+import Link from 'next/link';
 
 // ステータスに応じた色を定義
 const statusColors = {
@@ -34,7 +36,6 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                     <TableHead>タイトル</TableHead>
                     <TableHead>説明</TableHead>
                     <TableHead>技術スタック</TableHead>
-                    {/* <TableHead>会社ID</TableHead> */}
                     <TableHead>時給</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead>総作業時間</TableHead>
@@ -42,11 +43,25 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
             </TableHeader>
             <TableBody>
                 {projects.map((project) => (
-                    <TableRow key={project.id && typeof project.id === 'object' ? project.id.$oid : project.id}>
-                        <TableCell>{project.title}</TableCell>
+                    <TableRow
+                        key={project.id && typeof project.id === 'object' ? project.id.$oid : project.id}
+                        className="group"
+                    >
+                        <TableCell className="relative">
+                            <div className="flex items-center">
+                                <span className="text-gray-900 group-hover:text-blue-600 transition-colors">
+                                    {project.title}
+                                </span>
+                                <Link
+                                    href={`/dashboard/projects?projectId=${project.id && typeof project.id === 'object' ? project.id.$oid : project.id}`}
+                                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <MdChevronRight className="h-5 w-5 text-gray-500 hover:text-blue-600" />
+                                </Link>
+                            </div>
+                        </TableCell>
                         <TableCell>{project.description || "-"}</TableCell>
                         <TableCell>{project.skill_labels?.join(", ") || "-"}</TableCell>
-                        {/* <TableCell>{project.company_id && typeof project.company_id === 'object' ? project.company_id.$oid : project.company_id}</TableCell> */}
                         <TableCell>{project.hourly_pay ? `¥${project.hourly_pay}` : "-"}</TableCell>
                         <TableCell>
                             <Badge className={statusColors[project.status]}>

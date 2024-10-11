@@ -108,6 +108,18 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
+  // URLからドロワーの状態を同期する
+  useEffect(() => {
+    // TODO: 種別あとで増えます
+    const projectId = searchParams.get('projectId');
+
+    if (projectId) {
+      handleOpen('main', { id: projectId, dataType: 'project' });
+    } else {
+      handleClose('main');
+    }
+  }, [searchParams]);
+
   /**
    * ドロワーを開く関数
    * ドロワーが完全に閉じるまでにタイムラグがあるため、
