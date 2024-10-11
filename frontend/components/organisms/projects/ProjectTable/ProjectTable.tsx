@@ -48,18 +48,14 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                         key={project.id && typeof project.id === 'object' ? project.id.$oid : project.id}
                         className="group"
                     >
-                        <TableCell className="relative">
-                            <div className="flex items-center">
-                                <span className="text-gray-900 group-hover:text-blue-600 transition-colors">
-                                    {project.title}
-                                </span>
-                                <Link
-                                    href={`/dashboard/projects?projectId=${project.id && typeof project.id === 'object' ? project.id.$oid : project.id}`}
-                                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <MdChevronRight className="h-6 w-6 text-gray-500 hover:text-blue-600" />
-                                </Link>
-                            </div>
+                        <TableCell className="relative p-0">
+                            <Link
+                                href={`/dashboard/projects?projectId=${project.id && typeof project.id === 'object' ? project.id.$oid : project.id}`}
+                                className="flex items-center w-full h-full p-4 text-gray-900 hover:text-blue-600 transition-colors font-semibold"
+                            >
+                                <span>{project.title}</span>
+                                <MdChevronRight className="ml-2 h-6 w-6 text-gray-500 group-hover:text-blue-600" />
+                            </Link>
                         </TableCell>
                         <TableCell>{project.description || "-"}</TableCell>
                         <TableCell>{project.skill_labels?.join(", ") || "-"}</TableCell>
