@@ -113,7 +113,15 @@ export async function customFetch<
         // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
       }
     }
-    return response.json();
+
+    // レスポンスにコンテンツがある場合のみJSONとしてパースする
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return response.json();
+    } else {
+      // コンテンツがない場合は空のオブジェクトを返す
+      return {};
+    }
   } catch (error) {
     if (error instanceof ApiError) {
       if (typeof window !== "undefined") {

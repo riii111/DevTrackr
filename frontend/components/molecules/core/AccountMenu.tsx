@@ -1,8 +1,23 @@
 "use client";
 import { MdAccountCircle } from 'react-icons/md';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
+import { useRouter } from 'next/navigation';
 
 const AccountMenu: React.FC = () => {
+    const { logout } = useAuthApi();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            // ログアウト後、ログインページなどにリダイレクト
+            router.push('/auth');
+        } catch (error) {
+            console.error('ログアウトに失敗しました', error);
+        }
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -20,7 +35,7 @@ const AccountMenu: React.FC = () => {
                         <span>アドミン1 ユーザー</span>
                     </div>
                 </div>
-                <DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleLogout}>
                     ログアウト
                 </DropdownMenuItem>
             </DropdownMenuContent>
