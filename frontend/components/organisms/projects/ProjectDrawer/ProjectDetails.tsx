@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon, CheckIcon, XIcon } from 'lucide-react';
 import { statusColors } from "@/lib/constants/ProjectStatusColors";
+import { ProjectStatus } from "@/types/project";
 
 interface ProjectDetailsProps {
     project: any;
@@ -50,7 +51,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave 
                         editedProject.title
                     )}
                 </CardTitle>
-                <Badge className={statusColors[project.status as keyof typeof statusColors]}>
+                <Badge className={statusColors[project.status as ProjectStatus]}>
                     {project.status}
                 </Badge>
             </CardHeader>

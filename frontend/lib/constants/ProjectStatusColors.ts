@@ -11,4 +11,4 @@ export const statusColors = {
     "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800",
   [ProjectStatus.Cancelled]:
     "bg-red-100 text-red-800 hover:bg-red-100 hover:text-red-800",
-};
+} as const;

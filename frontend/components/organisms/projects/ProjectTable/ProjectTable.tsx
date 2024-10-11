@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MdChevronRight } from 'react-icons/md';
 import Link from 'next/link';
-import { Project } from "@/types/project";
+import { Project, ProjectStatus } from "@/types/project";
 import { statusColors } from "@/lib/constants/ProjectStatusColors";
 
 
@@ -53,7 +53,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                         <TableCell>{project.skill_labels?.join(", ") || "-"}</TableCell>
                         <TableCell>{project.hourly_pay ? `¥${project.hourly_pay}` : "-"}</TableCell>
                         <TableCell>
-                            <Badge className={statusColors[project.status as keyof typeof statusColors]}>
+                            <Badge className={statusColors[project.status as ProjectStatus]}>
                                 {project.status}
                             </Badge>
                         </TableCell>
