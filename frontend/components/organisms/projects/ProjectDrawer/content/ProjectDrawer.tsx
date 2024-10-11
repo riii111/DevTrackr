@@ -46,22 +46,6 @@ export const ProjectDrawer = React.memo(() => {
         };
     }, []);
 
-    useEffect(() => {
-        if (selectedProjectId) {
-            fetchProjectDetails(selectedProjectId);
-        }
-    }, [selectedProjectId]);
-
-    const fetchProjectDetails = async (projectId: string) => {
-        try {
-            // const projectData = await api.getProjectDetails(projectId);
-            // ここでプロジェクト詳細データを設定する
-        } catch (error) {
-            console.error('プロジェクト詳細の取得に失敗しました:', error);
-            // エラー状態を設定するなどの処理を追加
-        }
-    };
-
     const onUpdateModelValue = (isOpen: boolean) => {
         if (!isOpen) {
             drawerStore.handleClose("main");
