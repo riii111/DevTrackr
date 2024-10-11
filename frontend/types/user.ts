@@ -1,7 +1,30 @@
 export interface User {
-  _id: string;
+  id: string;
   username: string;
   email: string;
+  icon: string;
+  role: UserRole;
+}
+
+export enum UserRole {
+  Frontend = "Front-end",
+  Backend = "Back-end",
+  Fullstack = "Full-stack",
+  Designer = "Designer",
+  Infrastructure = "Infrastructure",
+  ProductManager = "Product Manager",
+  ProjectManager = "Project Manager",
+}
+
+export interface UpdateUserRequest {
+  username?: string;
+  email?: string;
+  icon?: string;
+  role?: UserRole;
+}
+
+export interface UserResponse {
+  user: User;
 }
 
 export interface AuthResponse {

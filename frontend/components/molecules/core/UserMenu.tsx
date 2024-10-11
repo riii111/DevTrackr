@@ -1,17 +1,22 @@
-"use client";
-import { MdAccountCircle } from 'react-icons/md';
+'use client';
+
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuthApi } from '@/lib/hooks/useAuthApi';
-import { useRouter } from 'next/navigation';
+import { User } from '@/types/user';
 
-const UserMenu: React.FC = () => {
+interface UserMenuProps {
+    initialUserData: User;
+}
+
+export default function UserMenu({ initialUserData }: UserMenuProps) {
     const { logout } = useAuthApi();
     const router = useRouter();
 
     const handleLogout = async () => {
         try {
             await logout();
-            // ログアウト後、ログインページなどにリダイレクト
             router.push('/auth');
         } catch (error) {
             console.error('ログアウトに失敗しました', error);
@@ -21,26 +26,31 @@ const UserMenu: React.FC = () => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <span className="sr-only">アカウントメニューを開く</span>
-                    <MdAccountCircle className="h-8 w-8" />
+                <button className="flex items-center space-x-2 focus:outline-none">
+                    <Image
+                        src={initialUserData.icon}
+                        alt={initialUserData.username}
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                    />
+                    <div className="text-left">
+                        <p className="font-semibold">{initialUserData.username}</p>
+                        <p className="text-sm text-gray-500">{initialUserData.role}</p>
+                    </div>
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-                <div className="px-4 py-2 text-sm text-gray-700">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                            アド
-                        </div>
-                        <span>アドミン1 ユーザー</span>
-                    </div>
-                </div>
+                <DropdownMenuItem onSelect={() => router.push('/profile')}>
+                    プロフィール
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push('/settings')}>
+                    設定
+                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleLogout}>
                     ログアウト
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
-};
-
-export default UserMenu;
+}
