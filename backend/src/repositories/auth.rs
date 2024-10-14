@@ -1,7 +1,7 @@
 use crate::constants::mongo_error_codes::mongodb_error_codes;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::users::UserInDB;
+use crate::models::users::{UserInDB, UserUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, Collection, Database};
@@ -27,6 +27,11 @@ pub trait AuthRepository {
         &self,
         access_token: &str,
     ) -> Result<Option<UserInDB>, RepositoryError>;
+    async fn update_user_by_access_token(
+        &self,
+        access_token: &str,
+        user: &UserUpdate,
+    ) -> Result<bool, RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
@@ -162,5 +167,40 @@ impl AuthRepository for MongoAuthRepository {
         }
 
         Ok(None)
+    }
+
+    async fn update_user_by_access_token(
+        &self,
+        access_token: &str,
+        user: &UserUpdate,
+    ) -> Result<bool, RepositoryError> {
+        // アクセストークンからAuthTokenを取得
+        let auth_token = self.find_auth_token(access_token).await?.ok_or_else(|| {
+            RepositoryError::DatabaseError(MongoError::custom(
+                "アクセストークンが見つかりません".to_string(),
+            ))
+        })?;
+
+        // トークンの有効期限をチェック
+        if auth_token.expires_at <= BsonDateTime::now() {
+            return Err(RepositoryError::DatabaseError(MongoError::custom(
+                "アクセストークンの有効期限が切れています".to_string(),
+            )));
+        }
+
+        let mut update_doc = bson::to_document(user)
+            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
+        update_doc.insert("updated_at", BsonDateTime::now());
+        let update = doc! {
+            "$set": update_doc
+        };
+
+        let result = self
+            .users_collection
+            .update_one(doc! { "_id": auth_token.user_id }, update, None)
+            .await
+            .map_err(RepositoryError::DatabaseError)?;
+
+        Ok(result.modified_count > 0)
     }
 }

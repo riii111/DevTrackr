@@ -28,5 +28,7 @@ pub fn companies_scope() -> Scope {
 }
 
 pub fn users_scope() -> Scope {
-    web::scope("/users").service(users::get_current_user)
+    web::scope("/users")
+        .service(users::get_current_user)
+        .service(users::update_me)
 }

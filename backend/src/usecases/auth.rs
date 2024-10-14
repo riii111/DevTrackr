@@ -1,6 +1,6 @@
 use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::users::UserInDB;
+use crate::models::users::{UserCreate, UserInDB, UserUpdate};
 use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
@@ -49,22 +49,29 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// - パスワードをハッシュ化
     /// - ユーザーを作成
     /// - 認証トークンを生成して保存
-    pub async fn register(
-        &self,
-        email: &str,
-        password: &str,
-        username: &str,
-    ) -> Result<AuthTokenInDB, AppError> {
-        let password_hash =
-            hash_password(password).map_err(|e| AppError::InternalServerError(e.to_string()))?;
+    pub async fn register(&self, user_create: &UserCreate) -> Result<AuthTokenInDB, AppError> {
+        let password_hash = hash_password(&user_create.password)
+            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
         let user_id = self
             .repository
-            .create_user(email, &password_hash, username)
+            .create_user(&user_create.email, &password_hash, &user_create.username)
             .await?;
 
         let auth_token = self.create_auth_token(&user_id.to_string())?;
         self.repository.save_auth_token(&auth_token).await?;
         Ok(auth_token)
+    }
+
+    /// ログイン中のユーザー更新処理
+    pub async fn update_user(
+        &self,
+        access_token: &str,
+        user_update: &UserUpdate,
+    ) -> Result<bool, AppError> {
+        Ok(self
+            .repository
+            .update_user_by_access_token(access_token, user_update)
+            .await?)
     }
 
     /// ログイン中のユーザー情報を取得
