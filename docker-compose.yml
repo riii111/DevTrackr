@@ -16,6 +16,7 @@ services:
     depends_on:
       - mongo
       - redis
+      - minio
     deploy:
       replicas: 1
     labels:
