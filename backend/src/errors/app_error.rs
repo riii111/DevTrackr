@@ -87,7 +87,8 @@ impl AppError {
 
 impl actix_web::ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        match self {
+        let status = self.status_code();
+        let (error_type, details) = match self {
             AppError::ValidationError(errors) => {
                 let error_messages: Vec<String> = errors
                     .field_errors()
@@ -106,40 +107,20 @@ impl actix_web::ResponseError for AppError {
                         format!("{}: {}", field, messages.join(", "))
                     })
                     .collect();
-
-                HttpResponse::BadRequest().json(json!({
-                    "error": "バリデーションエラー",
-                    "details": error_messages
-                }))
+                ("バリデーションエラー", error_messages)
             }
-            AppError::DuplicateError(_) => HttpResponse::BadRequest().json(json!({
-                "error": "ユニーク制約違反",
-                "details": [self.error_message()]
-            })),
-            AppError::BadRequest(_) => HttpResponse::BadRequest().json(json!({
-                "error": "不正なリクエスト",
-                "details": [self.error_message()]
-            })),
-            AppError::Unauthorized(_) => HttpResponse::Unauthorized().json(json!({
-                "error": "認証エラー",
-                "details": [self.error_message()]
-            })),
-            AppError::Forbidden(_) => HttpResponse::Forbidden().json(json!({
-                "error": "アクセス権限がありません",
-                "details": [self.error_message()]
-            })),
-            AppError::NotFound(_) => HttpResponse::NotFound().json(json!({
-                "error": "リソースが見つかりません",
-                "details": [self.error_message()]
-            })),
-            AppError::DatabaseError(error) => HttpResponse::InternalServerError().json(json!({
-                "error": "データベースエラー",
-                "details": [error.to_string()]
-            })),
-            AppError::InternalServerError(_) => HttpResponse::InternalServerError().json(json!({
-                "error": "内部サーバーエラー",
-                "details": [self.error_message()]
-            })),
-        }
+            AppError::DuplicateError(_) => ("ユニーク制約違反", vec![self.error_message()]),
+            AppError::BadRequest(_) => ("不正なリクエスト", vec![self.error_message()]),
+            AppError::Unauthorized(_) => ("認証エラー", vec![self.error_message()]),
+            AppError::Forbidden(_) => ("アクセス権限がありません", vec![self.error_message()]),
+            AppError::NotFound(_) => ("リソースが見つかりません", vec![self.error_message()]),
+            AppError::DatabaseError(error) => ("データベースエラー", vec![error.to_string()]),
+            AppError::InternalServerError(_) => ("内部サーバーエラー", vec![self.error_message()]),
+        };
+
+        HttpResponse::build(status).json(json!({
+            "error": error_type,
+            "details": details
+        }))
     }
 }
