@@ -16,7 +16,7 @@ actix-web-httpauth = "0.8.2"
 anyhow = "1.0.86"
 async-trait = "0.1.82"
 aws-config = "1.5.8"
-aws-sdk-s3 = "1.56.0"
+aws-sdk-s3 = { version = "1.56.0", features = ["behavior-version-latest"] }
 bcrypt = "0.15.1"
 bson = { version = "2.12.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.38", features = ["serde"] }

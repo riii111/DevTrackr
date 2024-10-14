@@ -94,6 +94,18 @@ async fn main() -> Result<()> {
         );
     }
 
+    // S3 (MinIO) クライアントの初期化
+    let s3_client = match config::s3::init_s3_client().await {
+        Ok(client) => {
+            log::info!("Successfully initialized S3 (MinIO) client");
+            client
+        }
+        Err(e) => {
+            log::error!("S3 (MinIO) クライアントの初期化に失敗しました: {}", e);
+            panic!("S3 (MinIO) クライアントの初期化に失敗しました");
+        }
+    };
+
     // データベースの初期化
     let db = db_index::init_db()
         .await
@@ -140,6 +152,7 @@ async fn main() -> Result<()> {
                     )
                     .build(),
             )
+            .app_data(web::Data::new(s3_client.clone()))
             .service(SwaggerUi::new("/docs/{_:.*}").url("/docs/openapi.json", ApiDoc::openapi()))
             .service(
                 web::scope("/api")
