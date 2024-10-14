@@ -13,6 +13,8 @@ pub enum EngineerRole {
     Security,
     ProductManager,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]

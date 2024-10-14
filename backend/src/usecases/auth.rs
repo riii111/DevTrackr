@@ -1,5 +1,6 @@
 use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
+use crate::models::users::UserInDB;
 use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
@@ -64,6 +65,18 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let auth_token = self.create_auth_token(&user_id.to_string())?;
         self.repository.save_auth_token(&auth_token).await?;
         Ok(auth_token)
+    }
+
+    /// ログイン中のユーザー情報を取得
+    pub async fn get_current_user(&self, access_token: &str) -> Result<UserInDB, AppError> {
+        // アクセストークンからユーザー情報を直接取得
+        let user = self
+            .repository
+            .find_user_by_access_token(access_token)
+            .await?
+            .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
+
+        Ok(user)
     }
 
     /// ユーザーログアウト処理

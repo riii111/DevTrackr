@@ -172,6 +172,7 @@ async fn main() -> Result<()> {
                         // 認証ミドルウェアを適用
                         web::scope("")
                             .wrap(jwt_auth_check.clone())
+                            .service(api::routes::users_scope())
                             .service(api::routes::projects_scope())
                             .service(api::routes::work_logs_scope())
                             .service(api::routes::companies_scope()),
