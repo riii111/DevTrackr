@@ -195,12 +195,24 @@ impl AuthRepository for MongoAuthRepository {
             "$set": update_doc
         };
 
-        let result = self
+        match self
             .users_collection
             .update_one(doc! { "_id": auth_token.user_id }, update, None)
             .await
-            .map_err(RepositoryError::DatabaseError)?;
-
-        Ok(result.modified_count > 0)
+        {
+            Ok(result) => Ok(result.modified_count > 0),
+            Err(e) => {
+                if let mongodb::error::ErrorKind::Write(write_failure) = e.kind.as_ref() {
+                    if let mongodb::error::WriteFailure::WriteError(write_error) = write_failure {
+                        if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
+                            return Err(RepositoryError::DuplicateError(
+                                "メールアドレスが既に使用されています".to_string(),
+                            ));
+                        }
+                    }
+                }
+                Err(RepositoryError::DatabaseError(e))
+            }
+        }
     }
 }

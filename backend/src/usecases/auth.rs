@@ -5,21 +5,28 @@ use crate::repositories::auth::AuthRepository;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
+use aws_sdk_s3::primitives::ByteStream;
+use aws_sdk_s3::Client as S3Client;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use bson::DateTime as BsonDateTime;
 use chrono::{Duration, Utc};
 use std::env;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub struct AuthUseCase<R: AuthRepository> {
     repository: Arc<R>,
     jwt_secret: Vec<u8>,
+    s3_client: Arc<S3Client>,
 }
 
 impl<R: AuthRepository> AuthUseCase<R> {
-    pub fn new(repository: Arc<R>, jwt_secret: &[u8]) -> Self {
+    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_client: Arc<S3Client>) -> Self {
         Self {
             repository,
             jwt_secret: jwt_secret.to_vec(),
+            s3_client,
         }
     }
 
@@ -63,15 +70,34 @@ impl<R: AuthRepository> AuthUseCase<R> {
     }
 
     /// ログイン中のユーザー更新処理
-    pub async fn update_user(
+    pub async fn update_me(
         &self,
         access_token: &str,
-        user_update: &UserUpdate,
-    ) -> Result<bool, AppError> {
-        Ok(self
+        user_update: &mut UserUpdate,
+    ) -> Result<UserInDB, AppError> {
+        // 画像のアップロード処理
+        if let Some(avatar_url) = &user_update.avatar_url {
+            let new_avatar_url = self.upload_avatar(avatar_url).await?;
+            user_update.avatar_url = Some(new_avatar_url);
+        }
+
+        // パスワードのハッシュ化
+        let password_hash = hash_password(&user_update.password)
+            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+        user_update.password = password_hash;
+
+        // ユーザー情報を更新
+        let updated = self
             .repository
             .update_user_by_access_token(access_token, user_update)
-            .await?)
+            .await?;
+
+        if updated {
+            // 更新されたユーザー情報を取得
+            self.get_current_user(access_token).await
+        } else {
+            Err(AppError::NotFound("ユーザーが見つかりません".to_string()))
+        }
     }
 
     /// ログイン中のユーザー情報を取得
@@ -239,5 +265,40 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// 認証ヘッダーからトークンを抽出
     fn extract_token(&self, auth_header: &str) -> String {
         auth_header.trim_start_matches("Bearer ").to_string()
+    }
+
+    async fn upload_avatar(&self, avatar_data: &str) -> Result<String, AppError> {
+        let bucket_name =
+            std::env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAMEが設定されていません");
+        let file_name = format!("avatars/{}.jpg", Uuid::new_v4());
+
+        // Base64デコード
+        let avatar_bytes = STANDARD
+            .decode(avatar_data)
+            .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
+
+        self.s3_client
+            .put_object()
+            .bucket(&bucket_name)
+            .key(&file_name)
+            .body(ByteStream::from(avatar_bytes))
+            .content_type("image/jpeg")
+            .send()
+            .await
+            .map_err(|e| {
+                AppError::InternalServerError(format!(
+                    "アバターのアップロードに失敗しました: {}",
+                    e
+                ))
+            })?;
+
+        let avatar_url = format!(
+            "{}/{}/{}",
+            std::env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINTが設定されていません"),
+            bucket_name,
+            file_name
+        );
+
+        Ok(avatar_url)
     }
 }

@@ -5,6 +5,7 @@ use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use actix_web::{get, put, web, HttpRequest, HttpResponse, Responder};
 use std::sync::Arc;
+use validator::Validate;
 
 #[utoipa::path(
     get,
@@ -54,8 +55,10 @@ pub async fn get_current_user(
 pub async fn update_me(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
-    user_update: web::Json<UserUpdate>,
+    update_me_dto: web::Json<UserUpdate>,
 ) -> Result<impl Responder, AppError> {
+    let mut update_me_dto = update_me_dto.into_inner();
+
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -63,7 +66,13 @@ pub async fn update_me(
         .ok_or_else(|| AppError::Unauthorized("認証ヘッダーが見つかりません".to_string()))?;
 
     let token = auth_header.trim_start_matches("Bearer ");
-    auth_usecase.update_user(token, &user_update).await?;
 
-    Ok(HttpResponse::NoContent().finish())
+    // バリデーションの実行
+    update_me_dto
+        .validate()
+        .map_err(|e| AppError::ValidationError(e))?;
+
+    let updated_user = auth_usecase.update_me(token, &mut update_me_dto).await?;
+    let user_response = UserResponse::from(updated_user);
+    Ok(HttpResponse::Ok().json(user_response))
 }

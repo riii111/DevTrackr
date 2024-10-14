@@ -6,6 +6,7 @@ use crate::usecases::auth::AuthUseCase;
 use crate::usecases::companies::CompanyUseCase;
 use crate::usecases::projects::ProjectUseCase;
 use crate::usecases::work_logs::WorkLogsUseCase;
+use aws_sdk_s3::Client as S3Client;
 use mongodb::Database;
 use std::env;
 use std::sync::Arc;
@@ -35,11 +36,14 @@ pub fn init_company_usecase(db: &Database) -> Arc<CompanyUseCase<MongoCompanyRep
 }
 
 // auth
-pub fn init_auth_usecase(db: &Database) -> Arc<AuthUseCase<MongoAuthRepository>> {
+pub fn init_auth_usecase(
+    db: &Database,
+    s3_client: Arc<S3Client>,
+) -> Arc<AuthUseCase<MongoAuthRepository>> {
     let auth_repository = Arc::new(MongoAuthRepository::new(db));
 
     let jwt_secret = env::var("JWT_SECRET")
         .expect("JWT_SECRETが設定されていません")
         .into_bytes();
-    Arc::new(AuthUseCase::new(auth_repository, &jwt_secret))
+    Arc::new(AuthUseCase::new(auth_repository, &jwt_secret, s3_client))
 }

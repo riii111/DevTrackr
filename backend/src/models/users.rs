@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
-#[derive(Serialize, Deserialize, Debug, Default, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Default, ToSchema, Clone)]
 pub enum EngineerRole {
     #[default]
     None,
@@ -34,15 +34,15 @@ pub struct UserCreate {
 pub struct UserUpdate {
     #[validate(email(message = "有効なメールアドレスを入力してください"))]
     #[schema(example = "user_updated@example.com")]
-    pub email: Option<String>,
+    pub email: String,
 
     #[validate(length(min = 8, message = "パスワードは8文字以上である必要があります"))]
     #[schema(example = "newpassword123")]
-    pub password: Option<String>,
+    pub password: String,
 
     #[validate(length(min = 1, message = "名前は1文字以上である必要があります"))]
     #[schema(example = "John Doe Updated")]
-    pub username: Option<String>,
+    pub username: String,
 
     #[schema(example = "Frontend")]
     pub role: Option<EngineerRole>,

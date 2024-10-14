@@ -123,7 +123,7 @@ async fn main() -> Result<()> {
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
-    let auth_usecase = di::init_auth_usecase(&db);
+    let auth_usecase = di::init_auth_usecase(&db, s3_client.clone());
     let auth_usecase_clone = auth_usecase.clone();
 
     // JWT認証のミドルウェアを設定
