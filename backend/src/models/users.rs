@@ -47,8 +47,11 @@ pub struct UserUpdate {
     #[schema(example = "Frontend")]
     pub role: Option<EngineerRole>,
 
-    #[validate(url(message = "有効なURLを入力してください"))]
-    #[schema(example = "https://example.com/avatar.jpg")]
+    #[schema(example = "/Users/AAAAA/Downloads/IMG_7313.jpg")]
+    pub avatar_path: Option<String>,
+
+    // avatar_path指定時に生成されるURL
+    #[schema(example = "https://example.com/IMG_7313.jpg")]
     pub avatar_url: Option<String>,
 }
 

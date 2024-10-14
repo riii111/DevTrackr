@@ -72,8 +72,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
         user_update: &mut UserUpdate,
     ) -> Result<UserInDB, AppError> {
         // 画像のアップロード処理
-        if let Some(avatar_url) = &user_update.avatar_url {
-            let new_avatar_url = self.s3_service.upload_avatar(avatar_url).await?;
+        if let Some(avatar_path) = &user_update.avatar_path {
+            let new_avatar_url = self.s3_service.upload_avatar(avatar_path).await?;
             user_update.avatar_url = Some(new_avatar_url);
         }
 
