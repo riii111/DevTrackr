@@ -23,6 +23,7 @@ mod errors;
 mod middleware;
 mod models;
 mod repositories;
+mod services;
 mod usecases;
 mod utils;
 
@@ -106,6 +107,9 @@ async fn main() -> Result<()> {
         }
     };
 
+    // S3Serviceの初期化
+    let s3_service = Arc::new(services::s3_service::S3Service::new(s3_client.clone()));
+
     // データベースの初期化
     let db = db_index::init_db()
         .await
@@ -123,7 +127,7 @@ async fn main() -> Result<()> {
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
-    let auth_usecase = di::init_auth_usecase(&db, s3_client.clone());
+    let auth_usecase = di::init_auth_usecase(&db, s3_service.clone());
     let auth_usecase_clone = auth_usecase.clone();
 
     // JWT認証のミドルウェアを設定

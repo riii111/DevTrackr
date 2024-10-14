@@ -2,31 +2,27 @@ use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
 use crate::models::users::{UserCreate, UserInDB, UserUpdate};
 use crate::repositories::auth::AuthRepository;
+use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
-use aws_sdk_s3::primitives::ByteStream;
-use aws_sdk_s3::Client as S3Client;
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
 use bson::DateTime as BsonDateTime;
 use chrono::{Duration, Utc};
 use std::env;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct AuthUseCase<R: AuthRepository> {
     repository: Arc<R>,
     jwt_secret: Vec<u8>,
-    s3_client: Arc<S3Client>,
+    s3_service: Arc<S3Service>,
 }
 
 impl<R: AuthRepository> AuthUseCase<R> {
-    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_client: Arc<S3Client>) -> Self {
+    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_service: Arc<S3Service>) -> Self {
         Self {
             repository,
             jwt_secret: jwt_secret.to_vec(),
-            s3_client,
+            s3_service,
         }
     }
 
@@ -77,7 +73,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     ) -> Result<UserInDB, AppError> {
         // 画像のアップロード処理
         if let Some(avatar_url) = &user_update.avatar_url {
-            let new_avatar_url = self.upload_avatar(avatar_url).await?;
+            let new_avatar_url = self.s3_service.upload_avatar(avatar_url).await?;
             user_update.avatar_url = Some(new_avatar_url);
         }
 
@@ -265,40 +261,5 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// 認証ヘッダーからトークンを抽出
     fn extract_token(&self, auth_header: &str) -> String {
         auth_header.trim_start_matches("Bearer ").to_string()
-    }
-
-    async fn upload_avatar(&self, avatar_data: &str) -> Result<String, AppError> {
-        let bucket_name =
-            std::env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAMEが設定されていません");
-        let file_name = format!("avatars/{}.jpg", Uuid::new_v4());
-
-        // Base64デコード
-        let avatar_bytes = STANDARD
-            .decode(avatar_data)
-            .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
-
-        self.s3_client
-            .put_object()
-            .bucket(&bucket_name)
-            .key(&file_name)
-            .body(ByteStream::from(avatar_bytes))
-            .content_type("image/jpeg")
-            .send()
-            .await
-            .map_err(|e| {
-                AppError::InternalServerError(format!(
-                    "アバターのアップロードに失敗しました: {}",
-                    e
-                ))
-            })?;
-
-        let avatar_url = format!(
-            "{}/{}/{}",
-            std::env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINTが設定されていません"),
-            bucket_name,
-            file_name
-        );
-
-        Ok(avatar_url)
     }
 }
