@@ -3,7 +3,7 @@ use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database}
 
 use crate::models::auth::AuthTokenInDB;
 use crate::models::projects::ProjectInDB;
-use crate::models::user::UserInDB;
+use crate::models::users::UserInDB;
 use crate::models::work_logs::WorkLogsInDB;
 
 pub async fn init_db() -> Result<Database> {

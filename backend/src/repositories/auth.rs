@@ -1,7 +1,7 @@
 use crate::constants::mongo_error_codes::mongodb_error_codes;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::user::UserInDB;
+use crate::models::users::UserInDB;
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, Collection, Database};
