@@ -23,6 +23,10 @@ pub trait AuthRepository {
         refresh_token: &str,
     ) -> Result<Option<AuthTokenInDB>, RepositoryError>;
     async fn update_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
+    async fn find_user_by_access_token(
+        &self,
+        access_token: &str,
+    ) -> Result<Option<UserInDB>, RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
@@ -59,6 +63,8 @@ impl AuthRepository for MongoAuthRepository {
             email: email.to_string(),
             password_hash: password_hash.to_string(),
             username: username.to_string(),
+            role: None,
+            avatar_url: None,
             created_at: BsonDateTime::now(),
             updated_at: None,
         };
@@ -137,5 +143,24 @@ impl AuthRepository for MongoAuthRepository {
             .map_err(RepositoryError::DatabaseError)?;
 
         Ok(())
+    }
+
+    async fn find_user_by_access_token(
+        &self,
+        access_token: &str,
+    ) -> Result<Option<UserInDB>, RepositoryError> {
+        let auth_token = self.find_auth_token(access_token).await?;
+
+        if let Some(token) = auth_token {
+            if token.expires_at > BsonDateTime::now() {
+                return self
+                    .users_collection
+                    .find_one(doc! { "_id": token.user_id }, None)
+                    .await
+                    .map_err(RepositoryError::DatabaseError);
+            }
+        }
+
+        Ok(None)
     }
 }
