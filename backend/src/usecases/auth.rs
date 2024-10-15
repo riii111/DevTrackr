@@ -86,9 +86,11 @@ impl<R: AuthRepository> AuthUseCase<R> {
         }
 
         // パスワードのハッシュ化
-        let password_hash = hash_password(&user_update.password)
-            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-        user_update_internal.password = Some(password_hash);
+        if let Some(password) = &user_update.password {
+            let password_hash = hash_password(password)
+                .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+            user_update_internal.password = Some(password_hash);
+        }
 
         // ユーザー情報を更新
         let updated = self

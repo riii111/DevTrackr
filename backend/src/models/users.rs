@@ -30,6 +30,7 @@ pub struct UserCreate {
     pub username: String,
 }
 
+// 画像など部分更新をサポートするためにOptionを使用する
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
 pub struct UserUpdate {
     #[validate(email(message = "有効なメールアドレスを入力してください"))]
@@ -38,7 +39,7 @@ pub struct UserUpdate {
 
     #[validate(length(min = 8, message = "パスワードは8文字以上である必要があります"))]
     #[schema(example = "newpassword123")]
-    pub password: String,
+    pub password: Option<String>,
 
     #[validate(length(min = 1, message = "名前は1文字以上である必要があります"))]
     #[schema(example = "John Doe Updated")]
