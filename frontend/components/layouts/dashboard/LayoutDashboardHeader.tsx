@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-// import UserMenu from '@/components/molecules/core/UserMenu';
+// import UserMenu from '@/components/organisms/users/UserMenu';
 // import { useUserApi } from '@/lib/hooks/useUserApi';
 const DynamicPageTitle = dynamic(() => import('@/components/molecules/PageTitle'), {
     ssr: false,
