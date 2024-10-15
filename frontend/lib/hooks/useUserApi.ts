@@ -5,14 +5,14 @@ const ENDPOINT = "/users";
 
 export function useUserApi() {
   return {
-    getCurrentUserDetails,
+    getMeDetails,
     updateUser,
   };
 
   /**
    * ログイン中のユーザーの詳細を取得する関数
    */
-  async function getCurrentUserDetails(): Promise<UserResponse> {
+  async function getMeDetails(): Promise<UserResponse> {
     const response = await customFetch<"GET", undefined, UserResponse>(
       `${ENDPOINT}/me`,
       {

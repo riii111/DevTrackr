@@ -2,7 +2,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  icon: string;
+  avatar: string;
   role: UserRole;
 }
 
@@ -19,7 +19,7 @@ export enum UserRole {
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
-  icon?: string;
+  avatar?: string;
   role?: UserRole;
 }
 
