@@ -149,7 +149,6 @@ impl AuthRepository for MongoAuthRepository {
 
         Ok(())
     }
-
     async fn find_user_by_access_token(
         &self,
         access_token: &str,
@@ -163,6 +162,8 @@ impl AuthRepository for MongoAuthRepository {
                     .find_one(doc! { "_id": token.user_id }, None)
                     .await
                     .map_err(RepositoryError::DatabaseError);
+            } else {
+                return Err(RepositoryError::ExpiredAccessToken);
             }
         }
 
@@ -183,9 +184,7 @@ impl AuthRepository for MongoAuthRepository {
 
         // トークンの有効期限をチェック
         if auth_token.expires_at <= BsonDateTime::now() {
-            return Err(RepositoryError::DatabaseError(MongoError::custom(
-                "アクセストークンの有効期限が切れています".to_string(),
-            )));
+            return Err(RepositoryError::ExpiredAccessToken);
         }
 
         let mut update_doc = bson::to_document(user)
