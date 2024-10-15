@@ -1,6 +1,6 @@
 use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::users::{UserCreate, UserInDB, UserUpdate};
+use crate::models::users::{UserCreate, UserInDB, UserUpdate, UserUpdateInternal};
 use crate::repositories::auth::AuthRepository;
 use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
@@ -69,23 +69,31 @@ impl<R: AuthRepository> AuthUseCase<R> {
     pub async fn update_me(
         &self,
         access_token: &str,
-        user_update: &mut UserUpdate,
+        user_update: &UserUpdate,
     ) -> Result<UserInDB, AppError> {
+        // MongoDBでは、PUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
+        let mut user_update_internal = UserUpdateInternal {
+            email: user_update.email.clone(),
+            password: None,
+            username: user_update.username.clone(),
+            role: user_update.role.clone(),
+            avatar_url: None,
+        };
         // 画像のアップロード処理
         if let Some(avatar_path) = &user_update.avatar_path {
             let new_avatar_url = self.s3_service.upload_avatar(avatar_path).await?;
-            user_update.avatar_url = Some(new_avatar_url);
+            user_update_internal.avatar_url = Some(new_avatar_url);
         }
 
         // パスワードのハッシュ化
         let password_hash = hash_password(&user_update.password)
             .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-        user_update.password = password_hash;
+        user_update_internal.password = Some(password_hash);
 
         // ユーザー情報を更新
         let updated = self
             .repository
-            .update_user_by_access_token(access_token, user_update)
+            .update_user_by_access_token(access_token, &user_update_internal)
             .await?;
 
         if updated {

@@ -1,7 +1,7 @@
 use crate::constants::mongo_error_codes::mongodb_error_codes;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::users::{UserInDB, UserUpdate};
+use crate::models::users::{UserInDB, UserUpdateInternal};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, Collection, Database};
@@ -30,7 +30,7 @@ pub trait AuthRepository {
     async fn update_user_by_access_token(
         &self,
         access_token: &str,
-        user: &UserUpdate,
+        user: &UserUpdateInternal,
     ) -> Result<bool, RepositoryError>;
 }
 
@@ -172,7 +172,7 @@ impl AuthRepository for MongoAuthRepository {
     async fn update_user_by_access_token(
         &self,
         access_token: &str,
-        user: &UserUpdate,
+        user: &UserUpdateInternal,
     ) -> Result<bool, RepositoryError> {
         // アクセストークンからAuthTokenを取得
         let auth_token = self.find_auth_token(access_token).await?.ok_or_else(|| {

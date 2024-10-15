@@ -49,9 +49,19 @@ pub struct UserUpdate {
 
     #[schema(example = "/Users/AAAAA/Downloads/IMG_7313.jpg")]
     pub avatar_path: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserUpdateInternal {
+    pub email: String,
+
+    pub password: Option<String>,
+
+    pub username: String,
+
+    pub role: Option<EngineerRole>,
 
     // avatar_path指定時に生成されるURL
-    #[schema(example = "https://example.com/IMG_7313.jpg")]
     pub avatar_url: Option<String>,
 }
 
