@@ -1,6 +1,7 @@
 use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::errors::app_error::AppError;
-use crate::models::auth::{AuthTokenCreate, AuthTokenLogin};
+use crate::models::auth::AuthTokenLogin;
+use crate::models::users::UserCreate;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
 use crate::utils::cookie_util::{set_access_token_cookie, set_refresh_token_cookie};
@@ -60,7 +61,7 @@ async fn login(
 #[utoipa::path(
     post,
     path = "/api/auth/register/",
-    request_body = AuthTokenCreate,
+    request_body = UserCreate,
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthTokenCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
@@ -71,20 +72,14 @@ async fn login(
 #[post("/register/")]
 async fn register(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
-    register_dto: web::Json<AuthTokenCreate>,
+    register_dto: web::Json<UserCreate>,
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
     register_dto
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let _ = auth_usecase
-        .register(
-            &register_dto.email,
-            &register_dto.password,
-            &register_dto.username,
-        )
-        .await?;
+    let _ = auth_usecase.register(&register_dto).await?;
 
     let response = HttpResponse::Created().json(AuthTokenCreatedResponse {
         message: "ユーザー登録に成功しました".to_string(),

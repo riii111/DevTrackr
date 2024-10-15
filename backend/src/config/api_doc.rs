@@ -1,16 +1,18 @@
-use crate::api::endpoints::{auth, companies, projects, work_logs};
+use crate::api::endpoints::{auth, companies, projects, users, work_logs};
 use crate::dto::responses::auth::{AuthResponse, AuthTokenCreatedResponse};
 use crate::dto::responses::companies::{
     CompaniesWithProjects, CompaniesWithProjectsResponse, CompanyCreatedResponse, CompanyResponse,
 };
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
+use crate::dto::responses::users::UserResponse;
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
 use crate::errors::app_error::{AppError, ErrorResponse};
-use crate::models::auth::{AuthTokenCreate, AuthTokenInDB, AuthTokenLogin};
+use crate::models::auth::{AuthTokenInDB, AuthTokenLogin};
 use crate::models::companies::{
     AnnualSales, Bonus, CompanyCommon, CompanyCreate, CompanyStatus, CompanyUpdate, ContractType,
 };
 use crate::models::projects::{ProjectCreate, ProjectStatus, ProjectUpdate};
+use crate::models::users::{EngineerRole, UserCreate, UserUpdate};
 use crate::models::work_logs::{WorkLogsCreate, WorkLogsUpdate};
 use utoipa::OpenApi;
 
@@ -34,6 +36,8 @@ use utoipa::OpenApi;
         auth::logout,
         auth::refresh,
         auth::register,
+        users::get_current_user,
+        users::update_me,
     ),
     components(
         schemas(
@@ -61,9 +65,12 @@ use utoipa::OpenApi;
             CompanyCommon,
             AuthTokenLogin,
             AuthTokenInDB,
-            AuthTokenCreate,
             AuthResponse,
             AuthTokenCreatedResponse,
+            UserResponse,
+            UserCreate,
+            UserUpdate,
+            EngineerRole,
         )
     ),
     tags(
@@ -71,6 +78,7 @@ use utoipa::OpenApi;
         (name = "work_logs", description = "勤怠関連のエンドポイント"),
         (name = "companies", description = "企業関連のエンドポイント"),
         (name = "auth", description = "認証関連のエンドポイント"),
+        (name = "users", description = "ユーザー関連のエンドポイント"),
     ),
     modifiers(&SecurityAddon)
 )]

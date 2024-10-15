@@ -4,21 +4,6 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
-pub struct AuthTokenCreate {
-    #[validate(email(message = "有効なメールアドレスを入力してください"))]
-    #[schema(example = "user@example.com")]
-    pub email: String,
-
-    #[validate(length(min = 8, message = "パスワードは8文字以上である必要があります"))]
-    #[schema(example = "password123")]
-    pub password: String,
-
-    #[validate(length(min = 1, message = "名前は1文字以上である必要があります"))]
-    #[schema(example = "John Doe")]
-    pub username: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
 pub struct AuthTokenLogin {
     #[validate(email(message = "有効なメールアドレスを入力してください"))]
     #[schema(example = "user@example.com")]

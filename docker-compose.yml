@@ -1,30 +1,4 @@
 services:
-  # TODO: shadcnのissueが片付いたらコンテナ化する.
-  #   frontend:
-  #     build:
-  #       context: ./frontend
-  #       dockerfile: Dockerfile
-  #     ports:
-  #       - "${FRONTEND_PORT:-3003}:3003"
-  #     volumes:
-  #       - ./frontend:/app
-  #       - /app/node_modules
-  #       - /app/.next
-  #     env_file:
-  #       - .env
-  #     command: yarn dev
-  #     networks:
-  #       - devtrackr-network
-  #     healthcheck:
-  #       test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
-  #       interval: 30s
-  #       timeout: 10s
-  #       retries: 3
-  #     labels:
-  #       - "traefik.enable=true"
-  #       - "traefik.http.routers.frontend.entrypoints=web"
-  #       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
-
   api:
     build:
       context: ./backend
@@ -42,6 +16,7 @@ services:
     depends_on:
       - mongo
       - redis
+      - minio
     deploy:
       replicas: 1
     labels:
@@ -66,8 +41,6 @@ services:
       - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE:-devtrackr}
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    # env_file:
-    #   - .env
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -141,6 +114,19 @@ services:
     networks:
       - mynet
 
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_storage:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+    command: server --console-address ":9001" /data
+
 networks:
   mynet:
     driver: "bridge" # デフォルトのネットワークドライバ
@@ -150,3 +136,4 @@ networks:
 volumes:
   mongodb_data:
   traefik-logs:
+  minio_storage: {}

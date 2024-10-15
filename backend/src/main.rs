@@ -23,6 +23,7 @@ mod errors;
 mod middleware;
 mod models;
 mod repositories;
+mod services;
 mod usecases;
 mod utils;
 
@@ -94,6 +95,21 @@ async fn main() -> Result<()> {
         );
     }
 
+    // S3 (MinIO) クライアントの初期化
+    let s3_client = match config::s3::init_s3_client().await {
+        Ok(client) => {
+            log::info!("Successfully initialized S3 (MinIO) client");
+            client
+        }
+        Err(e) => {
+            log::error!("S3 (MinIO) クライアントの初期化に失敗しました: {}", e);
+            panic!("S3 (MinIO) クライアントの初期化に失敗しました");
+        }
+    };
+
+    // S3Serviceの初期化
+    let s3_service = Arc::new(services::s3_service::S3Service::new(s3_client.clone()));
+
     // データベースの初期化
     let db = db_index::init_db()
         .await
@@ -111,7 +127,7 @@ async fn main() -> Result<()> {
 
     let project_usecase_clone = project_usecase.clone();
     let work_logs_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
-    let auth_usecase = di::init_auth_usecase(&db);
+    let auth_usecase = di::init_auth_usecase(&db, s3_service.clone());
     let auth_usecase_clone = auth_usecase.clone();
 
     // JWT認証のミドルウェアを設定
@@ -140,6 +156,7 @@ async fn main() -> Result<()> {
                     )
                     .build(),
             )
+            .app_data(web::Data::new(s3_client.clone()))
             .service(SwaggerUi::new("/docs/{_:.*}").url("/docs/openapi.json", ApiDoc::openapi()))
             .service(
                 web::scope("/api")
@@ -159,6 +176,7 @@ async fn main() -> Result<()> {
                         // 認証ミドルウェアを適用
                         web::scope("")
                             .wrap(jwt_auth_check.clone())
+                            .service(api::routes::users_scope())
                             .service(api::routes::projects_scope())
                             .service(api::routes::work_logs_scope())
                             .service(api::routes::companies_scope()),

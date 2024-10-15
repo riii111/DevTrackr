@@ -1,7 +1,7 @@
 use crate::constants::mongo_error_codes::mongodb_error_codes;
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
-use crate::models::user::UserInDB;
+use crate::models::users::{UserInDB, UserUpdateInternal};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use mongodb::{error::Error as MongoError, Collection, Database};
@@ -23,6 +23,15 @@ pub trait AuthRepository {
         refresh_token: &str,
     ) -> Result<Option<AuthTokenInDB>, RepositoryError>;
     async fn update_auth_token(&self, auth_token: &AuthTokenInDB) -> Result<(), RepositoryError>;
+    async fn find_user_by_access_token(
+        &self,
+        access_token: &str,
+    ) -> Result<Option<UserInDB>, RepositoryError>;
+    async fn update_user_by_access_token(
+        &self,
+        access_token: &str,
+        user: &UserUpdateInternal,
+    ) -> Result<bool, RepositoryError>;
 }
 
 pub struct MongoAuthRepository {
@@ -59,6 +68,8 @@ impl AuthRepository for MongoAuthRepository {
             email: email.to_string(),
             password_hash: password_hash.to_string(),
             username: username.to_string(),
+            role: None,
+            avatar_url: None,
             created_at: BsonDateTime::now(),
             updated_at: None,
         };
@@ -137,5 +148,70 @@ impl AuthRepository for MongoAuthRepository {
             .map_err(RepositoryError::DatabaseError)?;
 
         Ok(())
+    }
+    async fn find_user_by_access_token(
+        &self,
+        access_token: &str,
+    ) -> Result<Option<UserInDB>, RepositoryError> {
+        let auth_token = self.find_auth_token(access_token).await?;
+
+        if let Some(token) = auth_token {
+            if token.expires_at > BsonDateTime::now() {
+                return self
+                    .users_collection
+                    .find_one(doc! { "_id": token.user_id }, None)
+                    .await
+                    .map_err(RepositoryError::DatabaseError);
+            } else {
+                return Err(RepositoryError::ExpiredAccessToken);
+            }
+        }
+
+        Ok(None)
+    }
+
+    async fn update_user_by_access_token(
+        &self,
+        access_token: &str,
+        user: &UserUpdateInternal,
+    ) -> Result<bool, RepositoryError> {
+        // アクセストークンからAuthTokenを取得
+        let auth_token = self.find_auth_token(access_token).await?.ok_or_else(|| {
+            RepositoryError::DatabaseError(MongoError::custom(
+                "アクセストークンが見つかりません".to_string(),
+            ))
+        })?;
+
+        // トークンの有効期限をチェック
+        if auth_token.expires_at <= BsonDateTime::now() {
+            return Err(RepositoryError::ExpiredAccessToken);
+        }
+
+        let mut update_doc = bson::to_document(user)
+            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
+        update_doc.insert("updated_at", BsonDateTime::now());
+        let update = doc! {
+            "$set": update_doc
+        };
+
+        match self
+            .users_collection
+            .update_one(doc! { "_id": auth_token.user_id }, update, None)
+            .await
+        {
+            Ok(result) => Ok(result.modified_count > 0),
+            Err(e) => {
+                if let mongodb::error::ErrorKind::Write(write_failure) = e.kind.as_ref() {
+                    if let mongodb::error::WriteFailure::WriteError(write_error) = write_failure {
+                        if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
+                            return Err(RepositoryError::DuplicateError(
+                                "メールアドレスが既に使用されています".to_string(),
+                            ));
+                        }
+                    }
+                }
+                Err(RepositoryError::DatabaseError(e))
+            }
+        }
     }
 }

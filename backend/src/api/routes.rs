@@ -1,6 +1,6 @@
 use actix_web::{web, Scope};
 
-use crate::api::endpoints::{companies, projects, work_logs};
+use crate::api::endpoints::{companies, projects, users, work_logs};
 
 pub fn projects_scope() -> Scope {
     web::scope("/projects")
@@ -25,4 +25,10 @@ pub fn companies_scope() -> Scope {
         .service(companies::get_company_by_id)
         .service(companies::create_company)
         .service(companies::update_company_by_id)
+}
+
+pub fn users_scope() -> Scope {
+    web::scope("/users")
+        .service(users::get_current_user)
+        .service(users::update_me)
 }

@@ -1,6 +1,8 @@
 use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
+use crate::models::users::{UserCreate, UserInDB, UserUpdate, UserUpdateInternal};
 use crate::repositories::auth::AuthRepository;
+use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
@@ -12,13 +14,15 @@ use std::sync::Arc;
 pub struct AuthUseCase<R: AuthRepository> {
     repository: Arc<R>,
     jwt_secret: Vec<u8>,
+    s3_service: Arc<S3Service>,
 }
 
 impl<R: AuthRepository> AuthUseCase<R> {
-    pub fn new(repository: Arc<R>, jwt_secret: &[u8]) -> Self {
+    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_service: Arc<S3Service>) -> Self {
         Self {
             repository,
             jwt_secret: jwt_secret.to_vec(),
+            s3_service,
         }
     }
 
@@ -48,22 +52,70 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// - パスワードをハッシュ化
     /// - ユーザーを作成
     /// - 認証トークンを生成して保存
-    pub async fn register(
-        &self,
-        email: &str,
-        password: &str,
-        username: &str,
-    ) -> Result<AuthTokenInDB, AppError> {
-        let password_hash =
-            hash_password(password).map_err(|e| AppError::InternalServerError(e.to_string()))?;
+    pub async fn register(&self, user_create: &UserCreate) -> Result<AuthTokenInDB, AppError> {
+        let password_hash = hash_password(&user_create.password)
+            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
         let user_id = self
             .repository
-            .create_user(email, &password_hash, username)
+            .create_user(&user_create.email, &password_hash, &user_create.username)
             .await?;
 
         let auth_token = self.create_auth_token(&user_id.to_string())?;
         self.repository.save_auth_token(&auth_token).await?;
         Ok(auth_token)
+    }
+
+    /// ログイン中のユーザー更新処理
+    pub async fn update_me(
+        &self,
+        access_token: &str,
+        user_update: &UserUpdate,
+    ) -> Result<UserInDB, AppError> {
+        // MongoDBでは、PUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
+        let mut user_update_internal = UserUpdateInternal {
+            email: user_update.email.clone(),
+            password: None,
+            username: user_update.username.clone(),
+            role: user_update.role.clone(),
+            avatar_url: None,
+        };
+        // 画像のアップロード処理
+        if let Some(avatar_path) = &user_update.avatar_path {
+            let new_avatar_url = self.s3_service.upload_avatar(avatar_path).await?;
+            user_update_internal.avatar_url = Some(new_avatar_url);
+        }
+
+        // パスワードのハッシュ化
+        if let Some(password) = &user_update.password {
+            let password_hash = hash_password(password)
+                .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+            user_update_internal.password = Some(password_hash);
+        }
+
+        // ユーザー情報を更新
+        let updated = self
+            .repository
+            .update_user_by_access_token(access_token, &user_update_internal)
+            .await?;
+
+        if updated {
+            // 更新されたユーザー情報を取得
+            self.get_current_user(access_token).await
+        } else {
+            Err(AppError::NotFound("ユーザーが見つかりません".to_string()))
+        }
+    }
+
+    /// ログイン中のユーザー情報を取得
+    pub async fn get_current_user(&self, access_token: &str) -> Result<UserInDB, AppError> {
+        // アクセストークンからユーザー情報を直接取得
+        let user = self
+            .repository
+            .find_user_by_access_token(access_token)
+            .await?
+            .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
+
+        Ok(user)
     }
 
     /// ユーザーログアウト処理
