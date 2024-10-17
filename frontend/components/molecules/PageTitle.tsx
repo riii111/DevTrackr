@@ -11,7 +11,7 @@ const getPageTitle = (pathname: string) => {
     "projects": "開発プロジェクト一覧",
     "calendar": "カレンダー",
     "skill-analysis": "スキル分析",
-    "revenue": "収益・時給管理",
+    // "revenue": "収益・時給管理",
     "retrospective": "振り返り",
   };
 
@@ -25,7 +25,7 @@ const getPageTitle = (pathname: string) => {
   };
 
   if (firstSegment === "dashboard") {
-    return dashboardTitleMap[lastSegment] || "ダッシュボード";
+    return dashboardTitleMap[lastSegment] || "にゃほにゃほ";
   } else if (firstSegment === "configure") {
     return configureTitleMap[lastSegment] || "設定";
   }

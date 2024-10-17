@@ -2,7 +2,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { FaTasks } from "react-icons/fa";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { BiAnalyse } from "react-icons/bi";
-import { FaMoneyBillTrendUp } from "react-icons/fa6";
+// import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { MdRateReview } from "react-icons/md";
 import { MdDashboardCustomize } from "react-icons/md";
 
@@ -31,11 +31,11 @@ const LayoutDashboardNavigation = () => {
             path: "/dashboard/skill-analysis",
             icon: <BiAnalyse />,
         },
-        {
-            name: "収益・時給管理",
-            path: "/dashboard/revenue",
-            icon: <FaMoneyBillTrendUp />,
-        },
+        // {
+        //     name: "収益・時給管理",
+        //     path: "/dashboard/revenue",
+        //     icon: <FaMoneyBillTrendUp />,
+        // },
         {
             name: "振り返り",
             path: "/dashboard/retrospective",
