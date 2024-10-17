@@ -21,6 +21,7 @@ type FetchBody<T, M extends HttpMethod> = M extends
 interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
   headers?: Record<string, any>;
   method: M;
+  credentials?: RequestCredentials;
   params?: FetchParams<T, M>;
   body?: FetchBody<T, M>;
   cache?: RequestCache;
@@ -42,6 +43,7 @@ export async function customFetch<
   endpoint: string,
   {
     headers: optionHeaders,
+    credentials,
     method,
     body,
     params,
@@ -86,6 +88,7 @@ export async function customFetch<
     headers,
     cache,
     mode: "cors",
+    credentials,
   };
 
   if (body) {
