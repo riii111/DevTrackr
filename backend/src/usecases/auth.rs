@@ -70,7 +70,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
         &self,
         access_token: &str,
         user_update: &UserUpdate,
-    ) -> Result<UserInDB, AppError> {
+    ) -> Result<bool, AppError> {
         // MongoDBでは、PUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
         let mut user_update_internal = UserUpdateInternal {
             email: user_update.email.clone(),
@@ -93,17 +93,10 @@ impl<R: AuthRepository> AuthUseCase<R> {
         }
 
         // ユーザー情報を更新
-        let updated = self
+        Ok(self
             .repository
             .update_user_by_access_token(access_token, &user_update_internal)
-            .await?;
-
-        if updated {
-            // 更新されたユーザー情報を取得
-            self.get_current_user(access_token).await
-        } else {
-            Err(AppError::NotFound("ユーザーが見つかりません".to_string()))
-        }
+            .await?)
     }
 
     /// ログイン中のユーザー情報を取得

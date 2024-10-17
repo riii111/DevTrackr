@@ -41,9 +41,8 @@ pub async fn get_current_user(
     path = "/api/users/me/",
     request_body = UserUpdate,
     responses(
-        (status = 200, description = "ユーザー情報の更新に成功", body = UserResponse),
+        (status = 204, description = "ユーザー情報の更新に成功"),
         (status = 400, description = "無効なリクエストデータ"),
-        (status = 401, description = "認証エラー"),
         (status = 404, description = "ユーザーが見つかりません"),
         (status = 500, description = "内部サーバーエラー")
     ),
@@ -72,7 +71,6 @@ pub async fn update_me(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let updated_user = auth_usecase.update_me(token, &mut update_me_dto).await?;
-    let user_response = UserResponse::from(updated_user);
-    Ok(HttpResponse::Ok().json(user_response))
+    auth_usecase.update_me(token, &mut update_me_dto).await?;
+    Ok(HttpResponse::NoContent().finish())
 }
