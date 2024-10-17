@@ -1,6 +1,6 @@
 use crate::config::api_doc::ApiDoc;
 use crate::config::di;
-// use crate::utils::test_s3_upload;
+use crate::utils::test_s3_upload;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
@@ -109,11 +109,16 @@ async fn main() -> Result<()> {
     };
 
     // テストアップロードの実行
-    // match test_s3_upload::test_upload(&s3_client).await {
-    //     Ok(_) => log::info!("テストアップロードが成功しました"),
-    //     Err(e) => log::error!("テストアップロードに失敗しました: {:?}", e),
-    // }
+    let run_test_upload = env::var("RUN_TEST_UPLOAD").unwrap_or_default() == "true";
 
+    if run_test_upload {
+        match test_s3_upload::test_upload(&s3_client).await {
+            Ok(_) => log::info!("テストアップロードが成功しました"),
+            Err(e) => log::error!("テストアップロードに失敗しました: {:?}", e),
+        }
+    } else {
+        log::info!("テスト用のアップロードはOFFになっています");
+    }
     // S3Serviceの初期化
     let s3_service = Arc::new(services::s3_service::S3Service::new(s3_client.clone()));
 

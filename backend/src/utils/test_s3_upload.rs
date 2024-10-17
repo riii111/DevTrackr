@@ -4,7 +4,6 @@ use std::env;
 
 use crate::errors::app_error::AppError;
 
-#[allow(dead_code)]
 pub async fn test_upload(client: &Client) -> Result<(), AppError> {
     let bucket_name = env::var("MINIO_BUCKET_NAME").expect("MINIO_BUCKET_NAMEが設定されていません");
     log::debug!("Using bucket name: {}", bucket_name);
