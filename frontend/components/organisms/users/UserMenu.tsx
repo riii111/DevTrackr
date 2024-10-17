@@ -53,13 +53,8 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-                {/* <DropdownMenuItem onSelect={() => router.push('/profile')}> */}
-                <DropdownMenuItem>
-                    プロフィール
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem onSelect={() => router.push('/settings')}> */}
-                <DropdownMenuItem>
-                    設定
+                <DropdownMenuItem onSelect={() => router.push('/dashboard/profile')}>
+                    プロフィール設定
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleLogout}>
                     ログアウト
