@@ -100,11 +100,18 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                     return acc;
                 }, {} as Partial<Record<keyof ProfileFormData, string>>);
                 setErrors(newErrors);
-            } else {
+            } else if (error instanceof ApiError) {
                 console.error('Profile update error:', error);
                 toast({
                     title: 'プロフィールの更新に失敗しました',
                     description: error.message,
+                    variant: 'error',
+                });
+            } else {
+                console.error('Unexpected error:', error);
+                toast({
+                    title: 'プロフィールの更新に失敗しました',
+                    description: '予期せぬエラーが発生しました。もう一度お試しください。',
                     variant: 'error',
                 });
             }

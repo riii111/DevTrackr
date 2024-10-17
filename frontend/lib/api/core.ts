@@ -27,7 +27,7 @@ interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
 }
 
 // APIエラーを表すカスタムエラークラス
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
   }
@@ -110,12 +110,7 @@ export async function customFetch<
       }
     } else {
       let errorMessage = "エラーが発生しました";
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch (e) {
-        // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
-      }
+      errorMessage = getErrorMessage(response.status);
       throw new ApiError(response.status, errorMessage);
     }
 
@@ -132,7 +127,7 @@ export async function customFetch<
       if (typeof window !== "undefined") {
         // クライアントサイドの場合のみtoastを使用
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "エラー",
           description: error.message,
         });
@@ -144,7 +139,7 @@ export async function customFetch<
       if (typeof window !== "undefined") {
         // クライアントサイドの場合のみtoastを使用
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "エラー",
           description: "予期せぬエラーが発生しました。",
         });
@@ -154,5 +149,27 @@ export async function customFetch<
       }
     }
     throw error;
+  }
+}
+
+// エラーメッセージを取得する関数
+function getErrorMessage(status: number): string {
+  switch (status) {
+    case 400:
+      return "リクエストに問題があります。入力内容を確認してください。";
+    case 401:
+      return "認証に失敗しました。再度ログインしてください。";
+    case 403:
+      return "アクセス権限がありません。";
+    case 404:
+      return "リソースが見つかりません。";
+    case 413:
+      return "アップロードされたファイルが大きすぎます。より小さいファイルを選択してください。";
+    case 422:
+      return "入力内容に誤りがあります。確認して再度お試しください。";
+    case 500:
+      return "サーバーエラーが発生しました。しばらく経ってから再度お試しください。";
+    default:
+      return "予期せぬエラーが発生しました。";
   }
 }
