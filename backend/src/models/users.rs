@@ -7,12 +7,13 @@ use validator::Validate;
 pub enum EngineerRole {
     #[default]
     None,
-    Frontend,
-    Backend,
-    Fullstack,
+    FrontEnd,
+    BackEnd,
+    FullStack,
     DevOps,
     Security,
     ProductManager,
+    ProjectManager,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
