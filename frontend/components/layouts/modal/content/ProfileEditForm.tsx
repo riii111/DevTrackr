@@ -12,7 +12,7 @@ import FormField from '@/components/molecules/FormField';
 export const profileSchema = z.object({
     username: z.string().min(1, '名前を入力してください'),
     email: z.string().email('有効なメールアドレスを入力してください'),
-    role: z.nativeEnum(UserRole),
+    role: z.nativeEnum(UserRole).nullable().optional(),
     avatar: z.string().optional(),
 });
 
@@ -93,7 +93,7 @@ export default function ProfileEditForm({
 
             <div className="space-y-2">
                 <Label htmlFor="role">ロール</Label>
-                <Select value={user.role} onValueChange={onRoleChange}>
+                <Select value={user.role || undefined} onValueChange={onRoleChange}>
                     <SelectTrigger>
                         <SelectValue placeholder="ロールを選択" />
                     </SelectTrigger>
