@@ -99,56 +99,58 @@ export async function customFetch<
   }
 
   try {
-    let response = await fetch(url, fetchOptions);
+    const response = await fetch(url, fetchOptions);
 
     // TODO: 401エラーの場合、アクセストークンを更新して再リクエスト
-    // 200系のステータスコードは全て成功とみなす
-    if (response.ok) {
-      if (response.status === 204) {
-        // 204の場合は空のオブジェクトを返す
-        return {} as RequestResult;
-      }
-    } else {
-      let errorMessage = "エラーが発生しました";
-      errorMessage = getErrorMessage(response.status);
+    if (!response.ok) {
+      const errorMessage = getErrorMessage(response.status);
       throw new ApiError(response.status, errorMessage);
+    }
+
+    // 204 No Content の場合は空のオブジェクトを返す
+    if (response.status === 204) {
+      return {} as RequestResult;
     }
 
     // レスポンスにコンテンツがある場合のみJSONとしてパースする
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
-      return response.json();
-    } else {
-      // コンテンツがない場合は空のオブジェクトを返す
-      return {};
+      return response.json() as Promise<RequestResult>;
     }
+
+    // コンテンツがない場合は空のオブジェクトを返す
+    return {} as RequestResult;
   } catch (error) {
-    if (error instanceof ApiError) {
-      if (typeof window !== "undefined") {
-        // クライアントサイドの場合のみtoastを使用
-        toast({
-          variant: "error",
-          title: "エラー",
-          description: error.message,
-        });
-      } else {
-        // サーバーサイドの場合はコンソールにエラーを出力
-        console.error("API Error:", error.message);
-      }
-    } else {
-      if (typeof window !== "undefined") {
-        // クライアントサイドの場合のみtoastを使用
-        toast({
-          variant: "error",
-          title: "エラー",
-          description: "予期せぬエラーが発生しました。",
-        });
-      } else {
-        // サーバーサイドの場合はコンソールにエラーを出力
-        console.error("Unexpected Error:", error);
-      }
-    }
+    handleFetchError(error);
     throw error;
+  }
+}
+
+function handleFetchError(error: unknown) {
+  if (error instanceof ApiError) {
+    if (typeof window !== "undefined") {
+      // クライアントサイドの場合はtoastを使用
+      toast({
+        variant: "error",
+        title: "エラー",
+        description: error.message,
+      });
+    } else {
+      // サーバーサイドの場合はコンソールにエラーを出力
+      console.error("API Error:", error.message);
+    }
+  } else {
+    if (typeof window !== "undefined") {
+      // クライアントサイドの場合はtoastを使用
+      toast({
+        variant: "error",
+        title: "エラー",
+        description: "予期せぬエラーが発生しました。",
+      });
+    } else {
+      // サーバーサイドの場合はコンソールにエラーを出力
+      console.error("Unexpected Error:", error);
+    }
   }
 }
 
