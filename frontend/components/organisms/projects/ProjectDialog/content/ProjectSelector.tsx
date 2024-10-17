@@ -4,11 +4,11 @@ import { tv } from 'tailwind-variants'
 import { Project } from "@/types/project";
 
 const categoryButton = tv({
-    base: 'px-4 py-1 text-sm rounded-full border',
+    base: 'px-4 py-1 text-sm rounded-full border text-white/80 bg-text-primary/70',
     variants: {
         selected: {
-            true: 'text-white font-medium hover:bg-text-primary',
-            false: 'text-text-secondary hover:bg-text-primary/70 hover:text-white/80',
+            true: 'bg-text-primary text-white font-medium hover:bg-text-primary',
+            false: 'hover:bg-text-primary/90 hover:text-white/80',
         },
     },
 });
