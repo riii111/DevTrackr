@@ -11,6 +11,8 @@ import { useUserApi } from '@/lib/hooks/useUserApi';
 import { useToast } from "@/lib/hooks/use-toast";
 import { ApiError } from '@/lib/api/core';
 
+// TODO: svgファイルなどはバリデーションエラーとする！
+
 interface ProfileEditProps {
     initialUser: User;
 }
@@ -75,8 +77,10 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
             const updateData: UpdateUserRequest = {
                 username: validatedData.username,
                 email: validatedData.email,
-                role: validatedData.role,
             };
+            if (validatedData.role) {
+                updateData.role = validatedData.role;
+            }
             if (avatarFile) {
                 // ここでBase64エンコードした画像データを送信
                 const base64 = await fileToBase64(avatarFile);
@@ -129,7 +133,11 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result as string);
+            reader.onload = () => {
+                const result = reader.result as string;
+                // データURIスキーマを含めて送信
+                resolve(result);
+            };
             reader.onerror = error => reject(error);
         });
     };

@@ -6,6 +6,8 @@ use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use bson::DateTime as BsonDateTime;
 use chrono::{Duration, Utc};
 use std::env;
@@ -71,7 +73,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
         access_token: &str,
         user_update: &UserUpdate,
     ) -> Result<bool, AppError> {
-        // MongoDBでは、PUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
+        // MongoDBではPUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
         let mut user_update_internal = UserUpdateInternal {
             email: user_update.email.clone(),
             password: None,
@@ -79,9 +81,19 @@ impl<R: AuthRepository> AuthUseCase<R> {
             role: user_update.role.clone(),
             avatar_url: None,
         };
-        // 画像のアップロード処理
-        if let Some(avatar_path) = &user_update.avatar_path {
-            let new_avatar_url = self.s3_service.upload_avatar(avatar_path).await?;
+
+        if let Some(avatar_data) = &user_update.avatar {
+            // データURIスキーマを処理
+            let base64_data = avatar_data
+                .split_once(",")
+                .map(|(_, data)| data)
+                .ok_or_else(|| AppError::BadRequest("Invalid base64 data format".to_string()))?;
+
+            let image_data = STANDARD
+                .decode(base64_data)
+                .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
+
+            let new_avatar_url = self.s3_service.upload_avatar(&image_data).await?;
             user_update_internal.avatar_url = Some(new_avatar_url);
         }
 

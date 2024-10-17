@@ -1,7 +1,6 @@
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client as S3Client;
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
+use image::ImageFormat;
 use std::env;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -17,36 +16,54 @@ impl S3Service {
         Self { client }
     }
 
-    pub async fn upload_avatar(&self, avatar_data: &str) -> Result<String, AppError> {
+    pub async fn upload_avatar(&self, image_data: &[u8]) -> Result<String, AppError> {
         let bucket_name = env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAMEが設定されていません");
-        let file_name = format!("avatars/{}.jpg", Uuid::new_v4());
+        let file_name = format!("avatars/{}.png", Uuid::new_v4());
 
-        let avatar_bytes = STANDARD
-            .decode(avatar_data)
-            .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
+        // 画像フォーマットを明示的に判別
+        let format = image::guess_format(image_data).map_err(|e| {
+            AppError::BadRequest(format!("画像フォーマットの判別に失敗しました: {}", e))
+        })?;
 
-        self.client
+        log::debug!("Detected image format: {:?}", format);
+
+        // 画像をデコードし、PNGに変換
+        let img = image::load_from_memory_with_format(image_data, format)
+            .map_err(|e| AppError::BadRequest(format!("無効な画像データ: {}", e)))?;
+
+        let mut png_data = Vec::new();
+        img.write_to(&mut std::io::Cursor::new(&mut png_data), ImageFormat::Png)
+            .map_err(|e| {
+                AppError::InternalServerError(format!("画像の変換に失敗しました: {}", e))
+            })?;
+
+        let result = self
+            .client
             .put_object()
             .bucket(&bucket_name)
             .key(&file_name)
-            .body(ByteStream::from(avatar_bytes))
-            .content_type("image/jpeg")
+            .body(ByteStream::from(png_data))
+            .content_type("image/png")
             .send()
-            .await
-            .map_err(|e| {
-                AppError::InternalServerError(format!(
+            .await;
+
+        match result {
+            Ok(_) => {
+                let avatar_url = format!(
+                    "{}/{}/{}",
+                    env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINTが設定されていません"),
+                    bucket_name,
+                    file_name
+                );
+                Ok(avatar_url)
+            }
+            Err(e) => {
+                log::error!("S3 upload error: {:?}", e);
+                Err(AppError::InternalServerError(format!(
                     "アバターのアップロードに失敗しました: {}",
                     e
-                ))
-            })?;
-
-        let avatar_url = format!(
-            "{}/{}/{}",
-            env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINTが設定されていません"),
-            bucket_name,
-            file_name
-        );
-
-        Ok(avatar_url)
+                )))
+            }
+        }
     }
 }
