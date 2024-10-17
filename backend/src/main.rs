@@ -1,5 +1,6 @@
 use crate::config::api_doc::ApiDoc;
 use crate::config::di;
+// use crate::utils::test_s3_upload;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
@@ -106,6 +107,12 @@ async fn main() -> Result<()> {
             panic!("S3 (MinIO) クライアントの初期化に失敗しました");
         }
     };
+
+    // テストアップロードの実行
+    // match test_s3_upload::test_upload(&s3_client).await {
+    //     Ok(_) => log::info!("テストアップロードが成功しました"),
+    //     Err(e) => log::error!("テストアップロードに失敗しました: {:?}", e),
+    // }
 
     // S3Serviceの初期化
     let s3_service = Arc::new(services::s3_service::S3Service::new(s3_client.clone()));

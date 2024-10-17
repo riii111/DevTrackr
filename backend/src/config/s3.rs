@@ -2,6 +2,7 @@ use aws_sdk_s3::{
     config::{Builder, Credentials, Region},
     Client,
 };
+use log;
 use std::error::Error;
 use std::sync::Arc;
 
@@ -14,6 +15,10 @@ pub async fn init_s3_client() -> Result<Arc<Client>, Box<dyn Error>> {
     let minio_secret_key =
         std::env::var("MINIO_SECRET_KEY").expect("MINIO_SECRET_KEYが設定されていません");
     let region = std::env::var("S3_REGION").expect("S3_REGIONが設定されていません");
+
+    log::debug!("MINIO_ENDPOINT: {}", minio_endpoint);
+    log::debug!("MINIO_ACCESS_KEY: {}", minio_access_key);
+    log::debug!("S3_REGION: {}", region);
 
     let creds = Credentials::new(minio_access_key, minio_secret_key, None, None, "minio");
 
