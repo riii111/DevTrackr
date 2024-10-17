@@ -84,7 +84,6 @@ export async function customFetch<
   const fetchOptions: RequestInit = {
     method,
     headers,
-    credentials: "include",
     cache,
     mode: "cors",
   };
