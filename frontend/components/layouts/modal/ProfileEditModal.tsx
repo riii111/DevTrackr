@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { User } from '@/types/user';
+import { User, UpdateUserRequest } from '@/types/user';
 import ProfileEditForm, { profileSchema, ProfileFormData } from '@/components/layouts/modal/content/ProfileEditForm';
 import { z } from 'zod';
 import { useUserApi } from '@/lib/hooks/useUserApi';
@@ -22,6 +22,8 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         avatar: initialUser.avatar
     });
     const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(initialUser.avatar || null);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const router = useRouter();
     const { updateUser } = useUserApi();
 
@@ -55,11 +57,32 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         validateField('role', value);
     };
 
+    const handleAvatarChange = (file: File) => {
+        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAvatarPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const validatedData = profileSchema.parse(user);
-            updateUser(validatedData);
+            const updateData: UpdateUserRequest = {
+                username: validatedData.username,
+                email: validatedData.email,
+                role: validatedData.role,
+            };
+            if (avatarFile) {
+                // ここでBase64エンコードした画像データを送信
+                const base64 = await fileToBase64(avatarFile);
+                updateData.avatar = base64;
+            }
+
+            await updateUser(updateData);
+
             toast({
                 title: 'プロフィールを更新しました',
                 variant: 'default',
@@ -75,6 +98,13 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                     return acc;
                 }, {} as Partial<Record<keyof ProfileFormData, string>>);
                 setErrors(newErrors);
+            } else {
+                console.error('Profile update error:', error);
+                toast({
+                    title: 'プロフィールの更新に失敗しました',
+                    description: 'もう一度お試しください',
+                    variant: 'destructive',
+                });
             }
         }
     };
@@ -85,6 +115,16 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         }
     };
 
+    // ファイルをBase64に変換する関数
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    };
+
     return (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center overflow-auto" onClick={handleOverlayClick}>
             <div className="my-8 bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative" onClick={e => e.stopPropagation()}>
@@ -93,20 +133,22 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                         <CardTitle>プロフィール編集</CardTitle>
                         <CardDescription>あなたの個人情報を更新します</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <ProfileEditForm
-                            user={user}
-                            errors={errors}
-                            onInputChange={handleInputChange}
-                            onInputBlur={handleInputBlur}
-                            onRoleChange={handleRoleChange}
-                            onSubmit={handleSubmit}
-                        />
-                    </CardContent>
-                    <CardFooter className="flex justify-end space-x-2">
-                        <Button variant="outline" type="button" onClick={handleClose}>キャンセル</Button>
-                        <Button type="submit" onClick={handleSubmit}>保存</Button>
-                    </CardFooter>
+                    <form onSubmit={handleSubmit}>
+                        <CardContent>
+                            <ProfileEditForm
+                                user={{ ...user, avatar: avatarPreview || user.avatar }}
+                                errors={errors}
+                                onInputChange={handleInputChange}
+                                onInputBlur={handleInputBlur}
+                                onRoleChange={handleRoleChange}
+                                onAvatarChange={handleAvatarChange}
+                            />
+                        </CardContent>
+                        <CardFooter className="flex justify-end space-x-2">
+                            <Button variant="outline" type="button" onClick={handleClose}>キャンセル</Button>
+                            <Button type="submit">保存</Button>
+                        </CardFooter>
+                    </form>
                 </Card>
             </div>
         </div>

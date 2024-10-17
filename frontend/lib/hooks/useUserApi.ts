@@ -30,5 +30,6 @@ export function useUserApi() {
       method: "PUT",
       body: userData,
     });
+    // 成功時は何も返さない（voidを返す）
   }
 }

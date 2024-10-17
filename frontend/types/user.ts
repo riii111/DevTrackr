@@ -22,7 +22,7 @@ export interface UpdateUserRequest {
   username: string;
   email: string;
   password?: string;
-  avatar?: string;
+  avatar?: File | string;
   role?: UserRole;
 }
 

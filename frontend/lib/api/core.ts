@@ -77,7 +77,7 @@ export async function customFetch<
     ...authHeader,
   });
 
-  if (!headers.has("Content-Type")) {
+  if (!(body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -102,8 +102,13 @@ export async function customFetch<
     let response = await fetch(url, fetchOptions);
 
     // TODO: 401エラーの場合、アクセストークンを更新して再リクエスト
-
-    if (!response.ok) {
+    // 200系のステータスコードは全て成功とみなす
+    if (response.ok) {
+      if (response.status === 204) {
+        // 204の場合は空のオブジェクトを返す
+        return {} as RequestResult;
+      }
+    } else {
       let errorMessage = "エラーが発生しました";
       try {
         const errorData = await response.json();
@@ -111,6 +116,7 @@ export async function customFetch<
       } catch (e) {
         // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
       }
+      throw new ApiError(response.status, errorMessage);
     }
 
     // レスポンスにコンテンツがある場合のみJSONとしてパースする
