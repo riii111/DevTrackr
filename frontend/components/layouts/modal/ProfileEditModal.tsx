@@ -8,7 +8,8 @@ import { User, UpdateUserRequest } from '@/types/user';
 import ProfileEditForm, { profileSchema, ProfileFormData } from '@/components/layouts/modal/content/ProfileEditForm';
 import { z } from 'zod';
 import { useUserApi } from '@/lib/hooks/useUserApi';
-import { toast } from '@/lib/hooks/use-toast';
+import { useToast } from "@/lib/hooks/use-toast";
+import { ApiError } from '@/lib/api/core';
 
 interface ProfileEditProps {
     initialUser: User;
@@ -26,6 +27,7 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const router = useRouter();
     const { updateUser } = useUserApi();
+    const { toast } = useToast();
 
     const handleClose = useCallback(() => {
         router.back();
@@ -85,7 +87,7 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
 
             toast({
                 title: 'プロフィールを更新しました',
-                variant: 'default',
+                variant: 'success',
             });
             // TODO: UserMenuをrevalidateする
             handleClose();
@@ -102,8 +104,8 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 console.error('Profile update error:', error);
                 toast({
                     title: 'プロフィールの更新に失敗しました',
-                    description: 'もう一度お試しください',
-                    variant: 'destructive',
+                    description: error.message,
+                    variant: 'error',
                 });
             }
         }

@@ -23,7 +23,7 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
             router.push('/auth');
             toast({
                 title: 'ログアウトしました',
-                variant: 'default',
+                variant: 'success',
             });
         } catch (error) {
             console.error('ログアウトに失敗しました', error);
