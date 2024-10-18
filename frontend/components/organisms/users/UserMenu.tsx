@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuthApi } from '@/lib/hooks/useAuthApi';
 import { User } from '@/types/user';
 import { toast } from '@/lib/hooks/use-toast';
+import { useState, useEffect } from 'react';
 
 interface UserMenuProps {
     initialUserData: User;
@@ -16,6 +17,16 @@ interface UserMenuProps {
 export default function UserMenu({ initialUserData }: UserMenuProps) {
     const { logout } = useAuthApi();
     const router = useRouter();
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialUserData.avatar_url) {
+            // MinIOサーバーの公開アドレスに変更
+            const publicUrl = initialUserData.avatar_url.replace('minio:9000', 'localhost:9000');
+            console.log("publicUrl", publicUrl);
+            setAvatarUrl(publicUrl);
+        }
+    }, [initialUserData.avatar_url]);
 
     const handleLogout = async () => {
         try {
@@ -34,9 +45,9 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <button className="flex items-center space-x-2 focus:outline-none bg-white rounded-full px-2 shadow-sm">
-                    {initialUserData.avatar ? (
+                    {avatarUrl ? (
                         <Image
-                            src={initialUserData.avatar}
+                            src={avatarUrl}
                             alt={initialUserData.username}
                             width={32}
                             height={32}
