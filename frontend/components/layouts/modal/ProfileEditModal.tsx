@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
@@ -22,14 +22,22 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         username: initialUser.username,
         email: initialUser.email,
         role: initialUser.role,
-        avatar: initialUser.avatar
+        avatar: initialUser.avatar_url
     });
     const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(initialUser.avatar || null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const router = useRouter();
     const { updateUser } = useUserApi();
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (initialUser.avatar_url) {
+            // MinIOサーバーの公開アドレスに変更
+            const publicUrl = initialUser.avatar_url.replace('minio:9000', 'localhost:9000');
+            setAvatarPreview(publicUrl);
+        }
+    }, [initialUser.avatar_url]);
 
     const handleClose = useCallback(() => {
         router.back();
