@@ -23,7 +23,6 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
         if (initialUserData.avatar_url) {
             // MinIOサーバーの公開アドレスに変更
             const publicUrl = initialUserData.avatar_url.replace('minio:9000', 'localhost:9000');
-            console.log("publicUrl", publicUrl);
             setAvatarUrl(publicUrl);
         }
     }, [initialUserData.avatar_url]);
@@ -51,7 +50,7 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
                             alt={initialUserData.username}
                             width={32}
                             height={32}
-                            className="rounded-full"
+                            className="rounded-full w-8 h-8 object-cover"
                         />
                     ) : (
                         <MdAccountCircle size={36} className="text-gray-500" />

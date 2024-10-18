@@ -1,8 +1,6 @@
-use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
 use image::ImageFormat;
 use std::sync::Arc;
-use std::time::Duration;
 use uuid::Uuid;
 
 use crate::config::s3::S3Config;
