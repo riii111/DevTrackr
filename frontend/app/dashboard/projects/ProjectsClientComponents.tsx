@@ -28,7 +28,7 @@ export default function ProjectsClientComponents({ companiesWithProjects }: Proj
 
     return (
         <>
-            <div className="flex justify-start mb-4">
+            {/* <div className="flex justify-start mb-4">
                 <AtomsButtonWithIcon
                     icon={GoPlus}
                     text="プロジェクトを追加"
@@ -39,7 +39,7 @@ export default function ProjectsClientComponents({ companiesWithProjects }: Proj
                     disabled={false}
                     onClick={() => setIsOpen(true)}
                 />
-            </div>
+            </div> */}
             <ProjectSelectDialog
                 isOpen={isOpen}
                 onOpenChange={setIsOpen}

@@ -8,7 +8,6 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db_index;
 use dotenv::dotenv;
 use env_logger::Env;
-use log;
 use std::env;
 use std::io::Result;
 use std::sync::Arc;

@@ -122,15 +122,15 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave 
                 <div className="mt-4 flex justify-end space-x-2">
                     {isEditing ? (
                         <>
+                            <Button onClick={handleCancel} variant="outline" className="text-primary hover:bg-gray-100">
+                                <XIcon className="mr-2 h-4 w-4 text-primary" /> キャンセル
+                            </Button>
                             <Button onClick={handleSave} variant="default" className="text-white hover:bg-primary/80">
                                 <CheckIcon className="mr-2 h-4 w-4 text-white" /> 保存
                             </Button>
-                            <Button onClick={handleCancel} variant="outline" className="text-white hover:bg-primary/80">
-                                <XIcon className="mr-2 h-4 w-4 text-white" /> キャンセル
-                            </Button>
                         </>
                     ) : (
-                        <Button onClick={handleEdit} variant="outline" className="text-white hover:bg-primary/80">
+                        <Button onClick={handleEdit} variant="outline" className="text-white hover:bg-primary/80 bg-primary">
                             <PencilIcon className="mr-2 h-4 w-4 text-white" /> 編集
                         </Button>
                     )}
