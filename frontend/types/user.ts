@@ -2,24 +2,27 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  avatar: string;
+  avatar_url: string;
   role: UserRole;
 }
 
-export enum UserRole {
-  Frontend = "Front-end",
-  Backend = "Back-end",
-  Fullstack = "Full-stack",
-  Designer = "Designer",
-  Infrastructure = "Infrastructure",
-  ProductManager = "Product Manager",
-  ProjectManager = "Project Manager",
-}
+export const UserRole = {
+  FrontEnd: "FrontEnd",
+  BackEnd: "BackEnd",
+  FullStack: "FullStack",
+  DevOps: "DevOps",
+  Security: "Security",
+  ProductManager: "ProductManager",
+  ProjectManager: "ProjectManager",
+} as const;
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export interface UpdateUserRequest {
-  username?: string;
-  email?: string;
-  avatar?: string;
+  username: string;
+  email: string;
+  password?: string;
+  avatar?: string; // Base64エンコードされた画像データ or URL
   role?: UserRole;
 }
 

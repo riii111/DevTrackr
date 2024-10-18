@@ -127,6 +127,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
     command: server --console-address ":9001" /data
+    networks:
+      - mynet
 
 networks:
   mynet:

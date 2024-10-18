@@ -21,13 +21,14 @@ type FetchBody<T, M extends HttpMethod> = M extends
 interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
   headers?: Record<string, any>;
   method: M;
+  credentials?: RequestCredentials;
   params?: FetchParams<T, M>;
   body?: FetchBody<T, M>;
   cache?: RequestCache;
 }
 
 // APIエラーを表すカスタムエラークラス
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
   }
@@ -42,6 +43,7 @@ export async function customFetch<
   endpoint: string,
   {
     headers: optionHeaders,
+    credentials,
     method,
     body,
     params,
@@ -77,16 +79,16 @@ export async function customFetch<
     ...authHeader,
   });
 
-  if (!headers.has("Content-Type")) {
+  if (!(body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
   const fetchOptions: RequestInit = {
     method,
     headers,
-    credentials: "include",
     cache,
     mode: "cors",
+    credentials,
   };
 
   if (body) {
@@ -100,54 +102,79 @@ export async function customFetch<
   }
 
   try {
-    let response = await fetch(url, fetchOptions);
+    const response = await fetch(url, fetchOptions);
 
     // TODO: 401エラーの場合、アクセストークンを更新して再リクエスト
-
     if (!response.ok) {
-      let errorMessage = "エラーが発生しました";
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch (e) {
-        // JSON解析に失敗した場合は、デフォルトのエラーメッセージを使用
-      }
+      const errorMessage = getErrorMessage(response.status);
+      throw new ApiError(response.status, errorMessage);
+    }
+
+    // 204 No Content の場合は空のオブジェクトを返す
+    if (response.status === 204) {
+      return {} as RequestResult;
     }
 
     // レスポンスにコンテンツがある場合のみJSONとしてパースする
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
-      return response.json();
-    } else {
-      // コンテンツがない場合は空のオブジェクトを返す
-      return {};
+      return response.json() as Promise<RequestResult>;
     }
+
+    // コンテンツがない場合は空のオブジェクトを返す
+    return {} as RequestResult;
   } catch (error) {
-    if (error instanceof ApiError) {
-      if (typeof window !== "undefined") {
-        // クライアントサイドの場合のみtoastを使用
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: error.message,
-        });
-      } else {
-        // サーバーサイドの場合はコンソールにエラーを出力
-        console.error("API Error:", error.message);
-      }
-    } else {
-      if (typeof window !== "undefined") {
-        // クライアントサイドの場合のみtoastを使用
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "予期せぬエラーが発生しました。",
-        });
-      } else {
-        // サーバーサイドの場合はコンソールにエラーを出力
-        console.error("Unexpected Error:", error);
-      }
-    }
+    handleFetchError(error);
     throw error;
+  }
+}
+
+function handleFetchError(error: unknown) {
+  if (error instanceof ApiError) {
+    if (typeof window !== "undefined") {
+      // クライアントサイドの場合はtoastを使用
+      toast({
+        variant: "error",
+        title: "エラー",
+        description: error.message,
+      });
+    } else {
+      // サーバーサイドの場合はコンソールにエラーを出力
+      console.error("API Error:", error.message);
+    }
+  } else {
+    if (typeof window !== "undefined") {
+      // クライアントサイドの場合はtoastを使用
+      toast({
+        variant: "error",
+        title: "エラー",
+        description: "予期せぬエラーが発生しました。",
+      });
+    } else {
+      // サーバーサイドの場合はコンソールにエラーを出力
+      console.error("Unexpected Error:", error);
+    }
+  }
+}
+
+// エラーメッセージを取得する関数
+function getErrorMessage(status: number): string {
+  switch (status) {
+    case 400:
+      return "リクエストに問題があります。入力内容を確認してください。";
+    case 401:
+      return "認証に失敗しました。再度ログインしてください。";
+    case 403:
+      return "アクセス権限がありません。";
+    case 404:
+      return "リソースが見つかりません。";
+    case 413:
+      return "アップロードされたファイルが大きすぎます。より小さいファイルを選択してください。";
+    case 422:
+      return "入力内容に誤りがあります。確認して再度お試しください。";
+    case 500:
+      return "サーバーエラーが発生しました。しばらく経ってから再度お試しください。";
+    default:
+      return "予期せぬエラーが発生しました。";
   }
 }

@@ -71,6 +71,24 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        toast: {
+          success: {
+            background: "#4CAF50",
+            text: "#FFFFFF",
+          },
+          error: {
+            background: "#F44336",
+            text: "#FFFFFF",
+          },
+          info: {
+            background: "#2196F3",
+            text: "#FFFFFF",
+          },
+          warning: {
+            background: "#FF9800",
+            text: "#FFFFFF",
+          },
+        },
       },
       fontFamily: {
         sans: [

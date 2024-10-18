@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuthApi } from '@/lib/hooks/useAuthApi';
 import { User } from '@/types/user';
 import { toast } from '@/lib/hooks/use-toast';
+import { useState, useEffect } from 'react';
 
 interface UserMenuProps {
     initialUserData: User;
@@ -16,6 +17,15 @@ interface UserMenuProps {
 export default function UserMenu({ initialUserData }: UserMenuProps) {
     const { logout } = useAuthApi();
     const router = useRouter();
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialUserData.avatar_url) {
+            // MinIOサーバーの公開アドレスに変更
+            const publicUrl = initialUserData.avatar_url.replace('minio:9000', 'localhost:9000');
+            setAvatarUrl(publicUrl);
+        }
+    }, [initialUserData.avatar_url]);
 
     const handleLogout = async () => {
         try {
@@ -23,7 +33,7 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
             router.push('/auth');
             toast({
                 title: 'ログアウトしました',
-                variant: 'default',
+                variant: 'success',
             });
         } catch (error) {
             console.error('ログアウトに失敗しました', error);
@@ -34,13 +44,13 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <button className="flex items-center space-x-2 focus:outline-none bg-white rounded-full px-2 shadow-sm">
-                    {initialUserData.avatar ? (
+                    {avatarUrl ? (
                         <Image
-                            src={initialUserData.avatar}
+                            src={avatarUrl}
                             alt={initialUserData.username}
                             width={32}
                             height={32}
-                            className="rounded-full"
+                            className="rounded-full w-8 h-8 object-cover"
                         />
                     ) : (
                         <MdAccountCircle size={36} className="text-gray-500" />
@@ -53,13 +63,8 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-                {/* <DropdownMenuItem onSelect={() => router.push('/profile')}> */}
-                <DropdownMenuItem>
-                    プロフィール
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem onSelect={() => router.push('/settings')}> */}
-                <DropdownMenuItem>
-                    設定
+                <DropdownMenuItem onSelect={() => router.push('/dashboard/profile')}>
+                    プロフィール設定
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleLogout}>
                     ログアウト

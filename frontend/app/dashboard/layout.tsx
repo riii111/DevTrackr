@@ -4,8 +4,10 @@ import { DrawerProvider } from "@/lib/store/useDrawerStore";
 
 export default async function DashboardLayout({
   children,
+  modal
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
 
   return (
@@ -16,6 +18,7 @@ export default async function DashboardLayout({
           <LayoutDashboardHeader />
           <main className="flex-row p-8 overflow-y-auto bg-main-bg">
             {children}
+            {modal}
           </main>
         </div>
       </div>

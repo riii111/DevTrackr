@@ -6,6 +6,8 @@ use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use bson::DateTime as BsonDateTime;
 use chrono::{Duration, Utc};
 use std::env;
@@ -70,8 +72,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
         &self,
         access_token: &str,
         user_update: &UserUpdate,
-    ) -> Result<UserInDB, AppError> {
-        // MongoDBでは、PUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
+    ) -> Result<bool, AppError> {
+        // MongoDBではPUTとPATCHともに部分更新できるので、全フィールド渡さずともNoneで上書きされる事はない
         let mut user_update_internal = UserUpdateInternal {
             email: user_update.email.clone(),
             password: None,
@@ -79,9 +81,20 @@ impl<R: AuthRepository> AuthUseCase<R> {
             role: user_update.role.clone(),
             avatar_url: None,
         };
-        // 画像のアップロード処理
-        if let Some(avatar_path) = &user_update.avatar_path {
-            let new_avatar_url = self.s3_service.upload_avatar(avatar_path).await?;
+
+        if let Some(avatar_data) = &user_update.avatar {
+            // データURIスキーマを処理
+            let base64_data = avatar_data
+                .split_once(",")
+                .map(|(_, data)| data)
+                .ok_or_else(|| AppError::BadRequest("Invalid base64 data format".to_string()))?;
+
+            let image_data = STANDARD
+                .decode(base64_data)
+                .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
+
+            let new_avatar_key = self.s3_service.upload_avatar(&image_data).await?;
+            let new_avatar_url = self.s3_service.get_public_url(&new_avatar_key);
             user_update_internal.avatar_url = Some(new_avatar_url);
         }
 
@@ -93,27 +106,25 @@ impl<R: AuthRepository> AuthUseCase<R> {
         }
 
         // ユーザー情報を更新
-        let updated = self
+        Ok(self
             .repository
             .update_user_by_access_token(access_token, &user_update_internal)
-            .await?;
-
-        if updated {
-            // 更新されたユーザー情報を取得
-            self.get_current_user(access_token).await
-        } else {
-            Err(AppError::NotFound("ユーザーが見つかりません".to_string()))
-        }
+            .await?)
     }
 
     /// ログイン中のユーザー情報を取得
     pub async fn get_current_user(&self, access_token: &str) -> Result<UserInDB, AppError> {
         // アクセストークンからユーザー情報を直接取得
-        let user = self
+        let mut user = self
             .repository
             .find_user_by_access_token(access_token)
             .await?
             .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
+
+        if let Some(avatar_url) = &user.avatar_url {
+            let public_url = self.s3_service.get_public_url(avatar_url);
+            user.avatar_url = Some(public_url);
+        }
 
         Ok(user)
     }

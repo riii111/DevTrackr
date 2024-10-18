@@ -7,12 +7,13 @@ use validator::Validate;
 pub enum EngineerRole {
     #[default]
     None,
-    Frontend,
-    Backend,
-    Fullstack,
+    FrontEnd,
+    BackEnd,
+    FullStack,
     DevOps,
     Security,
     ProductManager,
+    ProjectManager,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
@@ -48,8 +49,10 @@ pub struct UserUpdate {
     #[schema(example = "Frontend")]
     pub role: Option<EngineerRole>,
 
-    #[schema(example = "/Users/AAAAA/Downloads/IMG_7313.jpg")]
-    pub avatar_path: Option<String>,
+    #[schema(
+        example = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="
+    )]
+    pub avatar: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

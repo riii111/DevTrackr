@@ -25,13 +25,11 @@ export function useUserApi() {
   /**
    * ユーザーを更新する関数
    */
-  async function updateUser(
-    id: string,
-    userData: UpdateUserRequest
-  ): Promise<void> {
-    await customFetch<"PUT", UpdateUserRequest, void>(`${ENDPOINT}/${id}/`, {
+  async function updateUser(userData: UpdateUserRequest): Promise<void> {
+    await customFetch<"PUT", UpdateUserRequest, void>(`${ENDPOINT}/me`, {
       method: "PUT",
       body: userData,
     });
+    // 成功時は何も返さない（voidを返す）
   }
 }

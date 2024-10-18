@@ -22,6 +22,7 @@ export function useAuthApi() {
     >(`${AUTH_ENDPOINT}/login/`, {
       method: "POST",
       body: { email, password },
+      credentials: "include",
     });
     return response.data;
   }
@@ -30,7 +31,10 @@ export function useAuthApi() {
    * ユーザーログアウト関数
    */
   async function logout(): Promise<void> {
-    await customFetch(`${AUTH_ENDPOINT}/logout/`, { method: "POST" });
+    await customFetch(`${AUTH_ENDPOINT}/logout/`, {
+      method: "POST",
+      credentials: "include",
+    });
   }
 
   /**
@@ -48,6 +52,7 @@ export function useAuthApi() {
     >(`${AUTH_ENDPOINT}/register/`, {
       method: "POST",
       body: { username, email, password },
+      credentials: "include",
     });
     return response.data;
   }
@@ -67,6 +72,7 @@ export async function refreshAccessToken(headers: Headers): Promise<string> {
     {
       method: "POST",
       headers: headers,
+      credentials: "include",
     }
   );
   return response.data.access_token;
