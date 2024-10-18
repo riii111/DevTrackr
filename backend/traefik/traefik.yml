@@ -7,11 +7,15 @@ http:
           - POST
           - PUT
           - DELETE
+          - OPTIONS
         accessControlAllowOriginList:
-          - "localhost:3000"
+          - "http://localhost:3000"
         accessControlAllowCredentials: true
         accessControlMaxAge: 100
         addVaryHeader: true
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
 
   routers:
     backend-api:

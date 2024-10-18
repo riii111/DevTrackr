@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const protectedRoutes = ["/dashboard"]; // 保護対象のルートをここに追加
+const publicRoutes = ["/auth"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // APIルートや認証ルートは許可
-  if (pathname.startsWith("/api") || pathname.startsWith("/auth")) {
+  // APIルートは全て許可
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  // 公開ルートは常に許可
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
@@ -54,5 +60,5 @@ export async function middleware(request: NextRequest) {
 
 // ミドルウェアを適用するルートを指定
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/api/:path*"],
 };
