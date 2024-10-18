@@ -93,7 +93,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
                 .decode(base64_data)
                 .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
 
-            let new_avatar_url = self.s3_service.upload_avatar(&image_data).await?;
+            let new_avatar_key = self.s3_service.upload_avatar(&image_data).await?;
+            let new_avatar_url = self.s3_service.get_public_url(&new_avatar_key);
             user_update_internal.avatar_url = Some(new_avatar_url);
         }
 
@@ -114,11 +115,16 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// ログイン中のユーザー情報を取得
     pub async fn get_current_user(&self, access_token: &str) -> Result<UserInDB, AppError> {
         // アクセストークンからユーザー情報を直接取得
-        let user = self
+        let mut user = self
             .repository
             .find_user_by_access_token(access_token)
             .await?
             .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
+
+        if let Some(avatar_url) = &user.avatar_url {
+            let public_url = self.s3_service.get_public_url(avatar_url);
+            user.avatar_url = Some(public_url);
+        }
 
         Ok(user)
     }

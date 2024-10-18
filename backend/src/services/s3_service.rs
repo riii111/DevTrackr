@@ -1,23 +1,24 @@
+use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
-use aws_sdk_s3::Client as S3Client;
 use image::ImageFormat;
-use std::env;
 use std::sync::Arc;
+use std::time::Duration;
 use uuid::Uuid;
 
+use crate::config::s3::S3Config;
 use crate::errors::app_error::AppError;
 
 pub struct S3Service {
-    client: Arc<S3Client>,
+    config: Arc<S3Config>,
 }
 
 impl S3Service {
-    pub fn new(client: Arc<S3Client>) -> Self {
-        Self { client }
+    pub fn new(config: Arc<S3Config>) -> Self {
+        Self { config }
     }
 
+    /// アバターをS3にアップロード
     pub async fn upload_avatar(&self, image_data: &[u8]) -> Result<String, AppError> {
-        let bucket_name = env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAMEが設定されていません");
         let file_name = format!("avatars/{}.png", Uuid::new_v4());
 
         // 画像フォーマットを明示的に判別
@@ -38,9 +39,10 @@ impl S3Service {
             })?;
 
         let result = self
+            .config
             .client
             .put_object()
-            .bucket(&bucket_name)
+            .bucket(&self.config.bucket_name)
             .key(&file_name)
             .body(ByteStream::from(png_data))
             .content_type("image/png")
@@ -49,13 +51,8 @@ impl S3Service {
 
         match result {
             Ok(_) => {
-                let avatar_url = format!(
-                    "{}/{}/{}",
-                    env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINTが設定されていません"),
-                    bucket_name,
-                    file_name
-                );
-                Ok(avatar_url)
+                // ファイル名のみを返す
+                Ok(file_name)
             }
             Err(e) => {
                 log::error!("S3 upload error: {:?}", e);
@@ -64,6 +61,18 @@ impl S3Service {
                     e
                 )))
             }
+        }
+    }
+
+    pub fn get_public_url(&self, object_key: &str) -> String {
+        // object_keyが既にフルURLの場合はそのまま返す
+        if object_key.starts_with("http://") || object_key.starts_with("https://") {
+            object_key.to_string()
+        } else {
+            format!(
+                "{}/{}/{}",
+                self.config.endpoint, self.config.bucket_name, object_key
+            )
         }
     }
 }
