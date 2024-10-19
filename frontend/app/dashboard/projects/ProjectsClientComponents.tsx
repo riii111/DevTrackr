@@ -7,12 +7,12 @@ import { GoPlus } from "react-icons/go";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 import { CompanyWithProjects } from "@/types/company";
 
-const ProjectSelectDialog = dynamic(
-    () => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog").then(mod => mod.ProjectSelectDialog),
-    {
-        ssr: false,
-    }
-);
+// const ProjectSelectDialog = dynamic(
+//     () => import("@/components/organisms/projects/ProjectDialog/ProjectSelectDialog").then(mod => mod.ProjectSelectDialog),
+//     {
+//         ssr: false,
+//     }
+// );
 
 const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer").then(mod => mod.ProjectDrawer), {
     ssr: false,
@@ -40,12 +40,12 @@ export default function ProjectsClientComponents({ companiesWithProjects }: Proj
                     onClick={() => setIsOpen(true)}
                 />
             </div> */}
-            <ProjectSelectDialog
+            {/* <ProjectSelectDialog
                 isOpen={isOpen}
                 onOpenChange={setIsOpen}
                 onClose={() => setIsOpen(false)}
                 companiesWithProjects={companiesWithProjects}
-            />
+            /> */}
             {drawerState.main.isOpen && <ProjectDrawer />}
         </>
     );
