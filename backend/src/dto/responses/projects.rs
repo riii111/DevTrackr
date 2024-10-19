@@ -15,6 +15,7 @@ pub struct ProjectResponse {
     pub description: String,
     pub status: ProjectStatus,
     pub skill_labels: Vec<String>,
+    #[serde(serialize_with = "serialize_object_id")]
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     pub company_id: ObjectId,
     #[schema(value_type = Vec<String>, example = json!(["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]))]
