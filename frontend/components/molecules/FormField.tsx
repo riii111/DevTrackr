@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -44,4 +45,4 @@ const FormField: React.FC<FormFieldProps> = ({
     );
 };
 
-export default FormField;
+export default memo(FormField);

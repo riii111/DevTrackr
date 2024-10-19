@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, memo } from 'react';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -28,6 +28,75 @@ interface ProfileEditFormProps {
     // onAvatarDelete: () => void;
 }
 
+const AvatarSection = memo(({ avatar, onAvatarChange, error }: {
+    avatar: string | null,
+    onAvatarChange: (file: File) => void,
+    error?: string
+}) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAvatarClick = useCallback(() => {
+        fileInputRef.current?.click();
+    }, []);
+
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            onAvatarChange(file);
+        }
+    }, [onAvatarChange]);
+
+    return (
+        <div className="flex flex-col items-center space-y-4">
+            <Avatar className="w-32 h-32">
+                <AvatarImage src={avatar || ''} alt="ユーザーアバター" className="object-cover" />
+                <AvatarFallback>UN</AvatarFallback>
+            </Avatar>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+            />
+            <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+        </div>
+    );
+});
+AvatarSection.displayName = 'AvatarSection';
+
+const RoleSelect = memo(({ role, onRoleChange, error }: {
+    role: string | null | undefined,
+    onRoleChange: (value: string) => void,
+    error?: string
+}) => (
+    <div className="space-y-2">
+        <Label htmlFor="role">ロール</Label>
+        <Select value={role || undefined} onValueChange={onRoleChange}>
+            <SelectTrigger>
+                <SelectValue placeholder="ロールを選択" />
+            </SelectTrigger>
+            <SelectContent>
+                {Object.entries(UserRole).map(([key, value]) => (
+                    <SelectItem key={key} value={value}>
+                        {value}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+    </div>
+));
+RoleSelect.displayName = 'RoleSelect';
+
+const PasswordChangeButton = memo(() => (
+    <div className="space-y-2">
+        <Button variant="outline" className="w-full">パスワードを変更</Button>
+    </div>
+));
+PasswordChangeButton.displayName = 'PasswordChangeButton';
+
 export default function ProfileEditForm({
     user,
     errors,
@@ -35,45 +104,14 @@ export default function ProfileEditForm({
     onInputBlur,
     onRoleChange,
     onAvatarChange,
-    // onAvatarDelete,
 }: ProfileEditFormProps) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            onAvatarChange(file);
-        }
-    };
-
     return (
         <div className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-                <Avatar className="w-32 h-32">
-                    <AvatarImage src={user.avatar || ''} alt="ユーザーアバター" className="object-cover" />
-                    <AvatarFallback>UN</AvatarFallback>
-                </Avatar>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                />
-                <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
-                {/* TODO: PUT→PATCH変更時に追加 */}
-                {/* <div className="flex space-x-2">
-                    <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
-                    {user.avatar && (
-                        <Button type="button" variant="outline" onClick={onAvatarDelete}>画像を削除</Button>
-                    )}
-                </div>　*/}
-                {errors.avatar && <p className="text-red-500 text-sm">{errors.avatar}</p>}
-            </div>
+            <AvatarSection
+                avatar={user.avatar || ''}
+                onAvatarChange={onAvatarChange}
+                error={errors.avatar}
+            />
 
             <FormField
                 id="username"
@@ -101,26 +139,13 @@ export default function ProfileEditForm({
                 required
             />
 
-            <div className="space-y-2">
-                <Label htmlFor="role">ロール</Label>
-                <Select value={user.role || undefined} onValueChange={onRoleChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="ロールを選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.entries(UserRole).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                                {value}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
-            </div>
+            <RoleSelect
+                role={user.role}
+                onRoleChange={onRoleChange}
+                error={errors.role}
+            />
 
-            <div className="space-y-2">
-                <Button variant="outline" className="w-full">パスワードを変更</Button>
-            </div>
+            <PasswordChangeButton />
         </div>
     );
 }

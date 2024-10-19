@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
@@ -11,11 +11,11 @@ import { useUserApi } from '@/lib/hooks/useUserApi';
 import { useToast } from "@/lib/hooks/use-toast";
 import { ApiError } from '@/lib/api/core';
 
-// TODO: svgファイルなどはバリデーションエラーとする！
-
 interface ProfileEditProps {
     initialUser: User;
 }
+
+const MemoizedProfileEditForm = React.memo(ProfileEditForm);
 
 export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
     const [user, setUser] = useState<ProfileFormData>({
@@ -43,10 +43,9 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         router.back();
     }, [router]);
 
-    const validateField = (name: keyof ProfileFormData, value: any) => {
+    const validateField = useCallback((name: keyof ProfileFormData, value: any) => {
         try {
             if (name === 'avatar') {
-                // アバターのバリデーション
                 if (value.size > 2 * 1024 * 1024) {
                     throw new Error('ファイルサイズは2MB以下にしてください。');
                 }
@@ -64,24 +63,36 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 setErrors(prev => ({ ...prev, [name]: error.message }));
             }
         }
-    };
+    }, []);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileToBase64 = useCallback((file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const result = reader.result as string;
+                resolve(result);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }, []);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
-    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const handleInputBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         validateField(name as keyof ProfileFormData, value);
-    };
+    }, [validateField]);
 
-    const handleRoleChange = (value: string) => {
+    const handleRoleChange = useCallback((value: string) => {
         setUser(prev => ({ ...prev, role: value as User['role'] }));
         validateField('role', value);
-    };
+    }, [validateField]);
 
-    const handleAvatarChange = (file: File) => {
+    const handleAvatarChange = useCallback((file: File) => {
         setAvatarFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -89,9 +100,9 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         };
         reader.readAsDataURL(file);
         validateField('avatar', file);
-    };
+    }, [validateField]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const validatedData = profileSchema.parse(user);
@@ -145,27 +156,15 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 });
             }
         }
-    };
+    }, [user, avatarFile, updateUser, toast, handleClose, fileToBase64]);
 
-    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {
             handleClose();
         }
-    };
+    }, [handleClose]);
 
-    // ファイルをBase64に変換する関数
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const result = reader.result as string;
-                // データURIスキーマを含めて送信
-                resolve(result);
-            };
-            reader.onerror = error => reject(error);
-        });
-    };
+    const memoizedUser = useMemo(() => ({ ...user, avatar: avatarPreview || user.avatar }), [user, avatarPreview]);
 
     return (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center overflow-auto" onClick={handleOverlayClick}>
@@ -177,8 +176,8 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                     </CardHeader>
                     <form onSubmit={handleSubmit}>
                         <CardContent>
-                            <ProfileEditForm
-                                user={{ ...user, avatar: avatarPreview || user.avatar }}
+                            <MemoizedProfileEditForm
+                                user={memoizedUser}
                                 errors={errors}
                                 onInputChange={handleInputChange}
                                 onInputBlur={handleInputBlur}
