@@ -56,9 +56,9 @@ export const ProjectDrawer = React.memo(() => {
     console.log("called ProjectDrawer")
 
     return (
-        <div className="fixed inset-0 overflow-hidden z-50">
+        <div className="absolute inset-0 overflow-hidden z-50">
             <div className="absolute inset-0 overflow-hidden">
-                <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex max-w-full pl-10">
                     <Sheet open={mainState.isOpen} onOpenChange={onUpdateModelValue}>
                         <SheetContent
                             side="right"
