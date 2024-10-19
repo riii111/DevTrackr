@@ -25,6 +25,7 @@ interface ProfileEditFormProps {
     onInputBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
     onRoleChange: (value: string) => void;
     onAvatarChange: (file: File) => void;
+    // onAvatarDelete: () => void;
 }
 
 export default function ProfileEditForm({
@@ -34,6 +35,7 @@ export default function ProfileEditForm({
     onInputBlur,
     onRoleChange,
     onAvatarChange,
+    // onAvatarDelete,
 }: ProfileEditFormProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +65,13 @@ export default function ProfileEditForm({
                     style={{ display: 'none' }}
                 />
                 <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
+                {/* TODO: PUT→PATCH変更時に追加 */}
+                {/* <div className="flex space-x-2">
+                    <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
+                    {user.avatar && (
+                        <Button type="button" variant="outline" onClick={onAvatarDelete}>画像を削除</Button>
+                    )}
+                </div>　*/}
                 {errors.avatar && <p className="text-red-500 text-sm">{errors.avatar}</p>}
             </div>
 
