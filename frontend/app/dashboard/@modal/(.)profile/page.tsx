@@ -4,9 +4,9 @@ import { useUserApi } from '@/lib/hooks/useUserApi';
 
 export default async function ProfileEditPage() {
     const { getMeDetails } = useUserApi();
-    const user = await getMeDetails();
+    const userResponse = await getMeDetails();
 
     return (
-        <ProfileEditModal initialUser={user} />
+        <ProfileEditModal initialUser={userResponse} />
     );
 }

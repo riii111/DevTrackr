@@ -21,7 +21,6 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
 
     useEffect(() => {
         if (initialUserData.avatar_url) {
-            // MinIOサーバーの公開アドレスに変更
             const publicUrl = initialUserData.avatar_url.replace('minio:9000', 'localhost:9000');
             setAvatarUrl(publicUrl);
         }

@@ -48,14 +48,9 @@ export interface UpdateProjectRequest {
   total_working_time: number;
 }
 
-export interface ProjectsResponse {
-  projects: Project[];
-  // total: number;
-}
+export type ProjectsResponse = Project[];
 
-export interface ProjectResponse {
-  project: Project;
-}
+export type ProjectResponse = Project;
 
 export interface CreateProjectResponse {
   id: string;

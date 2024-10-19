@@ -4,6 +4,8 @@ export interface User {
   email: string;
   avatar_url: string;
   role: UserRole;
+  created_at: string;
+  updated_at: string;
 }
 
 export const UserRole = {
@@ -26,9 +28,7 @@ export interface UpdateUserRequest {
   role?: UserRole;
 }
 
-export interface UserResponse {
-  user: User;
-}
+export type UserResponse = User;
 
 export interface AuthResponse {
   token_type: string;

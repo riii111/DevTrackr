@@ -23,7 +23,7 @@ export function useCompaniesApi() {
   /**
    * 企業一覧を取得する関数
    */
-  async function getCompanies(): Promise<Company[]> {
+  async function getCompanies(): Promise<CompaniesResponse> {
     const response = await customFetch<"GET", undefined, CompaniesResponse>(
       ENDPOINT,
       {
@@ -80,7 +80,7 @@ export function useCompaniesApi() {
   /**
    * 特定の企業を取得する関数
    */
-  async function getCompanyById(id: string): Promise<Company> {
+  async function getCompanyById(id: string): Promise<CompanyResponse> {
     const response = await customFetch<
       "GET",
       Record<string, never>,

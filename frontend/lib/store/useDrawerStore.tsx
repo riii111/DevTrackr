@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useReducer, useContext, useMemo, useEffect } from "react";
+import { createContext, useCallback, useReducer, useContext, useMemo, useEffect, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createExternalPromise } from "@/lib/utils/promiseUtils";
 
@@ -92,6 +92,16 @@ export const useDrawerStore = () => {
 export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DrawerProviderContent>{children}</DrawerProviderContent>
+    </Suspense>
+  );
+};
+
+const DrawerProviderContent: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(drawerReducer, {
     drawerState: {
       main: { isOpen: false },
@@ -177,4 +187,3 @@ export const DrawerProvider: React.FC<{ children: React.ReactNode }> = ({
     </DrawerContext.Provider>
   );
 };
-

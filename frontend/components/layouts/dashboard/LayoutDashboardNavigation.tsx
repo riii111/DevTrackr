@@ -36,11 +36,11 @@ const LayoutDashboardNavigation = () => {
         //     path: "/dashboard/revenue",
         //     icon: <FaMoneyBillTrendUp />,
         // },
-        {
-            name: "振り返り",
-            path: "/dashboard/retrospective",
-            icon: <MdRateReview />,
-        },
+        // {
+        //     name: "振り返り",
+        //     path: "/dashboard/retrospective",
+        //     icon: <MdRateReview />,
+        // },
     ];
 
     return (

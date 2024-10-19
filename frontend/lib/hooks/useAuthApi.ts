@@ -24,7 +24,7 @@ export function useAuthApi() {
       body: { email, password },
       credentials: "include",
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -54,7 +54,7 @@ export function useAuthApi() {
       body: { username, email, password },
       credentials: "include",
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -75,5 +75,5 @@ export async function refreshAccessToken(headers: Headers): Promise<string> {
       credentials: "include",
     }
   );
-  return response.data.access_token;
+  return response.access_token;
 }

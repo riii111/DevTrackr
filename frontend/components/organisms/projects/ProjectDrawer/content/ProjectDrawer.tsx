@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
@@ -15,6 +16,14 @@ const windowResizeObserver = (setWindowWidth: React.Dispatch<React.SetStateActio
 };
 
 export const ProjectDrawer = React.memo(() => {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ProjectDrawerContent />
+        </Suspense>
+    );
+});
+
+const ProjectDrawerContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const drawerStore = useDrawerStore();
@@ -93,6 +102,6 @@ export const ProjectDrawer = React.memo(() => {
             </div>
         </div>
     );
-});
+};
 
 ProjectDrawer.displayName = "ProjectDrawer"

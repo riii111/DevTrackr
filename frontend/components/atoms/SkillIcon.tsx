@@ -38,9 +38,6 @@ const getSkillIcon = (skill: string) => {
     if (normalizedSkill === 'Nodejs') {
         return (SkillIcons as any).NodeJSDark;
     }
-    if (normalizedSkill === 'gRPC') {
-        return (SkillIcons as any).GRPC;
-    }
 
     return null;
 };
