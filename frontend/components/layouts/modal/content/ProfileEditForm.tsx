@@ -13,7 +13,7 @@ export const profileSchema = z.object({
     username: z.string().min(1, '名前を入力してください'),
     email: z.string().email('有効なメールアドレスを入力してください'),
     role: z.nativeEnum(UserRole).nullable().optional(),
-    avatar: z.string().optional(),
+    avatar: z.string().optional().nullable(),
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
@@ -33,7 +33,7 @@ export default function ProfileEditForm({
     onInputChange,
     onInputBlur,
     onRoleChange,
-    onAvatarChange
+    onAvatarChange,
 }: ProfileEditFormProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +63,7 @@ export default function ProfileEditForm({
                     style={{ display: 'none' }}
                 />
                 <Button type="button" variant="outline" onClick={handleAvatarClick}>画像を変更</Button>
+                {errors.avatar && <p className="text-red-500 text-sm">{errors.avatar}</p>}
             </div>
 
             <FormField

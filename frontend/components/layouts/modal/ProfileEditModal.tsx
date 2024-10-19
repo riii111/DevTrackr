@@ -43,13 +43,25 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
         router.back();
     }, [router]);
 
-    const validateField = (name: keyof ProfileFormData, value: string) => {
+    const validateField = (name: keyof ProfileFormData, value: any) => {
         try {
-            profileSchema.shape[name].parse(value);
+            if (name === 'avatar') {
+                // アバターのバリデーション
+                if (value.size > 2 * 1024 * 1024) {
+                    throw new Error('ファイルサイズは2MB以下にしてください。');
+                }
+                if (!['image/jpeg', 'image/png', 'image/gif'].includes(value.type)) {
+                    throw new Error('JPG、PNG、GIF形式の画像のみ許可されています。');
+                }
+            } else {
+                profileSchema.shape[name].parse(value);
+            }
             setErrors(prev => ({ ...prev, [name]: undefined }));
         } catch (error) {
             if (error instanceof z.ZodError) {
                 setErrors(prev => ({ ...prev, [name]: error.errors[0]?.message }));
+            } else if (error instanceof Error) {
+                setErrors(prev => ({ ...prev, [name]: error.message }));
             }
         }
     };
@@ -76,6 +88,7 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
             setAvatarPreview(reader.result as string);
         };
         reader.readAsDataURL(file);
+        validateField('avatar', file);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -112,8 +125,12 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                     return acc;
                 }, {} as Partial<Record<keyof ProfileFormData, string>>);
                 setErrors(newErrors);
+                toast({
+                    title: 'プロフィールの更新に失敗しました',
+                    description: 'フォームの入力内容を確認してください。',
+                    variant: 'error',
+                });
             } else if (error instanceof ApiError) {
-                console.error('Profile update error:', error);
                 toast({
                     title: 'プロフィールの更新に失敗しました',
                     description: error.message,
