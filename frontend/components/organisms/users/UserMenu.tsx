@@ -55,7 +55,7 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
                     ) : (
                         <MdAccountCircle size={36} className="text-gray-500" />
                     )}
-                    <div className="text-left">
+                    <div className="text-left pr-4">
                         <p className="text-primary text-sm">{initialUserData.username}</p>
                         <p className="text-sm text-gray-400">{initialUserData.role}</p>
                     </div>

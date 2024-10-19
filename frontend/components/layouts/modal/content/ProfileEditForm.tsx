@@ -52,7 +52,7 @@ export default function ProfileEditForm({
         <div className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
                 <Avatar className="w-32 h-32">
-                    <AvatarImage src={user.avatar} alt="ユーザーアバター" />
+                    <AvatarImage src={user.avatar || ''} alt="ユーザーアバター" className="object-cover" />
                     <AvatarFallback>UN</AvatarFallback>
                 </Avatar>
                 <input
