@@ -5,7 +5,6 @@ import {
     DialogContent,
 } from '@/components/ui/dialog'
 import { useRouter } from "next/navigation";
-import { useDrawerStore } from "@/lib/store/useDrawerStore";
 import { CompanyWithProjects } from "@/types/company";
 import { ProjectDialogHeader } from "@/components/organisms/projects/ProjectDialog/content/ProjectDialogHeader";
 import { ProjectSelector } from "@/components/organisms/projects/ProjectDialog/content/ProjectSelector";
@@ -28,7 +27,6 @@ export const ProjectSelectDialog: React.FC<Props> = React.memo(({
     const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
     const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
-    const drawerStore = useDrawerStore();
 
     const handleProjectSelect = useCallback((projectId: string) => {
         setSelectedProjectId(projectId);
