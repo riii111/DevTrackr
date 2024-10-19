@@ -113,7 +113,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave 
                                         onChange={handleInputChange}
                                     />
                                 ) : (
-                                    `${editedProject.total_working_time}時間`
+                                    `${Math.floor(editedProject.total_working_time / 3600)}時間`
                                 )}
                             </dd>
                         </div>
