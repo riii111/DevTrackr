@@ -26,6 +26,7 @@ export function useUserApi() {
    * ユーザーを更新する関数
    */
   async function updateUser(userData: UpdateUserRequest): Promise<void> {
+    // TODO: PATCHに変更予定
     await customFetch<"PUT", UpdateUserRequest, void>(`${ENDPOINT}/me`, {
       method: "PUT",
       body: userData,

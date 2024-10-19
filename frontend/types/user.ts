@@ -22,7 +22,7 @@ export interface UpdateUserRequest {
   username: string;
   email: string;
   password?: string;
-  avatar?: string; // Base64エンコードされた画像データ or URL
+  avatar?: string | null; // null = アバターを削除する場合
   role?: UserRole;
 }
 
