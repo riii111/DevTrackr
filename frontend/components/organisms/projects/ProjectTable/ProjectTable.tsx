@@ -39,12 +39,12 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                 <TableBody>
                     {projects.map((project) => (
                         <TableRow
-                            key={project.id && typeof project.id === 'object' ? project.id.$oid : project.id}
+                            key={project.id.toString()}
                             className="group"
                         >
                             <TableCell className="relative p-0">
                                 <Link
-                                    href={`/dashboard/projects?projectId=${project.id && typeof project.id === 'object' ? project.id.$oid : project.id}`}
+                                    href={`/dashboard/projects?projectId=${project.id}`}
                                     className="flex items-center w-full h-full p-4 text-gray-900 hover:text-blue-600 transition-colors font-semibold"
                                 >
                                     <span>{project.title}</span>

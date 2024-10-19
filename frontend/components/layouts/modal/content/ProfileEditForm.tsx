@@ -90,13 +90,6 @@ const RoleSelect = memo(({ role, onRoleChange, error }: {
 ));
 RoleSelect.displayName = 'RoleSelect';
 
-const PasswordChangeButton = memo(() => (
-    <div className="space-y-2">
-        <Button variant="outline" className="w-full">パスワードを変更</Button>
-    </div>
-));
-PasswordChangeButton.displayName = 'PasswordChangeButton';
-
 export default function ProfileEditForm({
     user,
     errors,
@@ -144,8 +137,6 @@ export default function ProfileEditForm({
                 onRoleChange={onRoleChange}
                 error={errors.role}
             />
-
-            <PasswordChangeButton />
         </div>
     );
 }

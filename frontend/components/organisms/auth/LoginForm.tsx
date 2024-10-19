@@ -79,6 +79,7 @@ const LoginForm: React.FC = () => {
                     label="メールアドレス"
                     placeholder="your@email.com"
                     required={true}
+                    value=''
                 />
                 <FormField
                     id="password"
@@ -86,6 +87,7 @@ const LoginForm: React.FC = () => {
                     type="password"
                     label="パスワード"
                     required={true}
+                    value=''
                 />
                 <Button type="submit" className="w-full hover:text-accent" disabled={isLoading}>
                     {isLoading ? 'ログイン中...' : 'ログイン'}

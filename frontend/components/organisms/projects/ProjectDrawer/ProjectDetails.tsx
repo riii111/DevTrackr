@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon, CheckIcon, XIcon } from 'lucide-react';
 import { statusColors } from "@/lib/constants/ProjectStatusColors";
-import { ProjectStatus } from "@/types/project";
+import { Project, ProjectStatus } from "@/types/project";
 
 interface ProjectDetailsProps {
     project: any;
@@ -33,7 +33,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setEditedProject(prev => ({ ...prev, [name]: value }));
+        setEditedProject((prev: Project) => ({ ...prev, [name]: value }));
     };
 
     return (
