@@ -2,8 +2,9 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { FaTasks } from "react-icons/fa";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { BiAnalyse } from "react-icons/bi";
+import { BsBuildings } from "react-icons/bs";
 // import { FaMoneyBillTrendUp } from "react-icons/fa6";
-import { MdRateReview } from "react-icons/md";
+// import { MdRateReview } from "react-icons/md";
 import { MdDashboardCustomize } from "react-icons/md";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,9 +18,14 @@ const LayoutDashboardNavigation = () => {
             icon: <LuLayoutDashboard />,
         },
         {
-            name: "プロジェクト",
+            name: "プロジェクト一覧",
             path: "/dashboard/projects",
             icon: <FaTasks />,
+        },
+        {
+            name: "企業一覧",
+            path: "/dashboard/companies",
+            icon: <BsBuildings />,
         },
         {
             name: "カレンダー",
