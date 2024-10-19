@@ -9,7 +9,7 @@ interface FormFieldProps {
     label: string;
     placeholder?: string;
     required?: boolean;
-    value: string;
+    value?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
     error?: string;
@@ -27,6 +27,8 @@ const FormField: React.FC<FormFieldProps> = ({
     onBlur,
     error
 }) => {
+    const initialValue = value !== undefined ? { value } : {};
+
     return (
         <div className="space-y-2">
             <Label htmlFor={id}>{label}</Label>
@@ -36,9 +38,9 @@ const FormField: React.FC<FormFieldProps> = ({
                 type={type}
                 placeholder={placeholder}
                 required={required}
-                value={value}
                 onChange={onChange}
                 onBlur={onBlur}
+                {...initialValue}
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
         </div>
