@@ -26,7 +26,7 @@ interface CompanyTableProps {
 
 export const CompanyTable: React.FC<CompanyTableProps> = ({ companies }) => {
     if (!companies || companies.length === 0) {
-        return <p>企業がありません。</p>;
+        return <p>企業データがありません。</p>;
     }
 
     const formatEmployeeCount = (count: number) => {
