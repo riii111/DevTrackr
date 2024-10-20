@@ -122,8 +122,12 @@ const DrawerProviderContent: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const syncDrawerWithUrl = () => {
       const projectId = searchParams.get('projectId');
+      const companyId = searchParams.get('companyId');
+
       if (projectId) {
         dispatch({ type: "OPEN_DRAWER", drawer: 'main', id: projectId, dataType: 'project' });
+      } else if (companyId) {
+        dispatch({ type: "OPEN_DRAWER", drawer: 'main', id: companyId, dataType: 'company' });
       } else {
         dispatch({ type: "CLOSE_DRAWER", drawer: 'main' });
       }
@@ -147,7 +151,11 @@ const DrawerProviderContent: React.FC<{ children: React.ReactNode }> = ({
     async (drawerType: DrawerType) => {
       if (drawerType === "main") {
         const params = new URLSearchParams(searchParams);
-        params.delete("projectId");
+        if (params.get("projectId")) {
+          params.delete("projectId");
+        } else if (params.get("companyId")) {
+          params.delete("companyId");
+        }
         await router.push(`${pathname}?${params.toString()}`);
       }
     },
