@@ -6,7 +6,7 @@ import { ProjectDrawerToolbar } from "@/components/organisms/projects/ProjectDra
 import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
 import useSWR from "swr";
 import { ErrorAlert } from "@/components/organisms/projects/ProjectDrawer/content/ErrorAlert"
-import { ProjectDetails } from "@/components/organisms/projects/ProjectDrawer/ProjectDetails"
+import { ProjectDetails } from "@/components/organisms/projects/ProjectDrawer/content/ProjectDetails"
 import { LoadingSkeleton } from "@/components/organisms/projects/ProjectDrawer/content/LoadingSkeleton"
 
 interface Props {
