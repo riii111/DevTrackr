@@ -1,5 +1,5 @@
 import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
-import { CompanyTable } from "./CompanyTable";
+import { CompanyTable } from "@/components/organisms/companies/Table/CompanyTable";
 const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
 
 export default async function CompaniesPage() {

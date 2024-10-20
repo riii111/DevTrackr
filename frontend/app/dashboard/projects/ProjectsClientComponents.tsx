@@ -14,7 +14,7 @@ import { CompanyWithProjects } from "@/types/company";
 //     }
 // );
 
-const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/content/ProjectDrawer").then(mod => mod.ProjectDrawer), {
+const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/ProjectDrawer").then(mod => mod.ProjectDrawer), {
     ssr: false,
 });
 
