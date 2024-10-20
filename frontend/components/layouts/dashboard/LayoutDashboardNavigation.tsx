@@ -8,7 +8,7 @@ import { BsBuildings } from "react-icons/bs";
 import { MdDashboardCustomize } from "react-icons/md";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ActiveLink from "@/components/atoms/core/ActiveLink";
+import ActiveLink from "@/components/core/ActiveLink";
 
 const LayoutDashboardNavigation = () => {
     const dashboard = [

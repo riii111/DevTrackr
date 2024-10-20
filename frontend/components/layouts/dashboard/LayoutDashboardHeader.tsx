@@ -1,9 +1,8 @@
 import dynamic from 'next/dynamic';
-import UserMenu from '@/components/organisms/users/UserMenu';
+import UserMenu from '@/components/features/users/menu/UserMenu';
 import { useUserApi } from '@/lib/hooks/useUserApi';
-import { User } from '@/types/user';
 
-const DynamicPageTitle = dynamic(() => import('@/components/molecules/PageTitle'), {
+const DynamicPageTitle = dynamic(() => import('@/components/core/PageTitle'), {
     ssr: false,
     loading: () => <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
 });

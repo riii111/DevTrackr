@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from "react";
-import AtomsButtonWithIcon from "@/components/atoms/button/AtomsButtonWithIcon";
+import AtomsButtonWithIcon from "@/components/core/AtomsButtonWithIcon";
 import { GoPlus } from "react-icons/go";
 import { useDrawerStore } from "@/lib/store/useDrawerStore";
 import { CompanyWithProjects } from "@/types/company";
@@ -14,7 +14,7 @@ import { CompanyWithProjects } from "@/types/company";
 //     }
 // );
 
-const ProjectDrawer = dynamic(() => import("@/components/organisms/projects/ProjectDrawer/ProjectDrawer").then(mod => mod.ProjectDrawer), {
+const ProjectDrawer = dynamic(() => import("@/components/features/projects/Drawer/ProjectDrawer").then(mod => mod.ProjectDrawer), {
     ssr: false,
 });
 

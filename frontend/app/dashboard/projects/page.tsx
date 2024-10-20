@@ -1,7 +1,7 @@
 import ProjectsClientComponents from "@/app/dashboard/projects/ProjectsClientComponents";
 import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
 import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
-import { ProjectTable } from "@/components/organisms/projects/ProjectTable/ProjectTable";
+import { ProjectTable } from "@/components/features/projects/Table/ProjectTable";
 
 const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
 

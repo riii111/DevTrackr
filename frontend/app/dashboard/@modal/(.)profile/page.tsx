@@ -1,5 +1,5 @@
 
-import ProfileEditModal from '@/components/layouts/modal/ProfileEditModal';
+import ProfileEditModal from '@/components/features/users/modal/ProfileEditModal';
 import { useUserApi } from '@/lib/hooks/useUserApi';
 
 export default async function ProfileEditPage() {
