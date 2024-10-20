@@ -1,5 +1,5 @@
-import LayoutDashboardNavigation from "@/components/layouts/dashboard/LayoutDashboardNavigation";
-import LayoutDashboardHeader from "@/components/layouts/dashboard/LayoutDashboardHeader";
+import LayoutDashboardNavigation from "@/components/layouts/LayoutDashboardNavigation";
+import LayoutDashboardHeader from "@/components/layouts/LayoutDashboardHeader";
 import { DrawerProvider } from "@/lib/store/useDrawerStore";
 
 export default async function DashboardLayout({

@@ -37,16 +37,6 @@ const LayoutDashboardNavigation = () => {
             path: "/dashboard/skill-analysis",
             icon: <BiAnalyse />,
         },
-        // {
-        //     name: "収益・時給管理",
-        //     path: "/dashboard/revenue",
-        //     icon: <FaMoneyBillTrendUp />,
-        // },
-        // {
-        //     name: "振り返り",
-        //     path: "/dashboard/retrospective",
-        //     icon: <MdRateReview />,
-        // },
     ];
 
     return (
