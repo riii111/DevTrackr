@@ -1,3 +1,5 @@
+# Actix-web Server Architecture
+
 ```mermaid
 graph TD
     A[Client] -->|HTTP Request| B[Actix-web Server]
@@ -7,10 +9,6 @@ graph TD
     E <-->|Domain Logic| F[models]
     F <-->|Data Structure| G[repositories]
     G <-->|Data Access| H[Database]
-
-    K[main.rs] -->|Initialize| B
-    K -->|Create| M[RedisClient]
-    K -->|Create| N[RateLimiter]
 
     B -->|Apply Middleware| N
     N -->|Check Rate| M
@@ -23,8 +21,8 @@ graph TD
     subgraph "Application Layer"
     D
     E
-    N
-    M
+    N[RateLimiter]
+    M[RedisClient]
     end
 
     subgraph "Domain Layer"
