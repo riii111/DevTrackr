@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon, CheckIcon, XIcon } from 'lucide-react';
-import { statusColors } from "@/lib/constants/ProjectStatusColors";
 import { Project, ProjectStatus } from "@/types/project";
+import { StatusBadge } from "@/components/atoms/StatusBadge";
 
 interface ProjectDetailsProps {
     project: any;
@@ -51,9 +50,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave 
                         editedProject.title
                     )}
                 </CardTitle>
-                <Badge className={statusColors[project.status as ProjectStatus]}>
-                    {project.status}
-                </Badge>
+                <StatusBadge status={project.status as ProjectStatus} />
             </CardHeader>
             <CardContent>
                 <dl className="space-y-4">

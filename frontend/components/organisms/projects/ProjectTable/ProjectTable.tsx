@@ -6,13 +6,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { MdChevronRight } from 'react-icons/md';
 import Link from 'next/link';
 import { Project, ProjectStatus } from "@/types/project";
-import { statusColors } from "@/lib/constants/ProjectStatusColors";
 import { SkillIcon } from "@/components/atoms/SkillIcon";
 import { TruncatedText } from "@/components/atoms/TruncatedText";
+import { StatusBadge } from "@/components/atoms/StatusBadge";
 
 interface ProjectTableProps {
     projects: Project[];
@@ -40,7 +39,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                     {projects.map((project) => (
                         <TableRow
                             key={project.id.toString()}
-                            className="group"
+                            className="group hover:bg-gray-50 transition-colors"
                         >
                             <TableCell className="relative p-0">
                                 <Link
@@ -63,9 +62,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                             </TableCell>
                             <TableCell>{project.hourly_pay ? `¥${project.hourly_pay}` : "-"}</TableCell>
                             <TableCell>
-                                <Badge className={statusColors[project.status as ProjectStatus]}>
-                                    {project.status}
-                                </Badge>
+                                <StatusBadge status={project.status as ProjectStatus} />
                             </TableCell>
                             <TableCell>{Math.floor(project.total_working_time / 3600)}時間</TableCell>
                         </TableRow>
