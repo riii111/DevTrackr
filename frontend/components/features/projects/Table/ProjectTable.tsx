@@ -12,6 +12,7 @@ import { Project, ProjectStatus } from "@/types/project";
 import { SkillIcon } from "@/components/core/SkillIcon";
 import { TruncatedText } from "@/components/core/TruncatedText";
 import { StatusBadge } from "@/components/core/StatusBadge";
+import { WorkLogButton } from "@/components/features/work-logs/Button/WorkLogButton";
 
 interface ProjectTableProps {
     projects: Project[];
@@ -65,6 +66,9 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                                 <StatusBadge status={project.status as ProjectStatus} />
                             </TableCell>
                             <TableCell>{Math.floor(project.total_working_time / 3600)}時間</TableCell>
+                            <TableCell>
+                                <WorkLogButton projectId={project.id} />
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
