@@ -17,12 +17,17 @@
 - データベース: MongoDB
 - プロキシ: Traefik
 
-## 構築
+## ビルド〜起動まで
 
 `make build`
 
-`make up`
+`make up`　←apiコンテナのビルド完了待つ
 
+`cd frontend`
+
+`yarn build`
+
+`yarn start`
 ## アクセス先
 
 1. <http://localhost/docs/#/>
