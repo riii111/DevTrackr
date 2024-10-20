@@ -8,8 +8,8 @@ import { Project, ProjectStatus } from "@/types/project";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 
 interface ProjectDetailsProps {
-    project: any;
-    onSave: (updatedProject: any) => void;
+    project: Project;
+    onSave: (updatedProject: Project) => void;
 }
 
 export const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onSave }) => {
