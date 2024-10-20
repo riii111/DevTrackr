@@ -1,7 +1,7 @@
 import { customFetch } from "@/lib/api/core";
 import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
 
-const AUTH_ENDPOINT = "/auth";
+const ENDPOINT = "/auth";
 
 export function useAuthApi() {
   return {
@@ -19,7 +19,7 @@ export function useAuthApi() {
       "POST",
       { email: string; password: string },
       AuthResponse
-    >(`${AUTH_ENDPOINT}/login/`, {
+    >(`${ENDPOINT}/login/`, {
       method: "POST",
       body: { email, password },
       credentials: "include",
@@ -31,7 +31,7 @@ export function useAuthApi() {
    * ユーザーログアウト関数
    */
   async function logout(): Promise<void> {
-    await customFetch(`${AUTH_ENDPOINT}/logout/`, {
+    await customFetch(`${ENDPOINT}/logout/`, {
       method: "POST",
       credentials: "include",
     });
@@ -49,7 +49,7 @@ export function useAuthApi() {
       "POST",
       { username: string; email: string; password: string },
       AuthTokenCreatedResponse
-    >(`${AUTH_ENDPOINT}/register/`, {
+    >(`${ENDPOINT}/register/`, {
       method: "POST",
       body: { username, email, password },
       credentials: "include",
@@ -68,7 +68,7 @@ export function useAuthApi() {
 // ミドルウェアやcore.tsで使用するために個別にエクスポート
 export async function refreshAccessToken(headers: Headers): Promise<string> {
   const response = await customFetch<"POST", never, { access_token: string }>(
-    `${AUTH_ENDPOINT}/refresh/`,
+    `${ENDPOINT}/refresh/`,
     {
       method: "POST",
       headers: headers,

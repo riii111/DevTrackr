@@ -1,6 +1,5 @@
 import { customFetch } from "@/lib/api/core";
 import {
-  Company,
   CreateCompanyRequest,
   UpdateCompanyRequest,
   CompanyResponse,
@@ -9,7 +8,7 @@ import {
   CreateCompanyResponse,
 } from "@/types/company";
 
-const ENDPOINT = "/companies/";
+const ENDPOINT = "/companies";
 
 export function useCompaniesApi() {
   return {
@@ -41,7 +40,7 @@ export function useCompaniesApi() {
       "GET",
       undefined,
       CompaniesWithProjectsResponse
-    >(`${ENDPOINT}with-projects/`, {
+    >(`${ENDPOINT}/with-projects/`, {
       method: "GET",
     });
     return response;
@@ -81,13 +80,12 @@ export function useCompaniesApi() {
    * 特定の企業を取得する関数
    */
   async function getCompanyById(id: string): Promise<CompanyResponse> {
-    const response = await customFetch<
-      "GET",
-      Record<string, never>,
-      CompanyResponse
-    >(`${ENDPOINT}/${id}/`, {
-      method: "GET",
-    });
+    const response = await customFetch<"GET", undefined, CompanyResponse>(
+      `${ENDPOINT}/${id}/`,
+      {
+        method: "GET",
+      }
+    );
     return response;
   }
 }

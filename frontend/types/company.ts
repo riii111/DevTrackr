@@ -94,11 +94,6 @@ export interface CreateCompanyResponse {
   id: string;
 }
 
-export interface CompanyResponse {
-  company: Company;
-}
+export type CompanyResponse = Company;
 
-export interface CompaniesResponse {
-  companies: Company[];
-  // total: number;
-}
+export type CompaniesResponse = Company[];
