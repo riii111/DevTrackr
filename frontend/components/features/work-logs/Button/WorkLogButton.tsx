@@ -14,7 +14,6 @@ export const WorkLogButton: React.FC<WorkLogButtonProps> = React.memo(({ project
     const { dispatch } = useWorkLog();
 
     const handleClick = React.useCallback(() => {
-        console.log("called handleClick worklog button!!")
         dispatch({ type: 'OPEN_WORK_LOG', projectId });
     }, [dispatch, projectId]);
 
