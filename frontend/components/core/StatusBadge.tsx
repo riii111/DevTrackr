@@ -33,7 +33,7 @@ interface StatusBadgeProps {
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     return (
-        <Badge className={`${statusColors[status]} px-2 py-1 rounded-full text-xs font-medium`}>
+        <Badge className={`${statusColors[status]} px-2 py-1 rounded-full text-xs font-bold`}>
             {statusLabels[status]}
         </Badge>
     );
