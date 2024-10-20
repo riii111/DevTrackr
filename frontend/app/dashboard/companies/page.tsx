@@ -1,5 +1,5 @@
 import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
-import { CompanyTable } from "@/components/organisms/companies/Table/CompanyTable";
+import { CompanyTable } from "@/components/features/companies/Table/CompanyTable";
 import CompaniesClientComponents from "@/app/dashboard/companies/CompaniesClientComponents";
 
 const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
