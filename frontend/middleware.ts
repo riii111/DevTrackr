@@ -21,9 +21,14 @@ export async function middleware(request: NextRequest) {
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     let accessToken = request.cookies.get("access_token");
 
-    if (!accessToken || !accessToken.value) {
+    // アクセストークンが存在しない、または無効（期限切れを含む）の場合
+    if (
+      !accessToken ||
+      !accessToken.value ||
+      isTokenExpired(accessToken.value)
+    ) {
       try {
-        // リフレッシュトークンを含むCookieを転送
+        // リフレッシュトークンを使用してアクセストークンを更新
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh/`,
           {
@@ -31,31 +36,37 @@ export async function middleware(request: NextRequest) {
             headers: {
               Cookie: request.headers.get("cookie") || "",
             },
-            credentials: "include",
           }
         );
 
         if (response.ok) {
-          const newResponse = NextResponse.next();
-          // TODO: 再度見直し. バックエンド側でセットしてるけど反映されないのでセットしている.
-          newResponse.cookies.set("access_token", await response.text(), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-          });
-          return newResponse;
+          return NextResponse.next();
         } else {
-          // エラーは握りつぶした上で、ログイン画面にリダイレクト
+          // リフレッシュに失敗した場合、ログイン画面にリダイレクト
           return NextResponse.redirect(new URL("/auth", request.url));
         }
       } catch (error) {
-        // エラーは握りつぶした上で、ログイン画面にリダイレクト
+        // エラーの場合、ログイン画面にリダイレクト
         return NextResponse.redirect(new URL("/auth", request.url));
       }
     }
   }
 
   return NextResponse.next();
+}
+
+// トークンが期限切れかどうかを確認する関数
+function isTokenExpired(token: string): boolean {
+  console.log("isTokenExpired called");
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000; // JWTの有効期限はUNIXタイムスタンプ（秒）なので、ミリ秒に変換
+    console.log("exp:", exp);
+    return Date.now() >= exp;
+  } catch (error) {
+    console.error("Token validation error:", error);
+    return true; // エラーが発生した場合は、安全のためトークンを期限切れとみなす
+  }
 }
 
 // ミドルウェアを適用するルートを指定
