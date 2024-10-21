@@ -8,7 +8,6 @@ export function useAuthApi() {
     login,
     logout,
     register,
-    refreshAccessToken,
   };
 
   /**
@@ -56,24 +55,4 @@ export function useAuthApi() {
     });
     return response;
   }
-
-  /**
-   * アクセストークンリフレッシュ関数
-   */
-  async function refreshAccessToken(): Promise<string> {
-    return refreshAccessToken();
-  }
-}
-
-// ミドルウェアやcore.tsで使用するために個別にエクスポート
-export async function refreshAccessToken(headers: Headers): Promise<string> {
-  const response = await customFetch<"POST", never, { access_token: string }>(
-    `${ENDPOINT}/refresh/`,
-    {
-      method: "POST",
-      headers: headers,
-      credentials: "include",
-    }
-  );
-  return response.access_token;
 }
