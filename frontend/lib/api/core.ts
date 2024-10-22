@@ -116,11 +116,15 @@ export async function customFetch<
           ...authHeader,
         });
         fetchOptions.headers = headers;
-        return fetch(url, fetchOptions);
+        const retryResponse = await fetch(url, fetchOptions);
+        if (retryResponse.status === 401) {
+          // 再試行しても401の場合、認証画面にリダイレクト
+          redirectToAuth();
+        }
+        return retryResponse;
       } else {
-        throw new Error(
-          "リフレッシュトークンが無効です。再度ログインしてください。"
-        );
+        // リフレッシュトークンの更新に失敗した場合、認証画面にリダイレクト
+        redirectToAuth();
       }
     }
     return response;
@@ -137,36 +141,50 @@ export async function customFetch<
     return handleResponse(response);
   } catch (error) {
     handleFetchError(error);
-    if (
-      error instanceof Error &&
-      error.message ===
-        "リフレッシュトークンが無効です。再度ログインしてください。"
-    ) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth";
-      } else {
-        redirect("/auth");
-      }
-    }
     throw error;
   }
 }
 
 async function refreshAccessToken(): Promise<boolean> {
-  // 循環参照を防ぐため、customFetchは使わない
   try {
     console.log("Refreshing access token...");
-    console.log("Cookies being sent:", document.cookie);
-    const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+
+    let fetchOptions: RequestInit = {
       method: "POST",
-      credentials: "include",
-    });
-    console.log("Refresh response status:", response.status);
-    console.log("Refresh response headers:", response.headers);
+    };
+
+    if (typeof window === "undefined") {
+      // サーバーサイド
+      const { cookies } = await import("next/headers");
+      fetchOptions.headers = {
+        Cookie: cookies().toString(),
+      };
+    } else {
+      // クライアントサイド
+      fetchOptions.credentials = "include";
+    }
+    // 循環参照を防ぐため、customFetchは使わない
+    const response = await fetch(`${API_BASE_URL}/auth/refresh/`, fetchOptions);
     return response.ok;
   } catch (error) {
     console.error("Token refresh error:", error);
     return false;
+  }
+}
+
+function redirectToAuth() {
+  if (typeof window !== "undefined") {
+    // クライアントサイド
+    window.location.href = "/auth";
+    // TODO: 以下のtoastの動作未確認
+    toast({
+      variant: "error",
+      title: "エラー",
+      description: "認証に失敗しました。再度ログインしてください。",
+    });
+  } else {
+    // サーバーサイド
+    redirect("/auth");
   }
 }
 
