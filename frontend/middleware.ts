@@ -21,9 +21,10 @@ export async function middleware(request: NextRequest) {
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     let accessToken = request.cookies.get("access_token");
 
+    // アクセストークンが存在しない、または無効（期限切れを含む）の場合
     if (!accessToken || !accessToken.value) {
       try {
-        // リフレッシュトークンを含むCookieを転送
+        // リフレッシュトークンを使用してアクセストークンを更新
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh/`,
           {
@@ -31,25 +32,17 @@ export async function middleware(request: NextRequest) {
             headers: {
               Cookie: request.headers.get("cookie") || "",
             },
-            credentials: "include",
           }
         );
 
         if (response.ok) {
-          const newResponse = NextResponse.next();
-          // TODO: 再度見直し. バックエンド側でセットしてるけど反映されないのでセットしている.
-          newResponse.cookies.set("access_token", await response.text(), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-          });
-          return newResponse;
+          return NextResponse.next();
         } else {
-          // エラーは握りつぶした上で、ログイン画面にリダイレクト
+          // リフレッシュに失敗した場合、ログイン画面にリダイレクト
           return NextResponse.redirect(new URL("/auth", request.url));
         }
       } catch (error) {
-        // エラーは握りつぶした上で、ログイン画面にリダイレクト
+        // エラーの場合、ログイン画面にリダイレクト
         return NextResponse.redirect(new URL("/auth", request.url));
       }
     }
