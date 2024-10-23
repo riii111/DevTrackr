@@ -36,6 +36,9 @@ export class ApiError extends Error {
   }
 }
 
+// サーバーサイドかクライアントサイドか
+const isServerSide = typeof window === "undefined";
+
 // カスタムフェッチ関数
 export async function customFetch<
   M extends HttpMethod,
@@ -65,7 +68,7 @@ export async function customFetch<
   let url = `${API_BASE_URL}${endpoint}${endpoint.endsWith("/") ? "" : "/"}`;
 
   async function getAuthHeader(): Promise<Record<string, string>> {
-    if (typeof window === "undefined") {
+    if (isServerSide) {
       const { getServerSideAuthHeader } = await import(
         "@/lib/utils/cookiesForServer"
       );
@@ -116,15 +119,22 @@ export async function customFetch<
           ...authHeader,
         });
         fetchOptions.headers = headers;
+        // TODO: 新しいアクセストークンを反映してリクエストできないので別途調査
         const retryResponse = await fetch(url, fetchOptions);
         if (retryResponse.status === 401) {
-          // 再試行しても401の場合、認証画面にリダイレクト
-          redirectToAuth();
+          // 再試行しても401の場合、認証エラーを投げる
+          throw new ApiError(
+            401,
+            "認証に失敗しました。再度ログインしてください。"
+          );
         }
         return retryResponse;
       } else {
-        // リフレッシュトークンの更新に失敗した場合、認証画面にリダイレクト
-        redirectToAuth();
+        // リフレッシュトークンの更新に失敗した場合、認証エラーを投げる
+        throw new ApiError(
+          401,
+          "認証に失敗しました。再度ログインしてください。"
+        );
       }
     }
     return response;
@@ -153,7 +163,7 @@ async function refreshAccessToken(): Promise<boolean> {
       method: "POST",
     };
 
-    if (typeof window === "undefined") {
+    if (isServerSide) {
       // サーバーサイド
       const { cookies } = await import("next/headers");
       fetchOptions.headers = {
@@ -173,7 +183,10 @@ async function refreshAccessToken(): Promise<boolean> {
 }
 
 function redirectToAuth() {
-  if (typeof window !== "undefined") {
+  if (isServerSide) {
+    // サーバーサイド
+    redirect("/auth");
+  } else {
     // クライアントサイド
     window.location.href = "/auth";
     // TODO: 以下のtoastの動作未確認
@@ -182,9 +195,6 @@ function redirectToAuth() {
       title: "エラー",
       description: "認証に失敗しました。再度ログインしてください。",
     });
-  } else {
-    // サーバーサイド
-    redirect("/auth");
   }
 }
 
@@ -204,7 +214,7 @@ async function handleResponse(response: Response): Promise<any> {
 function handleFetchError(error: unknown) {
   if (error instanceof ApiError) {
     const message = `${error.status}: ${error.message}`;
-    if (typeof window !== "undefined") {
+    if (!isServerSide) {
       // クライアントサイドの場合はtoastを使用
       toast({
         variant: "error",
@@ -215,9 +225,13 @@ function handleFetchError(error: unknown) {
       // サーバーサイドの場合はコンソールにエラーを出力
       console.error("API Error:", message);
     }
+    // 401エラーの場合は認証画面にリダイレクト
+    if (error.status === 401) {
+      redirectToAuth();
+    }
   } else {
     const message = "予期せぬエラーが発生しました。";
-    if (typeof window !== "undefined") {
+    if (!isServerSide) {
       // クライアントサイドの場合はtoastを使用
       toast({
         variant: "error",
