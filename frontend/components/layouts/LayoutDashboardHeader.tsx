@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import UserMenu from '@/components/features/users/menu/UserMenu';
-import { useUserApi } from '@/lib/hooks/useUserApi';
+import { getMeDetails } from '@/lib/api/user';
 
 const DynamicPageTitle = dynamic(() => import('@/components/core/PageTitle'), {
     ssr: false,
@@ -8,7 +8,6 @@ const DynamicPageTitle = dynamic(() => import('@/components/core/PageTitle'), {
 });
 
 const LayoutDashboardHeader = async () => {
-    const { getMeDetails } = useUserApi();
     const userResponse = await getMeDetails();
 
     return (

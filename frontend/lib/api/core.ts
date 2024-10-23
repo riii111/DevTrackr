@@ -26,6 +26,7 @@ interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
   params?: FetchParams<T, M>;
   body?: FetchBody<T, M>;
   cache?: RequestCache;
+  next?: Record<string, unknown>;
 }
 
 // APIエラーを表すカスタムエラークラス
@@ -53,6 +54,7 @@ export async function customFetch<
     body,
     params,
     cache = "no-cache",
+    next,
   }: IFetchOptions<
     RequestInput extends Record<string, any>
       ? RequestInput
@@ -94,6 +96,7 @@ export async function customFetch<
     cache,
     mode: "cors",
     credentials,
+    next, // Next.js specific options
   };
 
   if (body) {
