@@ -32,8 +32,10 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
 
     useEffect(() => {
         if (initialUser.avatar_url) {
-            // MinIOサーバーの公開アドレスに変更
-            const publicUrl = initialUser.avatar_url.replace('minio:9000', 'localhost:9000');
+            const publicUrl = initialUser.avatar_url.replace(
+                'minio:9000',
+                process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL?.replace('http://', '') || 'localhost:9000'
+            );
             setAvatarPreview(publicUrl);
         }
     }, [initialUser.avatar_url]);

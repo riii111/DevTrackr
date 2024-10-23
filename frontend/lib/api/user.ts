@@ -11,6 +11,16 @@ export async function getMeDetails(): Promise<UserResponse> {
       next: { tags: ["user-profile"] },
     }
   );
+
+  // avatar_urlを変換
+  if (response.avatar_url) {
+    response.avatar_url = response.avatar_url.replace(
+      "minio:9000",
+      process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL?.replace("http://", "") ||
+        "localhost:9000"
+    );
+  }
+
   return response;
 }
 
