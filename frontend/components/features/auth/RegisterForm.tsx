@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/core/FormField';
-import { useAuthApi } from '@/lib/hooks/useAuthApi';
+import { registerAction, RegisterActionResult } from '@/lib/actions/auth';
 
 const registerSchema = z.object({
     name: z.string().min(1, '名前を入力してください'),
@@ -16,23 +16,13 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
-    const { register } = useAuthApi();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
-
-        // エラーメッセージをクリアするイベントを発火
-        window.dispatchEvent(new CustomEvent('clearAuthError'));
-
-        // フォームフィールドの customValidity をクリア
-        const formElements = event.currentTarget.elements;
-        Array.from(formElements).forEach((element) => {
-            if (element instanceof HTMLInputElement) {
-                element.setCustomValidity('');
-            }
-        });
+        setError(null);
 
         const formData = new FormData(event.currentTarget);
         const rawData = {
@@ -43,31 +33,24 @@ const RegisterForm: React.FC = () => {
 
         try {
             const validatedData = registerSchema.parse(rawData);
-            await registerUser(validatedData);
-            router.push('/dashboard');
+            const result: RegisterActionResult = await registerAction(
+                validatedData.name,
+                validatedData.email,
+                validatedData.password
+            );
+
+            if (!result.success) {
+                setError(result.error || "アカウント登録に失敗しました。");
+            }
+            // 成功時はサーバーサイドでリダイレクトされるため、ここでは何もしない
         } catch (error) {
             if (error instanceof z.ZodError) {
-                // フォームバリデーションエラーの処理
-                error.errors.forEach(err => {
-                    const field = document.getElementById(err.path[0] as string);
-                    if (field instanceof HTMLInputElement) {
-                        field.setCustomValidity(err.message);
-                        field.reportValidity();
-                    }
-                });
-            } else if (error instanceof Error) {
-                window.dispatchEvent(new CustomEvent('authError', { detail: error }));
+                setError(error.errors[0].message);
+            } else {
+                setError("予期せぬエラーが発生しました。");
             }
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const registerUser = async (data: RegisterFormData) => {
-        try {
-            await register(data.name, data.email, data.password);
-        } catch (error) {
-            throw new Error('アカウント登録に失敗しました');
         }
     };
 
