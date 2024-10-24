@@ -5,6 +5,7 @@ import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
 import { proxyServerCookies } from "@/lib/utils/cookiesForServer";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 const ENDPOINT = "/auth";
 
@@ -25,11 +26,12 @@ export async function loginAction(
   email: string,
   password: string
 ): Promise<LoginActionResult> {
+  let redirectFlag = false;
   try {
     // セキュリティ対策としてサーバーサイドでもバリデーション
     loginSchema.parse({ email, password });
 
-    const { headers } = await customFetch<
+    const { data, headers } = await customFetch<
       "POST",
       { email: string; password: string },
       AuthResponse
@@ -41,19 +43,20 @@ export async function loginAction(
     // レスポンスヘッダーからCookieを設定
     await proxyServerCookies(headers);
 
-    // サーバ側でリダイレクトすれば追加のラウンドトリップは不要、早く到達する
-    redirect("/dashboard");
-
-    return { success: true };
+    redirectFlag = true;
   } catch (error) {
-    console.error("ログインに失敗しました", error);
+    console.error("ログインに失敗しました: ", error);
     if (error instanceof z.ZodError) {
       return { success: false, error: "入力内容が正しくありません。" };
-    } else if (error instanceof Error) {
-      return { success: false, error: error.message };
+    } else {
+      return { success: false, error: "予期せぬエラーが発生しました。" };
     }
-    return { success: false, error: "予期せぬエラーが発生しました。" };
   }
+  if (redirectFlag) {
+    // サーバ側でリダイレクトすれば追加のラウンドトリップは発生せず、早く到達する
+    redirect("/dashboard");
+  }
+  return { success: true };
 }
 
 const registerSchema = z.object({
@@ -99,9 +102,8 @@ export async function registerAction(
     console.error("アカウント登録に失敗しました", error);
     if (error instanceof z.ZodError) {
       return { success: false, error: "入力内容が正しくありません。" };
-    } else if (error instanceof Error) {
-      return { success: false, error: error.message };
+    } else {
+      return { success: false, error: "予期せぬエラーが発生しました。" };
     }
-    return { success: false, error: "予期せぬエラーが発生しました。" };
   }
 }

@@ -29,15 +29,16 @@ const LoginForm: React.FC = () => {
 
         try {
             const validatedData = loginSchema.parse(rawData);
-            const result: LoginActionResult = await loginAction(
+            const result = await loginAction(
                 validatedData.email,
                 validatedData.password
             );
 
-            if (!result.success) {
+            // リダイレクトの場合はresultが一瞬undefinedになる
+            if (result && !result.success) {
+                console.log("ログインに失敗しました。", result.error);
                 setError(result.error || "ログインに失敗しました。");
             }
-            // 成功時はサーバーサイドでリダイレクトされるため、ここでは何もしない
         } catch (error) {
             if (error instanceof z.ZodError) {
                 setError(error.errors[0].message);
