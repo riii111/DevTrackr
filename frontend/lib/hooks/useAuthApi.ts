@@ -5,26 +5,8 @@ const ENDPOINT = "/auth";
 
 export function useAuthApi() {
   return {
-    login,
     logout,
-    register,
   };
-
-  /**
-   * ユーザーログイン関数
-   */
-  async function login(email: string, password: string): Promise<AuthResponse> {
-    const response = await customFetch<
-      "POST",
-      { email: string; password: string },
-      AuthResponse
-    >(`${ENDPOINT}/login/`, {
-      method: "POST",
-      body: { email, password },
-      credentials: "include",
-    });
-    return response;
-  }
 
   /**
    * ユーザーログアウト関数

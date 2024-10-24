@@ -1,76 +1,57 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { z } from 'zod';
+import { useState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import FormField from '@/components/core/FormField';
-import { useAuthApi } from '@/lib/hooks/useAuthApi';
+import FormField from "@/components/core/FormField";
+import { loginAction, LoginActionResult } from "@/lib/actions/auth";
 
 const loginSchema = z.object({
-    email: z.string().email('有効なメールアドレスを入力してください'),
-    password: z.string().min(8, 'パスワードは8文字以上である必要があります'),
+    email: z.string().email("有効なメールアドレスを入力してください"),
+    password: z.string().min(8, "パスワードは8文字以上である必要があります"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { login } = useAuthApi();
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
-
-        // エラーメッセージをクリアするイベントを発火
-        window.dispatchEvent(new CustomEvent('clearAuthError'));
-
-        // フォームフィールドの customValidity をクリア
-        const formElements = event.currentTarget.elements;
-        Array.from(formElements).forEach((element) => {
-            if (element instanceof HTMLInputElement) {
-                element.setCustomValidity('');
-            }
-        });
+        setError(null);
 
         const formData = new FormData(event.currentTarget);
         const rawData = {
-            email: formData.get('email') as string,
-            password: formData.get('password') as string,
+            email: formData.get("email") as string,
+            password: formData.get("password") as string,
         };
 
         try {
             const validatedData = loginSchema.parse(rawData);
-            await loginUser(validatedData);
-            router.push('/dashboard');
+            const result: LoginActionResult = await loginAction(
+                validatedData.email,
+                validatedData.password
+            );
+
+            if (!result.success) {
+                setError(result.error || "ログインに失敗しました。");
+            }
+            // 成功時はサーバーサイドでリダイレクトされるため、ここでは何もしない
         } catch (error) {
             if (error instanceof z.ZodError) {
-                // フォームバリデーションエラーの処理
-                error.errors.forEach(err => {
-                    const field = document.getElementById(err.path[0] as string);
-                    if (field instanceof HTMLInputElement) {
-                        field.setCustomValidity(err.message);
-                        field.reportValidity();
-                    }
-                });
-            } else if (error instanceof Error) {
-                window.dispatchEvent(new CustomEvent('authError', { detail: error }));
+                setError(error.errors[0].message);
+            } else {
+                setError("予期せぬエラーが発生しました。");
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const loginUser = async (data: LoginFormData) => {
-        try {
-            await login(data.email, data.password);
-        } catch (error) {
-            throw new Error('ログインに失敗しました');
-        }
-    };
-
     return (
         <form onSubmit={handleSubmit} noValidate>
+            {error && <div className="text-red-500 mb-4">{error}</div>}
             <div className="space-y-4">
                 <FormField
                     id="email"
@@ -87,8 +68,12 @@ const LoginForm: React.FC = () => {
                     label="パスワード"
                     required={true}
                 />
-                <Button type="submit" className="w-full hover:text-accent" disabled={isLoading}>
-                    {isLoading ? 'ログイン中...' : 'ログイン'}
+                <Button
+                    type="submit"
+                    className="w-full hover:text-accent"
+                    disabled={isLoading}
+                >
+                    {isLoading ? "ログイン中..." : "ログイン"}
                 </Button>
             </div>
         </form>
