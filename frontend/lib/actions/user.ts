@@ -17,13 +17,13 @@ export async function getMeDetails(): Promise<UserResponse> {
       next: { tags: ["user-profile"] },
     }
   );
-  return response;
+  return response.data as UserResponse;
 }
 
 /**
  * ユーザーを更新する関数
  */
-export async function updateUser(
+export async function updateUserAction(
   userData: UpdateUserRequest
 ): Promise<{ success: boolean; error?: string }> {
   try {

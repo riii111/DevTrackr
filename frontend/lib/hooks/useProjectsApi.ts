@@ -21,26 +21,26 @@ export function useProjectsApi() {
    * プロジェクト一覧を取得する関数
    */
   async function getProjects(): Promise<ProjectsResponse> {
-    const response = await customFetch<"GET", undefined, ProjectsResponse>(
+    const { data } = await customFetch<"GET", undefined, ProjectsResponse>(
       ENDPOINT,
       {
         method: "GET",
       }
     );
-    return response;
+    return data;
   }
 
   /**
    * 対象のプロジェクトの詳細を取得する関数
    */
   async function getProjectById(id: string): Promise<ProjectResponse> {
-    const response = await customFetch<"GET", undefined, ProjectResponse>(
+    const { data } = await customFetch<"GET", undefined, ProjectResponse>(
       `${ENDPOINT}/${id}`,
       {
         method: "GET",
       }
     );
-    return response;
+    return data;
   }
 
   /**
@@ -49,7 +49,7 @@ export function useProjectsApi() {
   async function createProject(
     projectData: CreateProjectRequest
   ): Promise<CreateProjectResponse> {
-    const response = await customFetch<
+    const { data } = await customFetch<
       "POST",
       CreateProjectRequest,
       CreateProjectResponse
@@ -57,7 +57,7 @@ export function useProjectsApi() {
       method: "POST",
       body: projectData,
     });
-    return response;
+    return data;
   }
 
   /**

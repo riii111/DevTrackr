@@ -9,7 +9,7 @@ import ProfileEditForm, { profileSchema, ProfileFormData } from '@/components/fe
 import { z } from 'zod';
 import { useToast } from "@/lib/hooks/use-toast";
 import { ApiError } from '@/lib/api/core';
-import { updateUser } from '@/lib/actions/user';
+import { updateUserAction } from '@/lib/actions/user';
 
 interface ProfileEditProps {
     initialUser: User;
@@ -120,7 +120,7 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 updateData.avatar = base64;
             }
 
-            const result = await updateUser(updateData);
+            const result = await updateUserAction(updateData);
             if (result.success) {
                 toast({
                     title: 'プロフィールを更新しました',

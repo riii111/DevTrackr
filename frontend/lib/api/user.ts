@@ -4,7 +4,7 @@ import { UpdateUserRequest, UserResponse } from "@/types/user";
 const ENDPOINT = "/users";
 
 export async function getMeDetails(): Promise<UserResponse> {
-  const response = await customFetch<"GET", undefined, UserResponse>(
+  const { data } = await customFetch<"GET", undefined, UserResponse>(
     `${ENDPOINT}/me`,
     {
       method: "GET",
@@ -13,15 +13,15 @@ export async function getMeDetails(): Promise<UserResponse> {
   );
 
   // avatar_urlを変換
-  if (response.avatar_url) {
-    response.avatar_url = response.avatar_url.replace(
+  if (data.avatar_url) {
+    data.avatar_url = data.avatar_url.replace(
       "minio:9000",
       process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL?.replace("http://", "") ||
         "localhost:9000"
     );
   }
 
-  return response;
+  return data;
 }
 
 export async function updateUserProfile(
