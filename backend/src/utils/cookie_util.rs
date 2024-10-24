@@ -1,6 +1,5 @@
 use actix_web::cookie::Cookie;
 use actix_web::HttpResponse;
-use serde_json;
 use std::env;
 
 /// アクセストークンをクッキーとしてセットする関数
@@ -28,14 +27,8 @@ pub fn set_refresh_token_cookie(response: &mut HttpResponse, refresh_token: &str
 }
 
 /// 初回ログインを示すクッキーをセットする関数
-pub fn set_first_login_cookie(response: &mut HttpResponse, username: &str) {
-    let cookie_value = serde_json::json!({
-        "username": username,
-        "show": true
-    })
-    .to_string();
-
-    let cookie = Cookie::build("firstLogin", cookie_value)
+pub fn set_first_login_cookie(response: &mut HttpResponse) {
+    let cookie = Cookie::build("firstLogin", "true")
         .path("/")
         .http_only(false) // JavaScriptからアクセスできるようにする
         .max_age(actix_web::cookie::time::Duration::seconds(30))

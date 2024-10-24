@@ -88,7 +88,7 @@ async fn register(
     });
     set_access_token_cookie(&mut response, &auth_token.access_token);
     set_refresh_token_cookie(&mut response, &auth_token.refresh_token);
-    set_first_login_cookie(&mut response, &register_dto.username);
+    set_first_login_cookie(&mut response);
     Ok(response)
 }
 

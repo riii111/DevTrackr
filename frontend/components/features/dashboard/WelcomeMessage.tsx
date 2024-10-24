@@ -18,24 +18,17 @@ export const WelcomeMessage: React.FC = () => {
         };
 
         const firstLoginCookie = getCookie('firstLogin');
-        if (firstLoginCookie) {
-            try {
-                const { username, show } = JSON.parse(firstLoginCookie);
-                if (show) {
-                    toast({
-                        variant: "success",
-                        title: "ようこそ！",
-                        description: `${username}さん、アカウント登録ありがとうございます！`,
-                        duration: 5000,
-                    });
-                    // Cookieを削除（オプション）
-                    document.cookie = "firstLogin=; max-age=0; path=/;";
-                }
-            } catch (error) {
-                console.error('Failed to parse firstLogin cookie:', error);
-            }
+        if (firstLoginCookie === 'true') {
+            toast({
+                variant: "success",
+                title: "ようこそ！",
+                description: "アカウント登録ありがとうございます！",
+                duration: 5000,
+            });
+            // Cookieを削除
+            document.cookie = "firstLogin=; max-age=0; path=/;";
         }
     }, [toast]);
 
-    return null;  // このコンポーネントは表示要素を持ちません
+    return null;  // このコンポーネントは表示要素を持たない
 };
