@@ -3,7 +3,6 @@ import { TabsContent } from "@/components/ui/tabs";
 import LoginForm from "@/components/features/auth/LoginForm";
 import RegisterForm from "@/components/features/auth/RegisterForm";
 import AuthTabs from "@/components/features/auth/AuthTabs";
-import AuthAlert from "@/components/features/auth/AuthAlert";
 
 const AuthScreen = () => {
     return (
@@ -22,7 +21,6 @@ const AuthScreen = () => {
                             <RegisterForm />
                         </TabsContent>
                     </AuthTabs>
-                    <AuthAlert />
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-text-secondary">
