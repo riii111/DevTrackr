@@ -25,3 +25,14 @@ pub fn set_refresh_token_cookie(response: &mut HttpResponse, refresh_token: &str
         .finish();
     response.add_cookie(&cookie).unwrap();
 }
+
+/// 初回ログインを示すクッキーをセットする関数
+pub fn set_first_login_cookie(response: &mut HttpResponse) {
+    let cookie = Cookie::build("firstLogin", "true")
+        .path("/")
+        .http_only(false) // JavaScriptからアクセスできるようにする
+        .max_age(actix_web::cookie::time::Duration::seconds(30))
+        .same_site(actix_web::cookie::SameSite::Lax)
+        .finish();
+    response.add_cookie(&cookie).unwrap();
+}

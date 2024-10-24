@@ -4,7 +4,9 @@ use crate::models::auth::AuthTokenLogin;
 use crate::models::users::UserCreate;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
-use crate::utils::cookie_util::{set_access_token_cookie, set_refresh_token_cookie};
+use crate::utils::cookie_util::{
+    set_access_token_cookie, set_first_login_cookie, set_refresh_token_cookie,
+};
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use std::sync::Arc;
 use validator::Validate;
@@ -79,11 +81,14 @@ async fn register(
         .validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let _ = auth_usecase.register(&register_dto).await?;
+    let auth_token = auth_usecase.register(&register_dto).await?;
 
-    let response = HttpResponse::Created().json(AuthTokenCreatedResponse {
+    let mut response = HttpResponse::Created().json(AuthTokenCreatedResponse {
         message: "ユーザー登録に成功しました".to_string(),
     });
+    set_access_token_cookie(&mut response, &auth_token.access_token);
+    set_refresh_token_cookie(&mut response, &auth_token.refresh_token);
+    set_first_login_cookie(&mut response);
     Ok(response)
 }
 

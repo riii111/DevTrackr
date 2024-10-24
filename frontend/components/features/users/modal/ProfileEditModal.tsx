@@ -7,9 +7,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { User, UpdateUserRequest } from '@/types/user';
 import ProfileEditForm, { profileSchema, ProfileFormData } from '@/components/features/users/modal/content/ProfileEditForm';
 import { z } from 'zod';
-import { useUserApi } from '@/lib/hooks/useUserApi';
 import { useToast } from "@/lib/hooks/use-toast";
 import { ApiError } from '@/lib/api/core';
+import { updateUserAction } from '@/lib/actions/user';
 
 interface ProfileEditProps {
     initialUser: User;
@@ -28,13 +28,14 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const router = useRouter();
-    const { updateUser } = useUserApi();
     const { toast } = useToast();
 
     useEffect(() => {
         if (initialUser.avatar_url) {
-            // MinIOサーバーの公開アドレスに変更
-            const publicUrl = initialUser.avatar_url.replace('minio:9000', 'localhost:9000');
+            const publicUrl = initialUser.avatar_url.replace(
+                'minio:9000',
+                process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL?.replace('http://', '') || 'localhost:9000'
+            );
             setAvatarPreview(publicUrl);
         }
     }, [initialUser.avatar_url]);
@@ -119,14 +120,16 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 updateData.avatar = base64;
             }
 
-            await updateUser(updateData);
-
-            toast({
-                title: 'プロフィールを更新しました',
-                variant: 'success',
-            });
-            // TODO: UserMenuをrevalidateする
-            handleClose();
+            const result = await updateUserAction(updateData);
+            if (result.success) {
+                toast({
+                    title: 'プロフィールを更新しました',
+                    variant: 'success',
+                });
+                handleClose();
+            } else {
+                throw new Error(result.error);
+            }
         } catch (error) {
             if (error instanceof z.ZodError) {
                 // ZodErrorの場合、エラーメッセージを新しいエラーオブジェクトに変換
@@ -156,7 +159,7 @@ export default function ProfileEditModal({ initialUser }: ProfileEditProps) {
                 });
             }
         }
-    }, [user, avatarFile, updateUser, toast, handleClose, fileToBase64]);
+    }, [user, avatarFile, toast, handleClose, fileToBase64]);
 
     const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {

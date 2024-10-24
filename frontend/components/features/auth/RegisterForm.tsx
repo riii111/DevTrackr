@@ -1,10 +1,9 @@
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/core/FormField';
-import { useAuthApi } from '@/lib/hooks/useAuthApi';
+import { registerAction, RegisterActionResult } from '@/lib/actions/auth';
 
 const registerSchema = z.object({
     name: z.string().min(1, '名前を入力してください'),
@@ -16,63 +15,77 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { register } = useAuthApi();
+    const [formData, setFormData] = useState<RegisterFormData>({ name: '', email: '', password: '' });
+    const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData | 'form', string>>>({});
+    const [isFormValid, setIsFormValid] = useState(false);
+
+    const validateForm = (data: RegisterFormData) => {
+        try {
+            registerSchema.parse(data);
+            setIsFormValid(true);
+        } catch (error) {
+            setIsFormValid(false);
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const newFormData = { ...formData, [name]: value };
+        setFormData(newFormData);
+        validateForm(newFormData);
+    };
+
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        try {
+            if (name === 'name' || name === 'email' || name === 'password') {
+                registerSchema.shape[name].parse(value);
+            }
+            setErrors(prev => ({ ...prev, [name]: undefined }));
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                setErrors(prev => ({ ...prev, [name]: error.errors[0].message }));
+            }
+        }
+        validateForm(formData);
+    };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
-
-        // エラーメッセージをクリアするイベントを発火
-        window.dispatchEvent(new CustomEvent('clearAuthError'));
-
-        // フォームフィールドの customValidity をクリア
-        const formElements = event.currentTarget.elements;
-        Array.from(formElements).forEach((element) => {
-            if (element instanceof HTMLInputElement) {
-                element.setCustomValidity('');
-            }
-        });
-
-        const formData = new FormData(event.currentTarget);
-        const rawData = {
-            name: formData.get('name') as string,
-            email: formData.get('email') as string,
-            password: formData.get('password') as string,
-        };
+        setErrors({});
 
         try {
-            const validatedData = registerSchema.parse(rawData);
-            await registerUser(validatedData);
-            router.push('/dashboard');
+            const validatedData = registerSchema.parse(formData);
+            const result: RegisterActionResult = await registerAction(
+                validatedData.name,
+                validatedData.email,
+                validatedData.password
+            );
+
+            if (result && !result.success) {
+                setErrors(prev => ({ ...prev, form: result.error || "アカウント登録に失敗しました。" }));
+            }
         } catch (error) {
             if (error instanceof z.ZodError) {
-                // フォームバリデーションエラーの処理
+                const fieldErrors: Partial<Record<keyof RegisterFormData, string>> = {};
                 error.errors.forEach(err => {
-                    const field = document.getElementById(err.path[0] as string);
-                    if (field instanceof HTMLInputElement) {
-                        field.setCustomValidity(err.message);
-                        field.reportValidity();
+                    if (err.path[0]) {
+                        fieldErrors[err.path[0] as keyof RegisterFormData] = err.message;
                     }
                 });
-            } else if (error instanceof Error) {
-                window.dispatchEvent(new CustomEvent('authError', { detail: error }));
+                setErrors(prev => ({ ...prev, ...fieldErrors }));
+            } else {
+                setErrors(prev => ({ ...prev, form: "予期せぬエラーが発生しました。" }));
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const registerUser = async (data: RegisterFormData) => {
-        try {
-            await register(data.name, data.email, data.password);
-        } catch (error) {
-            throw new Error('アカウント登録に失敗しました');
-        }
-    };
-
     return (
         <form onSubmit={handleSubmit} noValidate>
+            {errors.form && <div className="text-red-500 mb-4">{errors.form}</div>}
             <div className="space-y-4">
                 <FormField
                     id="name"
@@ -81,6 +94,10 @@ const RegisterForm: React.FC = () => {
                     label="名前"
                     placeholder="山田 太郎"
                     required={true}
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    error={errors.name}
                 />
                 <FormField
                     id="email"
@@ -89,6 +106,10 @@ const RegisterForm: React.FC = () => {
                     label="メールアドレス"
                     placeholder="your@email.com"
                     required={true}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    error={errors.email}
                 />
                 <FormField
                     id="password"
@@ -96,9 +117,17 @@ const RegisterForm: React.FC = () => {
                     type="password"
                     label="パスワード"
                     required={true}
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    error={errors.password}
                 />
-                <Button type="submit" className="w-full hover:bg-secondary hover:text-accent" disabled={isLoading}>
-                    {isLoading ? 'アカウント登録中...' : 'アカウント登録'}
+                <Button
+                    type="submit"
+                    className="w-full hover:bg-secondary hover:text-accent"
+                    disabled={isLoading || !isFormValid}
+                >
+                    {isLoading ? '登録処理中...' : 'アカウント登録'}
                 </Button>
             </div>
         </form>

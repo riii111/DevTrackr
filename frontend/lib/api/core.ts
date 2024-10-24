@@ -10,6 +10,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 type FetchParams<T, M extends HttpMethod> = M extends "GET"
   ? T
   : Record<string, string | number | boolean>;
+
 type FetchBody<T, M extends HttpMethod> = M extends
   | "POST"
   | "PUT"
@@ -17,6 +18,11 @@ type FetchBody<T, M extends HttpMethod> = M extends
   | "PATCH"
   ? T | FormData
   : never;
+
+type CustomFetchResponse<T> = {
+  data: T;
+  headers: Headers;
+};
 
 // フェッチオプションのインターフェース定義
 interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
@@ -26,6 +32,7 @@ interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
   params?: FetchParams<T, M>;
   body?: FetchBody<T, M>;
   cache?: RequestCache;
+  next?: Record<string, unknown>;
 }
 
 // APIエラーを表すカスタムエラークラス
@@ -53,13 +60,14 @@ export async function customFetch<
     body,
     params,
     cache = "no-cache",
+    next,
   }: IFetchOptions<
     RequestInput extends Record<string, any>
       ? RequestInput
       : Record<string, never>,
     M
   >
-) {
+): Promise<CustomFetchResponse<RequestResult>> {
   if (!API_BASE_URL) {
     throw new Error("API_BASE_URL is not defined");
   }
@@ -94,6 +102,7 @@ export async function customFetch<
     cache,
     mode: "cors",
     credentials,
+    next,
   };
 
   if (body) {
@@ -148,7 +157,8 @@ export async function customFetch<
       throw new ApiError(response.status, errorMessage);
     }
 
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    return { data, headers: response.headers };
   } catch (error) {
     handleFetchError(error);
     throw error;

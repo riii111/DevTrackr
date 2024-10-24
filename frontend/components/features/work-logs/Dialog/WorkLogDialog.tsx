@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import { ProjectResponse } from "@/types/project";
 
 export function WorkLogDialog() {
     const { state, dispatch } = useWorkLog();
-    const [project, setProject] = useState<Project | null>(null);
+    const [project, setProject] = useState<ProjectResponse | null>(null);
     const { getProjectById } = useProjectsApi();
 
     const [startTime, setStartTime] = useState<Date | null>(null);

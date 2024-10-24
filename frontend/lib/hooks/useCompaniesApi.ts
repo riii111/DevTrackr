@@ -8,6 +8,7 @@ import {
   CreateCompanyResponse,
 } from "@/types/company";
 
+// TODO: hooks→apiフォルダへ移動
 const ENDPOINT = "/companies";
 
 export function useCompaniesApi() {
@@ -23,27 +24,27 @@ export function useCompaniesApi() {
    * 企業一覧を取得する関数
    */
   async function getCompanies(): Promise<CompaniesResponse> {
-    const response = await customFetch<"GET", undefined, CompaniesResponse>(
+    const { data } = await customFetch<"GET", undefined, CompaniesResponse>(
       ENDPOINT,
       {
         method: "GET",
       }
     );
-    return response;
+    return data;
   }
 
   /**
    * 企業一覧（プロジェクトを含む）を取得する関数
    */
   async function getCompaniesWithProjects(): Promise<CompaniesWithProjectsResponse> {
-    const response = await customFetch<
+    const { data } = await customFetch<
       "GET",
       undefined,
       CompaniesWithProjectsResponse
     >(`${ENDPOINT}/with-projects/`, {
       method: "GET",
     });
-    return response;
+    return data;
   }
 
   /**
@@ -52,7 +53,7 @@ export function useCompaniesApi() {
   async function createCompany(
     companyData: CreateCompanyRequest
   ): Promise<CreateCompanyResponse> {
-    const response = await customFetch<
+    const { data } = await customFetch<
       "POST",
       CreateCompanyRequest,
       CreateCompanyResponse
@@ -60,7 +61,7 @@ export function useCompaniesApi() {
       method: "POST",
       body: companyData,
     });
-    return response;
+    return data;
   }
 
   /**
@@ -80,12 +81,12 @@ export function useCompaniesApi() {
    * 特定の企業を取得する関数
    */
   async function getCompanyById(id: string): Promise<CompanyResponse> {
-    const response = await customFetch<"GET", undefined, CompanyResponse>(
+    const { data } = await customFetch<"GET", undefined, CompanyResponse>(
       `${ENDPOINT}/${id}/`,
       {
         method: "GET",
       }
     );
-    return response;
+    return data;
   }
 }
