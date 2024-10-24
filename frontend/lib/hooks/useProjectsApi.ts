@@ -7,6 +7,7 @@ import {
   ProjectsResponse,
 } from "@/types/project";
 
+// TODO: hooks→apiフォルダへ移動
 const ENDPOINT = "/projects";
 
 export function useProjectsApi() {

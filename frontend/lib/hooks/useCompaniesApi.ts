@@ -8,6 +8,7 @@ import {
   CreateCompanyResponse,
 } from "@/types/company";
 
+// TODO: hooks→apiフォルダへ移動
 const ENDPOINT = "/companies";
 
 export function useCompaniesApi() {

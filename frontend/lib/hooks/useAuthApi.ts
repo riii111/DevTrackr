@@ -1,6 +1,6 @@
 import { customFetch } from "@/lib/api/core";
-import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
 
+// TODO: hooks→apiフォルダへ移動
 const ENDPOINT = "/auth";
 
 export function useAuthApi() {
