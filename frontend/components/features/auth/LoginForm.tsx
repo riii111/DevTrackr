@@ -36,7 +36,6 @@ const LoginForm: React.FC = () => {
 
             // リダイレクトの場合はresultが一瞬undefinedになる
             if (result && !result.success) {
-                console.log("ログインに失敗しました。", result.error);
                 setError(result.error || "ログインに失敗しました。");
             }
         } catch (error) {

@@ -21,8 +21,6 @@ export async function getServerSideAuthHeader(): Promise<
  * サーバーからのレスポンスのCookieをクライアントに反映する
  */
 export async function proxyServerCookies(headers: Headers) {
-  console.log("proxyServerCookies");
-  console.log(headers);
   const setCookie = headers.get("set-cookie");
 
   if (setCookie !== null) {
