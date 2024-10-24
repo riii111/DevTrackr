@@ -3,8 +3,8 @@
 import React, { useMemo, useRef, useCallback, useState } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { ProjectDrawerToolbar } from "@/components/features/projects/Drawer/content/ProjectDrawerToolbar"
-import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
 import useSWR from "swr";
+import { getProjectById } from "@/lib/api/projects";
 import { ErrorAlert } from "@/components/core/ErrorAlert"
 import { ProjectDetails } from "@/components/features/projects/Drawer/content/ProjectDetails"
 import { LoadingSkeleton } from "@/components/core/LoadingSkeleton"
@@ -16,11 +16,9 @@ interface Props {
 }
 
 function useProjectDetails(projectId: string | null) {
-    const { getProjectById } = useProjectsApi();
-
     const fetchProject = useCallback(() => {
         return projectId ? getProjectById(projectId) : null;
-    }, [projectId, getProjectById]);
+    }, [projectId]);
 
     const { data, error, isLoading } = useSWR(
         projectId ? `project-${projectId}` : null,

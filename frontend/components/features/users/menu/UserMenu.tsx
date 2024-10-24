@@ -5,7 +5,7 @@ import { IoIosArrowDown } from "react-icons/io";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuthApi } from '@/lib/hooks/useAuthApi';
+import { logout } from '@/lib/api/auth';
 import { User } from '@/types/user';
 import { toast } from '@/lib/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ initialUserData }: UserMenuProps) {
-    const { logout } = useAuthApi();
     const router = useRouter();
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 

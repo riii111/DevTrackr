@@ -1,14 +1,11 @@
 import ProjectsClientComponents from "@/app/dashboard/projects/ProjectsClientComponents";
-import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
-import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import { getCompaniesWithProjects } from "@/lib/api/companies";
+import { getProjects } from "@/lib/api/projects";
 import { ProjectTable } from "@/components/features/projects/Table/ProjectTable";
 
 const bgColor = "bg-main-translucent backdrop-filter backdrop-blur-sm";
 
 export default async function ProjectListPage() {
-    const { getCompaniesWithProjects } = useCompaniesApi();
-    const { getProjects } = useProjectsApi();
-
     const [{ companies }, projects] = await Promise.all([
         getCompaniesWithProjects(),
         getProjects()

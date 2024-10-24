@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useCallback } from "react"
 import { useDrawerStore } from "@/lib/store/useDrawerStore"
 import { CompanyDrawerToolbar } from "@/components/features/companies/Drawer/content/CompanyDrawerToolbar"
-import { useCompaniesApi } from "@/lib/hooks/useCompaniesApi";
+import { getCompanyById } from "@/lib/api/companies";
 import useSWR from "swr";
 import { ErrorAlert } from "@/components/core/ErrorAlert"
 import { CompanyDetails } from "@/components/features/companies/Drawer/content/CompanyDetails"
@@ -17,11 +17,10 @@ interface Props {
 
 function useCompanyDetails(companyId: string | null) {
     console.log("companyId", companyId)
-    const { getCompanyById } = useCompaniesApi();
 
     const fetchCompany = useCallback(() => {
         return companyId ? getCompanyById(companyId) : null;
-    }, [companyId, getCompanyById]);
+    }, [companyId]);
 
     const { data, error, isLoading } = useSWR(
         companyId ? `company-${companyId}` : null,

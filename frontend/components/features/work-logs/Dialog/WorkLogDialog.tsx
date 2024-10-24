@@ -5,13 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useProjectsApi } from "@/lib/hooks/useProjectsApi";
+import { getProjectById } from "@/lib/api/projects";
 import { ProjectResponse } from "@/types/project";
 
 export function WorkLogDialog() {
     const { state, dispatch } = useWorkLog();
     const [project, setProject] = useState<ProjectResponse | null>(null);
-    const { getProjectById } = useProjectsApi();
 
     const [startTime, setStartTime] = useState<Date | null>(null);
     const [endTime, setEndTime] = useState<Date | null>(null);
@@ -26,7 +25,7 @@ export function WorkLogDialog() {
         } catch (error) {
             console.error("プロジェクトの取得に失敗しました:", error);
         }
-    }, [getProjectById]);
+    }, []);
 
     useEffect(() => {
         if (state.isOpen && state.projectId && state.projectId !== prevProjectId.current) {
