@@ -1,6 +1,5 @@
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import FormField from '@/components/core/FormField';
@@ -17,7 +16,6 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const RegisterForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -39,10 +37,9 @@ const RegisterForm: React.FC = () => {
                 validatedData.password
             );
 
-            if (!result.success) {
+            if (result && !result.success) {
                 setError(result.error || "アカウント登録に失敗しました。");
             }
-            // 成功時はサーバーサイドでリダイレクトされるため、ここでは何もしない
         } catch (error) {
             if (error instanceof z.ZodError) {
                 setError(error.errors[0].message);
@@ -56,6 +53,7 @@ const RegisterForm: React.FC = () => {
 
     return (
         <form onSubmit={handleSubmit} noValidate>
+            {error && <div className="text-red-500 mb-4">{error}</div>}
             <div className="space-y-4">
                 <FormField
                     id="name"
@@ -80,8 +78,12 @@ const RegisterForm: React.FC = () => {
                     label="パスワード"
                     required={true}
                 />
-                <Button type="submit" className="w-full hover:bg-secondary hover:text-accent" disabled={isLoading}>
-                    {isLoading ? 'アカウント登録中...' : 'アカウント登録'}
+                <Button
+                    type="submit"
+                    className="w-full hover:bg-secondary hover:text-accent"
+                    disabled={isLoading}
+                >
+                    {isLoading ? '登録処理中...' : 'アカウント登録'}
                 </Button>
             </div>
         </form>

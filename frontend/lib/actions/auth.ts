@@ -78,6 +78,7 @@ export async function registerAction(
   email: string,
   password: string
 ): Promise<RegisterActionResult> {
+  let redirectFlag = false;
   try {
     // セキュリティ対策としてサーバーサイドでもバリデーション
     registerSchema.parse({ username, email, password });
@@ -94,16 +95,18 @@ export async function registerAction(
     // レスポンスヘッダーからCookieを設定
     await proxyServerCookies(headers);
 
-    // サーバ側でリダイレクトすれば追加のラウンドトリップは不要、早く到達する
-    redirect("/dashboard");
-
-    return { success: true };
+    redirectFlag = true;
   } catch (error) {
     console.error("アカウント登録に失敗しました", error);
     if (error instanceof z.ZodError) {
       return { success: false, error: "入力内容が正しくありません。" };
     } else {
-      return { success: false, error: "予期せぬエラーが発生しました。" };
+      return { success: false, error: "アカウント登録に失敗しました" };
     }
   }
+  if (redirectFlag) {
+    // サーバ側でリダイレクトすれば追加のラウンドトリップは不要、早く到達する
+    redirect("/dashboard");
+  }
+  return { success: true };
 }
