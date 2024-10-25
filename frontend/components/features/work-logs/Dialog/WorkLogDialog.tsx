@@ -1,10 +1,14 @@
 'use client';
 
-import { useWorkLog } from '@/lib/store/useWorkLogStore';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Draggable from 'react-draggable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Timer, Play, Square, GripHorizontal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { useWorkLog } from '@/lib/store/useWorkLogStore';
 import { getProjectById } from "@/lib/api/projects";
 import { ProjectResponse } from "@/types/project";
 
@@ -15,7 +19,7 @@ export function WorkLogDialog() {
     const [startTime, setStartTime] = useState<Date | null>(null);
     const [endTime, setEndTime] = useState<Date | null>(null);
     const [memo, setMemo] = useState("");
-
+    const dialogRef = useRef<HTMLDivElement>(null);
     const prevProjectId = useRef<string | null>(null);
 
     const fetchProject = useCallback(async (projectId: string) => {
@@ -61,52 +65,119 @@ export function WorkLogDialog() {
     if (!state.isOpen) return null;
 
     return (
-        <Dialog open={true} onOpenChange={handleClose}>
-            <DialogContent noOverlay className="w-96 max-w-full">
-                <DialogHeader>
-                    <DialogTitle>稼働記録 {project ? `- ${project.title}` : ''}</DialogTitle>
-                </DialogHeader>
-                {project ? (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="flex justify-between">
-                            <Button type="button" onClick={handleStartWork} disabled={!!startTime}>
-                                稼働開始
-                            </Button>
-                            <Button type="button" onClick={handleEndWork} disabled={!startTime || !!endTime}>
-                                稼働終了
+        <Dialog open={state.isOpen}>
+            <Draggable
+                handle=".drag-handle"
+                bounds="parent"
+                defaultPosition={{ x: 0, y: 0 }}
+                positionOffset={{ x: '50%', y: '25%' }}
+            >
+                <DialogContent
+                    ref={dialogRef}
+                    className="w-96 max-w-full bg-white shadow-lg rounded-lg overflow-hidden"
+                    style={{
+                        position: 'fixed',
+                        margin: 0,
+                        transform: 'none',
+                        pointerEvents: 'auto',
+                        zIndex: 50
+                    }}
+                    noOverlay={true}
+                >
+                    <DialogHeader className="space-y-4 pb-4 border-b">
+                        <div className="flex justify-between items-center cursor-grab drag-handle select-none">
+                            <GripHorizontal className="h-5 w-5 text-gray-400" />
+                            <DialogTitle className="text-lg font-bold flex-1 text-center">
+                                稼働記録
+                                {project && (
+                                    <Badge variant="secondary" className="ml-2">
+                                        {project.title}
+                                    </Badge>
+                                )}
+                            </DialogTitle>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClose}
+                                className="rounded-full hover:bg-gray-100"
+                            >
+                                <Timer className="h-4 w-4" />
                             </Button>
                         </div>
-                        {startTime && (
-                            <div className="text-sm">
-                                開始時間: {startTime.toLocaleString()}
+                    </DialogHeader>
+
+                    {project ? (
+                        <form onSubmit={handleSubmit} className="space-y-4 p-4">
+                            <Card className="bg-gray-50 p-4">
+                                <div className="flex justify-center space-x-4">
+                                    <Button
+                                        type="button"
+                                        onClick={handleStartWork}
+                                        disabled={!!startTime}
+                                        className="w-full"
+                                        variant={startTime ? "secondary" : "default"}
+                                    >
+                                        <Play className="mr-2 h-4 w-4" />
+                                        開始
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={handleEndWork}
+                                        disabled={!startTime || !!endTime}
+                                        className="w-full"
+                                        variant={endTime ? "secondary" : "default"}
+                                    >
+                                        <Square className="mr-2 h-4 w-4" />
+                                        終了
+                                    </Button>
+                                </div>
+                            </Card>
+
+                            <div className="space-y-2 text-sm">
+                                {startTime && (
+                                    <div className="text-gray-600">
+                                        開始: {startTime.toLocaleString()}
+                                    </div>
+                                )}
+                                {endTime && (
+                                    <div className="text-gray-600">
+                                        終了: {endTime.toLocaleString()}
+                                    </div>
+                                )}
                             </div>
-                        )}
-                        {endTime && (
-                            <div className="text-sm">
-                                終了時間: {endTime.toLocaleString()}
+
+                            <div className="space-y-2">
+                                <label htmlFor="memo" className="text-sm font-medium block">
+                                    メモ
+                                </label>
+                                <Textarea
+                                    id="memo"
+                                    value={memo}
+                                    onChange={(e) => setMemo(e.target.value)}
+                                    placeholder="作業内容を入力してください"
+                                    className="h-24 resize-none"
+                                />
                             </div>
-                        )}
-                        <div className="space-y-2">
-                            <label htmlFor="memo" className="text-sm font-medium">メモ</label>
-                            <Textarea
-                                id="memo"
-                                value={memo}
-                                onChange={(e) => setMemo(e.target.value)}
-                                placeholder="作業内容を入力してください"
-                                className="h-24"
-                            />
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                            <Button type="button" variant="outline" onClick={handleClose}>
-                                キャンセル
+
+                            <Button
+                                type="submit"
+                                disabled={!startTime || !endTime}
+                                className="w-full"
+                            >
+                                記録を保存
                             </Button>
-                            <Button type="submit" disabled={!startTime || !endTime}>送信</Button>
+                        </form>
+                    ) : (
+                        <div className="flex items-center justify-center h-32">
+                            <p className="text-sm text-gray-500">
+                                プロジェクト情報を読み込み中...
+                            </p>
                         </div>
-                    </form>
-                ) : (
-                    <p className="text-sm">プロジェクト情報を読み込み中...</p>
-                )}
-            </DialogContent>
+                    )}
+                </DialogContent>
+            </Draggable>
         </Dialog>
     );
 }
+
+export default WorkLogDialog;
