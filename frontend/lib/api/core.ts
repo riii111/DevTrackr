@@ -6,11 +6,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
-// GETメソッドの場合はクエリパラメータ、それ以外はリクエストボディの型を定義
-type FetchParams<T, M extends HttpMethod> = M extends "GET"
-  ? T
-  : Record<string, string | number | boolean>;
-
 type CustomFetchResponse<T> = {
   data: T;
   headers: Headers;
@@ -112,7 +107,7 @@ export async function customFetch<
       // リフレッシュトークンを使用してアクセストークンを更新
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        // 新しいアクセストークンでリクエストを再試行
+        // 新しいアクセストークンでリトライ（循環参照防止のためにcustomFetchを使用しない）
         authHeader = await getAuthHeader();
         headers = new Headers({
           ...optionHeaders,

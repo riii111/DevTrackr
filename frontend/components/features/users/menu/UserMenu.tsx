@@ -5,7 +5,7 @@ import { IoIosArrowDown } from "react-icons/io";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { logout } from '@/lib/api/auth';
+import { logoutAction } from '@/lib/actions/auth';
 import { User } from '@/types/user';
 import { toast } from '@/lib/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -27,7 +27,7 @@ export default function UserMenu({ initialUserData }: UserMenuProps) {
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await logoutAction();
             router.push('/auth');
             toast({
                 title: 'ログアウトしました',
