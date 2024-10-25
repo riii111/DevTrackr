@@ -10,7 +10,6 @@ type WorkLogButtonProps = {
 };
 
 export const WorkLogButton: React.FC<WorkLogButtonProps> = React.memo(({ projectId }) => {
-    console.log(projectId);
     const { dispatch } = useWorkLog();
 
     const handleClick = React.useCallback(() => {

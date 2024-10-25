@@ -2,8 +2,10 @@ import { toast } from "@/lib/hooks/use-toast";
 import { getClientSideAuthHeader } from "@/lib/utils/cookies";
 import { redirect } from "next/navigation";
 
+// APIのベースURL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// HTTPメソッド
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 type CustomFetchResponse<T> = {
@@ -35,21 +37,26 @@ export class ApiError extends Error {
 // サーバーサイドかクライアントサイドか
 const isServerSide = typeof window === "undefined";
 
+// リクエスト設定の共通化
+const createRequestConfig = (
+  options: Partial<IFetchOptions<any>>,
+  headers: Headers
+): RequestInit => ({
+  method: options.method,
+  headers,
+  mode: "cors",
+  credentials: options.credentials,
+  cache: options.cache ?? "no-cache",
+  next: options.next,
+});
+
 // カスタムフェッチ関数
 export async function customFetch<
   RequestInput extends Record<string, any> | undefined = Record<string, any>,
   RequestResult = unknown
 >(
   endpoint: string,
-  {
-    headers: optionHeaders,
-    credentials,
-    method,
-    body,
-    params,
-    cache = "no-cache",
-    next,
-  }: IFetchOptions<
+  options: IFetchOptions<
     RequestInput extends Record<string, any>
       ? RequestInput
       : Record<string, never>
@@ -75,29 +82,27 @@ export async function customFetch<
 
   let authHeader = await getAuthHeader();
   let headers = new Headers({
-    ...optionHeaders,
+    ...options.headers,
     ...authHeader,
   });
 
-  if (!(body instanceof FormData) && !headers.has("Content-Type")) {
+  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  const fetchOptions: RequestInit = {
-    method,
-    headers,
-    cache,
-    mode: "cors",
-    credentials,
-    next,
-  };
+  let fetchOptions = createRequestConfig(options, headers);
 
-  if (body) {
-    fetchOptions.body = body instanceof FormData ? body : JSON.stringify(body);
+  if (options.body) {
+    fetchOptions.body =
+      options.body instanceof FormData
+        ? options.body
+        : JSON.stringify(options.body);
   }
 
-  if (params && method === "GET") {
-    const searchParams = new URLSearchParams(params as Record<string, string>);
+  if (options.params && options.method === "GET") {
+    const searchParams = new URLSearchParams(
+      options.params as Record<string, string>
+    );
     url += `?${searchParams.toString()}`;
   }
 
@@ -110,11 +115,11 @@ export async function customFetch<
         // 新しいアクセストークンでリトライ（循環参照防止のためにcustomFetchを使用しない）
         authHeader = await getAuthHeader();
         headers = new Headers({
-          ...optionHeaders,
+          ...options.headers,
           ...authHeader,
         });
-        fetchOptions.headers = headers;
         // TODO: 新しいアクセストークンを反映してリクエストできないので別途調査
+        fetchOptions = createRequestConfig(options, headers);
         const retryResponse = await fetch(url, fetchOptions);
         if (retryResponse.status === 401) {
           // 再試行しても401の場合、認証エラーを投げる
@@ -156,6 +161,7 @@ export async function customFetch<
   }
 }
 
+// アクセストークンの更新とリトライ
 async function refreshAccessToken(): Promise<boolean> {
   try {
     console.log("Refreshing access token...");
@@ -183,6 +189,7 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
+// 認証画面にリダイレクト
 function redirectToAuth() {
   if (isServerSide) {
     // サーバーサイド
@@ -199,6 +206,7 @@ function redirectToAuth() {
   }
 }
 
+// レスポンスハンドリング
 async function handleResponse(response: Response): Promise<any> {
   if (response.status === 204) {
     return {};
@@ -212,6 +220,7 @@ async function handleResponse(response: Response): Promise<any> {
   return {};
 }
 
+// エラーハンドリング
 function handleFetchError(error: unknown) {
   if (error instanceof ApiError) {
     const message = `${error.status}: ${error.message}`;
@@ -246,7 +255,7 @@ function handleFetchError(error: unknown) {
   }
 }
 
-// エラーメッセージを取得する関数
+// エラーメッセージを取得
 function getErrorMessage(status: number): string {
   switch (status) {
     case 400:
