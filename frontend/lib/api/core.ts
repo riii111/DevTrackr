@@ -11,26 +11,20 @@ type FetchParams<T, M extends HttpMethod> = M extends "GET"
   ? T
   : Record<string, string | number | boolean>;
 
-type FetchBody<T, M extends HttpMethod> = M extends
-  | "POST"
-  | "PUT"
-  | "DELETE"
-  | "PATCH"
-  ? T | FormData
-  : never;
-
 type CustomFetchResponse<T> = {
   data: T;
   headers: Headers;
+  ok: boolean;
+  status: number;
 };
 
 // フェッチオプションのインターフェース定義
-interface IFetchOptions<T extends Record<string, any>, M extends HttpMethod> {
+interface IFetchOptions<T extends Record<string, any>> {
   headers?: Record<string, any>;
-  method: M;
+  method: HttpMethod;
   credentials?: RequestCredentials;
-  params?: FetchParams<T, M>;
-  body?: FetchBody<T, M>;
+  params?: T;
+  body?: T | FormData;
   cache?: RequestCache;
   next?: Record<string, unknown>;
 }
@@ -48,7 +42,6 @@ const isServerSide = typeof window === "undefined";
 
 // カスタムフェッチ関数
 export async function customFetch<
-  M extends HttpMethod,
   RequestInput extends Record<string, any> | undefined = Record<string, any>,
   RequestResult = unknown
 >(
@@ -64,8 +57,7 @@ export async function customFetch<
   }: IFetchOptions<
     RequestInput extends Record<string, any>
       ? RequestInput
-      : Record<string, never>,
-    M
+      : Record<string, never>
   >
 ): Promise<CustomFetchResponse<RequestResult>> {
   if (!API_BASE_URL) {
@@ -109,7 +101,6 @@ export async function customFetch<
     fetchOptions.body = body instanceof FormData ? body : JSON.stringify(body);
   }
 
-  // GETメソッドの場合、クエリパラメータをURLに追加
   if (params && method === "GET") {
     const searchParams = new URLSearchParams(params as Record<string, string>);
     url += `?${searchParams.toString()}`;
@@ -158,7 +149,12 @@ export async function customFetch<
     }
 
     const data = await handleResponse(response);
-    return { data, headers: response.headers };
+    return {
+      data,
+      headers: response.headers,
+      ok: response.ok,
+      status: response.status,
+    };
   } catch (error) {
     handleFetchError(error);
     throw error;

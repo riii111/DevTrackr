@@ -13,12 +13,9 @@ const ENDPOINT = "/projects";
  * プロジェクト一覧を取得する関数
  */
 export async function getProjects(): Promise<ProjectsResponse> {
-  const { data } = await customFetch<"GET", undefined, ProjectsResponse>(
-    ENDPOINT,
-    {
-      method: "GET",
-    }
-  );
+  const { data } = await customFetch<undefined, ProjectsResponse>(ENDPOINT, {
+    method: "GET",
+  });
   return data;
 }
 
@@ -26,7 +23,7 @@ export async function getProjects(): Promise<ProjectsResponse> {
  * 対象のプロジェクトの詳細を取得する関数
  */
 export async function getProjectById(id: string): Promise<ProjectResponse> {
-  const { data } = await customFetch<"GET", undefined, ProjectResponse>(
+  const { data } = await customFetch<undefined, ProjectResponse>(
     `${ENDPOINT}/${id}`,
     {
       method: "GET",
@@ -42,7 +39,6 @@ export async function createProject(
   projectData: CreateProjectRequest
 ): Promise<CreateProjectResponse> {
   const { data } = await customFetch<
-    "POST",
     CreateProjectRequest,
     CreateProjectResponse
   >(ENDPOINT, {
@@ -59,7 +55,7 @@ export async function updateProject(
   id: string,
   projectData: UpdateProjectRequest
 ): Promise<void> {
-  await customFetch<"PUT", UpdateProjectRequest, void>(`${ENDPOINT}/${id}/`, {
+  await customFetch<UpdateProjectRequest, void>(`${ENDPOINT}/${id}/`, {
     method: "PUT",
     body: projectData,
   });

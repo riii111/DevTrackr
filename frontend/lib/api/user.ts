@@ -3,8 +3,11 @@ import { UpdateUserRequest, UserResponse } from "@/types/user";
 
 const ENDPOINT = "/users";
 
+/**
+ * ユーザーのプロフィールを取得する関数
+ */
 export async function getMeDetails(): Promise<UserResponse> {
-  const { data } = await customFetch<"GET", undefined, UserResponse>(
+  const { data } = await customFetch<undefined, UserResponse>(
     `${ENDPOINT}/me`,
     {
       method: "GET",
@@ -24,10 +27,13 @@ export async function getMeDetails(): Promise<UserResponse> {
   return data;
 }
 
+/**
+ * ユーザーのプロフィールを更新する関数
+ */
 export async function updateUserProfile(
   userData: UpdateUserRequest
 ): Promise<void> {
-  await customFetch<"PUT", UpdateUserRequest, void>(`${ENDPOINT}/me`, {
+  await customFetch<UpdateUserRequest, void>(`${ENDPOINT}/me`, {
     method: "PUT",
     body: userData,
   });

@@ -1,7 +1,12 @@
 "use server";
 
 import { customFetch } from "@/lib/api/core";
-import { AuthResponse, AuthTokenCreatedResponse } from "@/types/user";
+import {
+  AuthResponse,
+  AuthTokenCreatedResponse,
+  LoginRequest,
+  RegisterRequest,
+} from "@/types/user";
 import { proxyServerCookies } from "@/lib/utils/cookiesForServer";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,14 +36,13 @@ export async function loginAction(
     // セキュリティ対策としてサーバーサイドでもバリデーション
     loginSchema.parse({ email, password });
 
-    const { data, headers } = await customFetch<
-      "POST",
-      { email: string; password: string },
-      AuthResponse
-    >(`${ENDPOINT}/login/`, {
-      method: "POST",
-      body: { email, password },
-    });
+    const { data, headers } = await customFetch<LoginRequest, AuthResponse>(
+      `${ENDPOINT}/login/`,
+      {
+        method: "POST",
+        body: { email, password },
+      }
+    );
 
     // レスポンスヘッダーからCookieを設定
     await proxyServerCookies(headers);
@@ -84,8 +88,7 @@ export async function registerAction(
     registerSchema.parse({ username, email, password });
 
     const { data, headers } = await customFetch<
-      "POST",
-      { username: string; email: string; password: string },
+      RegisterRequest,
       AuthTokenCreatedResponse
     >(`${ENDPOINT}/register/`, {
       method: "POST",
@@ -109,4 +112,22 @@ export async function registerAction(
     redirect("/dashboard");
   }
   return { success: true };
+}
+
+/**
+ * ユーザーログアウト関数
+ */
+export async function logoutAction() {
+  const response = await customFetch<undefined, void>(`${ENDPOINT}/logout/`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("ログアウトに失敗しました");
+  }
+
+  cookies().delete("access_token");
+  cookies().delete("refresh_token");
+
+  redirect("/auth");
 }

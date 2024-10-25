@@ -14,12 +14,9 @@ const ENDPOINT = "/companies";
  * 企業一覧を取得する関数
  */
 export async function getCompanies(): Promise<CompaniesResponse> {
-  const { data } = await customFetch<"GET", undefined, CompaniesResponse>(
-    ENDPOINT,
-    {
-      method: "GET",
-    }
-  );
+  const { data } = await customFetch<undefined, CompaniesResponse>(ENDPOINT, {
+    method: "GET",
+  });
   return data;
 }
 
@@ -27,13 +24,12 @@ export async function getCompanies(): Promise<CompaniesResponse> {
  * 企業一覧（プロジェクトを含む）を取得する関数
  */
 export async function getCompaniesWithProjects(): Promise<CompaniesWithProjectsResponse> {
-  const { data } = await customFetch<
-    "GET",
-    undefined,
-    CompaniesWithProjectsResponse
-  >(`${ENDPOINT}/with-projects/`, {
-    method: "GET",
-  });
+  const { data } = await customFetch<undefined, CompaniesWithProjectsResponse>(
+    `${ENDPOINT}/with-projects/`,
+    {
+      method: "GET",
+    }
+  );
   return data;
 }
 
@@ -44,7 +40,6 @@ export async function createCompany(
   companyData: CreateCompanyRequest
 ): Promise<CreateCompanyResponse> {
   const { data } = await customFetch<
-    "POST",
     CreateCompanyRequest,
     CreateCompanyResponse
   >(ENDPOINT, {
@@ -61,7 +56,7 @@ export async function updateCompany(
   id: string,
   companyData: UpdateCompanyRequest
 ): Promise<void> {
-  await customFetch<"PUT", UpdateCompanyRequest, void>(`${ENDPOINT}/${id}/`, {
+  await customFetch<UpdateCompanyRequest, void>(`${ENDPOINT}/${id}/`, {
     method: "PUT",
     body: companyData,
   });
@@ -71,7 +66,7 @@ export async function updateCompany(
  * 特定の企業を取得する関数
  */
 export async function getCompanyById(id: string): Promise<CompanyResponse> {
-  const { data } = await customFetch<"GET", undefined, CompanyResponse>(
+  const { data } = await customFetch<undefined, CompanyResponse>(
     `${ENDPOINT}/${id}/`,
     {
       method: "GET",

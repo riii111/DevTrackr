@@ -10,7 +10,7 @@ const ENDPOINT = "/users";
  * ログイン中のユーザーの詳細を取得する関数
  */
 export async function getMeDetails(): Promise<UserResponse> {
-  const response = await customFetch<"GET", undefined, UserResponse>(
+  const response = await customFetch<undefined, UserResponse>(
     `${ENDPOINT}/me`,
     {
       method: "GET",
@@ -27,7 +27,7 @@ export async function updateUserAction(
   userData: UpdateUserRequest
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await customFetch<"PUT", UpdateUserRequest, void>(`${ENDPOINT}/me`, {
+    await customFetch<UpdateUserRequest, void>(`${ENDPOINT}/me`, {
       method: "PUT",
       body: userData,
     });
