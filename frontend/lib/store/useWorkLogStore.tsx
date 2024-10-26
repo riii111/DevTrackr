@@ -1,12 +1,12 @@
 "use client";
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
-type WorkLogState = {
+export type WorkLogState = {
     isOpen: boolean;
     projectId: string | null;
 };
 
-type WorkLogAction =
+export type WorkLogAction =
     | { type: 'OPEN_WORK_LOG'; projectId: string }
     | { type: 'CLOSE_WORK_LOG' };
 
