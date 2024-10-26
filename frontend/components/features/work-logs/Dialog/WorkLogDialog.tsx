@@ -4,24 +4,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { X, Play, Square, GripHorizontal, PauseCircle, Edit2, Save, Coffee } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Save } from "lucide-react";
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import { useWorkLog } from '@/lib/store/useWorkLogStore';
 import { getProjectById } from "@/lib/api/projects";
 import { ProjectResponse } from "@/types/project";
 import { useAutoSave } from '@/lib/hooks/useAutoSave';
 import { useDraggable } from '@/lib/hooks/useDraggable';
-
-const styles = {
-    slideIn: 'animate-slide-in',
-    fadeIn: 'animate-fade-in',
-    press: 'animate-press',
-    bounce: 'animate-bounce-in',
-} as const;
+import { Header } from '@/components/features/work-logs/Dialog/contents/Header';
+import { ActionButtons } from '@/components/features/work-logs/Dialog/contents/ActionButton';
+import { TimeInfo } from '@/components/features/work-logs/Dialog/contents/TimeInfo';
+import '@/components/features/work-logs/Dialog/contents/dialog.css';
 
 interface TimeEditMode {
     type: 'start' | 'end' | 'break';
@@ -166,29 +159,6 @@ export function WorkLogDialog() {
         return { hours, minutes, totalMinutes: actualMinutes };
     }, [startTime, endTime, breakTime]);
 
-    const TimeDisplay = ({ time, label, canEdit }: { time: Date | null, label: string, canEdit: boolean }) => (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>{label}:</span>
-            <div className="flex items-center gap-2">
-                {time ? (
-                    <>
-                        <span>{format(time, 'HH:mm', { locale: ja })}</span>
-                        {canEdit && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => handleTimeEdit(label.toLowerCase() as 'start' | 'end')}
-                            >
-                                <Edit2 className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </>
-                ) : '未設定'}
-            </div>
-        </div>
-    );
-
     if (!state.isOpen) return null;
 
     return (
@@ -207,174 +177,26 @@ export function WorkLogDialog() {
             }}
             onMouseDown={handleMouseDown}
         >
-            <div className="space-y-4 pb-4 border-b animate-fade-in">
-                <div className="flex items-center cursor-grab drag-handle select-none p-4">
-                    <GripHorizontal className="h-5 w-5 text-gray-400 flex-shrink-0 animate-bounce-in" />
-
-                    <div className="flex-1 mx-4">
-                        <h2 className="text-lg font-bold text-primary text-center animate-fade-in">
-                            稼働記録
-                        </h2>
-                        {project && (
-                            <div className="mt-1 text-center animate-slide-in">
-                                <Badge
-                                    variant="secondary"
-                                    className="max-w-full truncate px-3 py-1 text-sm bg-gray-100 text-gray-700 
-                                             hover:bg-gray-200 transition-all duration-200 ease-in-out
-                                             hover:scale-105 transform"
-                                >
-                                    {project.title}
-                                </Badge>
-                            </div>
-                        )}
-                    </div>
-
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleClose}
-                        className="rounded-full hover:bg-gray-100 flex-shrink-0 h-8 w-8
-                                 transition-all duration-200 ease-in-out
-                                 hover:rotate-90 transform"
-                    >
-                        <X className="h-4 w-4 text-gray-500" />
-                    </Button>
-                </div>
-            </div>
-
-            <style jsx global>{`
-                @keyframes slideIn {
-                    from {
-                        transform: translateY(10px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-
-                @keyframes slideOut {
-                    from {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateY(10px);
-                        opacity: 0;
-                    }
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                @keyframes bounceIn {
-                    0% {
-                        transform: scale(0.3);
-                        opacity: 0;
-                    }
-                    50% {
-                        transform: scale(1.05);
-                        opacity: 0.8;
-                    }
-                    70% { transform: scale(0.9); }
-                    100% {
-                        transform: scale(1);
-                        opacity: 1;
-                    }
-                }
-
-                .animate-slide-in {
-                    animation: slideIn 0.3s ease-out forwards;
-                }
-
-                .animate-slide-out {
-                    animation: slideOut 0.2s ease-in forwards;
-                }
-
-                .animate-fade-in {
-                    animation: fadeIn 0.3s ease-out forwards;
-                }
-
-                .animate-bounce-in {
-                    animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-                }
-
-                .button-hover {
-                    transition: all 0.2s ease-in-out;
-                }
-                
-                .button-hover:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                }
-            `}</style>
+            <Header project={project} onClose={handleClose} />
 
             {project ? (
                 <form onSubmit={handleSubmit} className="space-y-4 p-4 animate-fade-in">
-                    <Card className="bg-gray-50 p-4">
-                        <div className="flex justify-center space-x-4">
-                            <Button
-                                type="button"
-                                onClick={handleStartWork}
-                                disabled={!!startTime}
-                                className="w-full button-hover"
-                                variant={startTime ? "secondary" : "default"}
-                            >
-                                <Play className="mr-2 h-4 w-4" />
-                                開始
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleEndWork}
-                                disabled={!startTime || !!endTime}
-                                className="w-full button-hover"
-                                variant={endTime ? "secondary" : "default"}
-                            >
-                                <Square className="mr-2 h-4 w-4" />
-                                終了
-                            </Button>
-                            {startTime && !endTime && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                onClick={handlePause}
-                                                variant="outline"
-                                                className="button-hover"
-                                            >
-                                                {isPaused ? <Play className="h-4 w-4" /> : <PauseCircle className="h-4 w-4" />}
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {isPaused ? '作業を再開' : '一時停止'}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                        </div>
-                    </Card>
+                    <ActionButtons
+                        startTime={startTime}
+                        endTime={endTime}
+                        isPaused={isPaused}
+                        onStart={handleStartWork}
+                        onEnd={handleEndWork}
+                        onPause={handlePause}
+                    />
 
-                    <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
-                        <TimeDisplay time={startTime} label="開始" canEdit={true} />
-                        <TimeDisplay time={endTime} label="終了" canEdit={!!endTime} />
-
-                        {breakTime > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Coffee className="h-4 w-4" />
-                                <span>休憩時間: {breakTime}分</span>
-                            </div>
-                        )}
-
-                        {calculateWorkTime() && (
-                            <div className="text-sm font-medium text-primary">
-                                実作業時間: {calculateWorkTime()!.hours}時間 {calculateWorkTime()!.minutes}分
-                            </div>
-                        )}
-                    </div>
+                    <TimeInfo
+                        startTime={startTime}
+                        endTime={endTime}
+                        breakTime={breakTime}
+                        workTime={calculateWorkTime()}
+                        onTimeEdit={handleTimeEdit}
+                    />
 
                     {isTimeEditing && (
                         <div className="space-y-2">
