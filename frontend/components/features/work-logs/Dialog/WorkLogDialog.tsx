@@ -232,9 +232,6 @@ export function WorkLogDialog() {
                     )}
 
                     <div className="space-y-2">
-                        <label htmlFor="memo" className="text-sm font-medium block">
-                            メモ
-                        </label>
                         <Textarea
                             id="memo"
                             value={memo}
