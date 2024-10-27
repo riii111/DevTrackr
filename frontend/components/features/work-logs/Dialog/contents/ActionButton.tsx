@@ -11,6 +11,7 @@ interface ActionButtonsProps {
     onStart: () => void;
     onEnd: () => void;
     onPause: () => void;
+    isToday: boolean;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = memo(({
@@ -19,7 +20,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = memo(({
     isPaused,
     onStart,
     onEnd,
-    onPause
+    onPause,
+    isToday
 }) => {
     return (
         <Card className="bg-gray-50 p-4">
@@ -27,7 +29,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = memo(({
                 <Button
                     type="button"
                     onClick={onStart}
-                    disabled={!!startTime}
+                    disabled={!!startTime || !isToday}
                     className="w-full button-hover"
                     variant={startTime ? "secondary" : "default"}
                 >

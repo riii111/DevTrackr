@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Save } from "lucide-react";
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { useWorkLog } from '@/lib/store/useWorkLogStore';
 import { getProjectById } from "@/lib/api/projects";
 import { ProjectResponse } from "@/types/project";
@@ -159,6 +160,14 @@ export function WorkLogDialog() {
         return { hours, minutes, totalMinutes: actualMinutes };
     }, [startTime, endTime, breakTime]);
 
+    const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+    useEffect(() => {
+        if (state.isOpen) {
+            setCurrentDate(new Date());
+        }
+    }, [state.isOpen]);
+
     if (!state.isOpen) return null;
 
     return (
@@ -181,6 +190,10 @@ export function WorkLogDialog() {
 
             {project ? (
                 <form onSubmit={handleSubmit} className="space-y-4 p-4 animate-fade-in">
+                    <div className="text-center text-sm text-gray-600 mb-2">
+                        {format(currentDate, 'yyyy年M月d日（E）', { locale: ja })}の稼働記録
+                    </div>
+
                     <ActionButtons
                         startTime={startTime}
                         endTime={endTime}
@@ -188,6 +201,7 @@ export function WorkLogDialog() {
                         onStart={handleStartWork}
                         onEnd={handleEndWork}
                         onPause={handlePause}
+                        isToday={isToday(currentDate)}
                     />
 
                     <TimeInfo

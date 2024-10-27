@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, GripHorizontal } from "lucide-react";
 import { ProjectResponse } from "@/types/project";
+import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
 interface HeaderProps {
     project: ProjectResponse | null;
@@ -11,7 +13,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = memo(({ project, onClose }) => {
     return (
-        <div className="space-y-4 pb-4 border-b animate-fade-in">
+        <div className="space-y-4 border-b animate-fade-in">
             <div className="flex items-center cursor-grab drag-handle select-none p-4">
                 <GripHorizontal className="h-5 w-5 text-gray-400 flex-shrink-0 animate-bounce-in" />
 
