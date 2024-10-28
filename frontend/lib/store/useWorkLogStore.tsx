@@ -4,23 +4,35 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 export type WorkLogState = {
     isOpen: boolean;
     projectId: string | null;
+    clickPosition: { x: number; y: number } | null;
 };
 
 export type WorkLogAction =
-    | { type: 'OPEN_WORK_LOG'; projectId: string }
+    | { type: 'OPEN_WORK_LOG'; projectId: string; position: { x: number; y: number } }
     | { type: 'CLOSE_WORK_LOG' };
 
 const initialState: WorkLogState = {
     isOpen: false,
     projectId: null,
+    clickPosition: null,
 };
 
 const workLogReducer = (state: WorkLogState, action: WorkLogAction): WorkLogState => {
     switch (action.type) {
         case 'OPEN_WORK_LOG':
-            return { ...state, isOpen: true, projectId: action.projectId };
+            return {
+                ...state,
+                isOpen: true,
+                projectId: action.projectId,
+                clickPosition: action.position,
+            };
         case 'CLOSE_WORK_LOG':
-            return { ...state, isOpen: false, projectId: null };
+            return {
+                ...state,
+                isOpen: false,
+                projectId: null,
+                clickPosition: null,
+            };
         default:
             return state;
     }

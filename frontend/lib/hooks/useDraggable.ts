@@ -68,5 +68,10 @@ export const useDraggable = (
     };
   }, [isDragging, dragStart, dialogRef]);
 
+  // initialPositionの変更を監視して位置を更新
+  useEffect(() => {
+    setPosition(initialPosition);
+  }, [initialPosition]);
+
   return { position, isDragging, handleMouseDown };
 };

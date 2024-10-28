@@ -24,24 +24,24 @@ interface TimeEditMode {
 
 export function WorkLogDialog() {
     const { state, dispatch } = useWorkLog();
+    const dialogRef = useRef<HTMLDivElement>(null);
     const [project, setProject] = useState<ProjectResponse | null>(null);
     const [startTime, setStartTime] = useState<Date | null>(null);
     const [endTime, setEndTime] = useState<Date | null>(null);
     const [memo, setMemo] = useState("");
-    const dialogRef = useRef<HTMLDivElement>(null);
     const prevProjectId = useRef<string | null>(null);
 
-    // アニメーション状態の追加
+    const lastPosition = useRef<{ x: number; y: number } | null>(null);
+    const [dialogPosition, setDialogPosition] = useState<{ x: number; y: number } | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isTimeEditing, setIsTimeEditing] = useState<TimeEditMode | null>(null);
     const [breakTime, setBreakTime] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [pauseStartTime, setPauseStartTime] = useState<Date | null>(null);
-    // use client宣言してるのになぜか"window is not defined"が出るので、初期値設定しておきクライアントサイドで操作する
-    const [initialPosition, setInitialPosition] = useState({ x: 100, y: 100 });
 
+    // ドラッグ機能の適用
     const { position, isDragging, handleMouseDown } = useDraggable(
-        initialPosition,
+        dialogPosition || { x: 0, y: 0 },
         dialogRef
     );
 
@@ -68,34 +68,62 @@ export function WorkLogDialog() {
         }
     }, [state.isOpen, state.projectId, fetchProject]);
 
-    useEffect(() => {
-        if (state.isOpen) {
-            setIsVisible(true);
+    // ダイアログの位置を計算
+    const calculateDialogPosition = useCallback((clickPosition: { x: number; y: number }) => {
+        const dialogWidth = 384;
+        const dialogHeight = 500;
+        const padding = 16;
+        const buttonOffset = 8;
+
+        let x = clickPosition.x + buttonOffset;
+        let y = Math.max(padding, clickPosition.y - (dialogHeight / 2));
+
+        // 画面端での位置調整
+        if (x + dialogWidth + padding > window.innerWidth) {
+            x = x - dialogWidth - buttonOffset * 2;
         }
-    }, [state.isOpen]);
+        if (y + dialogHeight > window.innerHeight) {
+            y = window.innerHeight - dialogHeight - padding;
+        }
 
-    useEffect(() => {
-        // クライアントサイドでのみ実行
-        const updatePosition = () => {
-            setInitialPosition({ x: window.innerWidth - 480, y: 100 });
-        };
-
-        updatePosition();
-        window.addEventListener('resize', updatePosition);
-
-        return () => window.removeEventListener('resize', updatePosition);
+        return { x, y };
     }, []);
 
+    // ダイアログの表示制御
+    useEffect(() => {
+        if (!state.isOpen || !state.clickPosition) return;
+
+        const newPosition = calculateDialogPosition(state.clickPosition);
+
+        if (!lastPosition.current) {
+            // 初回表示: 位置を設定してから表示
+            setIsVisible(false);
+            requestAnimationFrame(() => {
+                setDialogPosition(newPosition);
+                lastPosition.current = newPosition;
+                requestAnimationFrame(() => setIsVisible(true));
+            });
+        } else {
+            // 再表示: 現在位置から新しい位置へアニメーション
+            setDialogPosition(newPosition);
+            lastPosition.current = newPosition;
+        }
+    }, [state.isOpen, state.clickPosition, calculateDialogPosition]);
+
+    // クリーンアップ処理
     const handleClose = useCallback(() => {
         setIsVisible(false);
         // アニメーション完了後にダイアログを閉じる
         setTimeout(() => {
             dispatch({ type: 'CLOSE_WORK_LOG' });
+            // 全ての状態をリセット
             setStartTime(null);
             setEndTime(null);
             setMemo("");
             setProject(null);
             prevProjectId.current = null;
+            lastPosition.current = null;
+            setDialogPosition(null);
         }, 200);
     }, [dispatch]);
 
@@ -168,14 +196,14 @@ export function WorkLogDialog() {
         }
     }, [state.isOpen]);
 
-    if (!state.isOpen) return null;
+    if (!state.isOpen || !dialogPosition) return null;
 
     return (
         <div
             ref={dialogRef}
             className={`
                 fixed bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200
-                ${isVisible ? 'animate-slide-in opacity-100' : 'animate-slide-out opacity-0'}
+                ${isVisible ? 'animate-slide-in opacity-100' : 'opacity-0'}
             `}
             style={{
                 top: `${position.y}px`,
@@ -183,6 +211,7 @@ export function WorkLogDialog() {
                 width: '384px',
                 zIndex: 50,
                 transition: isDragging ? 'none' : 'all 0.2s ease-in-out',
+                visibility: isVisible ? 'visible' : 'hidden'
             }}
             onMouseDown={handleMouseDown}
         >
