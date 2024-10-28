@@ -7,20 +7,6 @@ import { revalidateTag } from "next/cache";
 const ENDPOINT = "/users";
 
 /**
- * ログイン中のユーザーの詳細を取得する関数
- */
-export async function getMeDetails(): Promise<UserResponse> {
-  const response = await customFetch<undefined, UserResponse>(
-    `${ENDPOINT}/me`,
-    {
-      method: "GET",
-      next: { tags: ["user-profile"] },
-    }
-  );
-  return response.data as UserResponse;
-}
-
-/**
  * ユーザーを更新する関数
  */
 export async function updateUserAction(
