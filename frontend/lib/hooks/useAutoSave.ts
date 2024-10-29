@@ -5,11 +5,15 @@ import { WorkLog } from "@/types/worklog";
 import { updateWorkLogAction } from "@/lib/actions/worklog";
 import { useToast } from "@/lib/hooks/use-toast";
 
+// 定数の定義
+const DEBOUNCE_DELAY = 1500;
+const LOCAL_STORAGE_KEY_PREFIX = "workLog_autosave_";
+
 interface AutoSaveState extends Partial<WorkLog> {
   break_time?: number;
   end_time?: string;
-  workLogId?: string | null;
-  project_id?: string;
+  workLogId: string | null; // 必須項目として定義
+  project_id: string; // 必須項目として定義
   memo?: string;
 }
 
@@ -30,7 +34,7 @@ export const useAutoSave = (state: AutoSaveState) => {
 
     try {
       localStorage.setItem(
-        `workLog_autosave_${data.project_id}`,
+        `${LOCAL_STORAGE_KEY_PREFIX}${data.project_id}`,
         JSON.stringify({
           ...data,
           lastModified: new Date().toISOString(),
@@ -61,7 +65,9 @@ export const useAutoSave = (state: AutoSaveState) => {
         }
 
         // API保存成功時にローカルストレージをクリア
-        localStorage.removeItem(`workLog_autosave_${data.project_id}`);
+        localStorage.removeItem(
+          `${LOCAL_STORAGE_KEY_PREFIX}${data.project_id}`
+        );
         setLastAutoSave(new Date());
         setIsDirty(false);
         console.log("success!! memo : ", data.memo);
@@ -102,7 +108,7 @@ export const useAutoSave = (state: AutoSaveState) => {
       debounceTimerRef.current = setTimeout(() => {
         saveToAPI(state);
         lastSavedStateRef.current = currentState;
-      }, 1500);
+      }, DEBOUNCE_DELAY);
     }
 
     return () => {
@@ -122,6 +128,6 @@ export const useAutoSave = (state: AutoSaveState) => {
     lastAutoSave,
     isDirty,
     isSaving,
-    restoreState, // 復元用の関数を公開
+    restoreState,
   };
 };
