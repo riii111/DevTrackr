@@ -4,16 +4,9 @@ use crate::models::work_logs::{WorkLogsCreate, WorkLogsInDB, WorkLogsUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::repositories::work_logs::WorkLogsRepository;
 use crate::usecases::projects::ProjectUseCase;
-use bson::{oid::ObjectId, DateTime as BsonDateTime};
+use bson::oid::ObjectId;
 use std::sync::Arc;
 use tokio::try_join;
-
-// WorkLogsCreate と WorkLogsUpdate から共通のフィールドを取り出すヘルパー関数
-fn calculate_working_duration(start_time: &BsonDateTime, end_time: &Option<BsonDateTime>) -> i64 {
-    end_time.map_or(0, |end_time| {
-        (end_time.to_chrono() - start_time.to_chrono()).num_seconds()
-    })
-}
 
 pub struct WorkLogsUseCase<R: WorkLogsRepository> {
     repository: Arc<R>,
@@ -54,11 +47,11 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
             AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())
         })?;
 
-        // 最新の総稼働時間を計算
-        let diff_working_time =
-            calculate_working_duration(&work_logs.start_time, &work_logs.end_time);
-        let updated_total_working_time = associated_project.total_working_time + diff_working_time;
-        // 計算した総稼働時間をプロジェクトに反映して更新
+        // 実作業時間を使用して総稼働時間を更新
+        let actual_work_minutes = work_logs.actual_work_minutes.unwrap_or(0);
+        let updated_total_working_time =
+            associated_project.total_working_time + actual_work_minutes as i64 * 60; // 分を秒に変換
+
         let project_update = ProjectUpdate {
             total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
@@ -87,11 +80,11 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
             AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())
         })?;
 
-        // 最新の総稼働時間を計算
-        let diff_working_time =
-            calculate_working_duration(&work_logs.start_time, &work_logs.end_time);
-        let updated_total_working_time = associated_project.total_working_time + diff_working_time;
-        // 計算した総稼働時間をプロジェクトに反映して更新
+        // 実作業時間を使用して総稼働時間を更新
+        let actual_work_minutes = work_logs.actual_work_minutes.unwrap_or(0);
+        let updated_total_working_time =
+            associated_project.total_working_time + actual_work_minutes as i64 * 60; // 分を秒に変換
+
         let project_update = ProjectUpdate {
             total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
