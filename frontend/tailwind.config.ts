@@ -73,20 +73,20 @@ const config: Config = {
         },
         toast: {
           success: {
-            background: "#4CAF50",
-            text: "#FFFFFF",
+            background: "#E8F5E9", // より柔らかい緑色
+            text: "#2E7D32", // 濃い緑のテキスト
           },
           error: {
-            background: "#F44336",
-            text: "#FFFFFF",
+            background: "#FFEBEE", // より柔らかい赤色
+            text: "#C62828", // 濃い赤のテキスト
           },
           info: {
-            background: "#2196F3",
-            text: "#FFFFFF",
+            background: "#E3F2FD", // より柔らかい青色
+            text: "#1565C0", // 濃い青のテキスト
           },
           warning: {
-            background: "#FF9800",
-            text: "#FFFFFF",
+            background: "#FFF3E0", // より柔らかいオレンジ色
+            text: "#EF6C00", // 濃いオレンジのテキスト
           },
         },
       },
