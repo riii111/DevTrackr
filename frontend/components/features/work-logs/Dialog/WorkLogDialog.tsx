@@ -241,12 +241,14 @@ export function WorkLogDialog() {
         if (!project?.id || !workLogId) return;
 
         try {
+            const workTime = calculateWorkTime();
             const result = await updateWorkLogAction(workLogId, {
                 project_id: project.id,
                 start_time: startTime.toISOString(),
                 end_time: now.toISOString(),
                 memo: memo,
-                break_time: breakTime
+                break_time: breakTime,
+                actual_work_minutes: workTime ? workTime.totalMinutes : undefined
             });
 
             if (!result.success) {

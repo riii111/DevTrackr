@@ -26,6 +26,10 @@ pub struct WorkLogsResponse {
     #[serde(serialize_with = "serialize_option_bson_datetime")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
+    #[schema(value_type = Option<i32>, example = 30)]
+    pub break_time: Option<i32>,
+    #[schema(value_type = Option<i32>, example = 120)]
+    pub actual_work_minutes: Option<i32>,
 }
 
 //  パニック防止
@@ -40,6 +44,8 @@ impl TryFrom<WorkLogsInDB> for WorkLogsResponse {
             end_time: db_work_logs.end_time,
             created_at: db_work_logs.created_at,
             updated_at: db_work_logs.updated_at,
+            break_time: db_work_logs.break_time,
+            actual_work_minutes: db_work_logs.actual_work_minutes,
         })
     }
 }
