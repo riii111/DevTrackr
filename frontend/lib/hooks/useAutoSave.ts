@@ -12,8 +12,8 @@ const LOCAL_STORAGE_KEY_PREFIX = "workLog_autosave_";
 interface AutoSaveState extends Partial<WorkLog> {
   break_time?: number;
   end_time?: string;
-  workLogId: string | null; // 必須項目として定義
-  project_id: string; // 必須項目として定義
+  workLogId: string | null;
+  project_id: string;
   memo?: string;
 }
 
