@@ -148,17 +148,17 @@ export function WorkLogDialog() {
 
         const newPosition = calculateDialogPosition(state.clickPosition);
 
-        // 初期表示時はクリック位置から開始
-        setDialogPosition(newPosition);
+        // 一度完全に非表示にする
         setIsVisible(false);
+        setDialogPosition(null);
 
-        // 一瞬待ってからアニメーションを開始
+        // 位置設定とアニメーション開始のタイミングを分離
         requestAnimationFrame(() => {
-            setIsVisible(true);
+            setDialogPosition(newPosition);
+            requestAnimationFrame(() => {
+                setIsVisible(true);
+            });
         });
-
-        // 位置を記憶
-        lastPosition.current = newPosition;
 
     }, [state.isOpen, state.clickPosition, calculateDialogPosition]);
 
@@ -176,6 +176,8 @@ export function WorkLogDialog() {
             setProject(null);
             setWorkLogId(null);
             prevProjectId.current = null;
+
+            // 位置情報も完全にリセット
             lastPosition.current = null;
             setDialogPosition(null);
 
@@ -327,15 +329,16 @@ export function WorkLogDialog() {
             ref={dialogRef}
             className={`
                 fixed bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200
-                ${isVisible ? 'animate-slide-in opacity-100' : 'opacity-0'}
+                transform-gpu
+                ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
             `}
             style={{
                 top: `${position.y}px`,
                 left: `${position.x}px`,
                 width: '384px',
                 zIndex: 50,
-                transition: isDragging ? 'none' : 'all 0.2s ease-in-out',
-                visibility: isVisible ? 'visible' : 'hidden'
+                transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                visibility: isVisible && dialogPosition ? 'visible' : 'hidden'
             }}
             onMouseDown={handleMouseDown}
         >
