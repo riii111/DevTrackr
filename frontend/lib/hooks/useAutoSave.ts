@@ -66,10 +66,7 @@ export const useAutoSave = (state: AutoSaveState) => {
         setIsDirty(false);
         console.log("success!! memo : ", data.memo);
 
-        toast({
-          description: "保存しました",
-          duration: 2000,
-        });
+        // 成功時はDialog内に出力されるのでtoast不要
       } catch (error) {
         console.error("保存に失敗しました:", error);
         toast({

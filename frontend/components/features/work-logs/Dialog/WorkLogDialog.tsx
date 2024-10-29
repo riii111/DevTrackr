@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -15,23 +15,75 @@ import { TimeInfo } from '@/components/features/work-logs/Dialog/contents/TimeIn
 import '@/components/features/work-logs/Dialog/contents/dialog.css';
 import { createWorkLogAction, updateWorkLogAction } from "@/lib/actions/worklog";
 import { useToast } from "@/lib/hooks/use-toast";
+import { DIALOG_DIMENSIONS, AUTO_SAVE_EXPIRATION } from "@/lib/constants/WorkLogDialog";
+
+// 作業時間の検証
+const validateWorkLogTimes = (startTime: Date | null, endTime: Date) => {
+    if (!startTime || isNaN(startTime.getTime())) {
+        return {
+            isValid: false,
+            error: "開始時刻が正しく設定されていません"
+        };
+    }
+
+    if (endTime < startTime) {
+        return {
+            isValid: false,
+            error: "終了時刻は開始時刻より後に設定してください"
+        };
+    }
+
+    return { isValid: true, error: null };
+};
+
+// 作業時間の計算
+const calculateWorkTime = (startTime: Date | null, endTime: Date | null, breakTime: number) => {
+    if (!startTime || !endTime) return null;
+    const totalMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
+    const actualMinutes = totalMinutes - breakTime;
+    return {
+        hours: Math.floor(actualMinutes / 60),
+        minutes: actualMinutes % 60,
+        totalMinutes: actualMinutes
+    };
+};
+
+// ダイアログの位置を計算
+const calculateDialogPosition = (clickPosition: { x: number; y: number }) => {
+    let x = clickPosition.x + DIALOG_DIMENSIONS.buttonOffset;
+    let y = Math.max(DIALOG_DIMENSIONS.padding, clickPosition.y - (DIALOG_DIMENSIONS.height / 2));
+
+    // 画面端での位置調整
+    if (x + DIALOG_DIMENSIONS.width + DIALOG_DIMENSIONS.padding > window.innerWidth) {
+        x = x - DIALOG_DIMENSIONS.width - DIALOG_DIMENSIONS.buttonOffset * 2;
+    }
+    if (y + DIALOG_DIMENSIONS.height > window.innerHeight) {
+        y = window.innerHeight - DIALOG_DIMENSIONS.height - DIALOG_DIMENSIONS.padding;
+    }
+
+    return { x, y };
+};
 
 export function WorkLogDialog() {
-    const { state, dispatch } = useWorkLog();
-    const dialogRef = useRef<HTMLDivElement>(null);
-    const [project, setProject] = useState<ProjectResponse | null>(null);
-    const [startTime, setStartTime] = useState<Date | null>(null);
-    const [endTime, setEndTime] = useState<Date | null>(null);
-    const [memo, setMemo] = useState("");
-    const prevProjectId = useRef<string | null>(null);
+    const {
+        state,
+        setStartTime,
+        setEndTime,
+        setMemo,
+        setBreakTime,
+        setPauseStatus,
+        setWorkLogId,
+        resetWorkLog,
+        closeWorkLog
+    } = useWorkLog();
 
-    const [dialogPosition, setDialogPosition] = useState<{ x: number; y: number } | null>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [breakTime, setBreakTime] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
-    const [pauseStartTime, setPauseStartTime] = useState<Date | null>(null);
-    const [workLogId, setWorkLogId] = useState<string | null>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
+    const [project, setProject] = React.useState<ProjectResponse | null>(null);
+    const [isVisible, setIsVisible] = React.useState(false);
+    const [dialogPosition, setDialogPosition] = React.useState<{ x: number; y: number } | null>(null);
+    const prevProjectId = useRef<string | null>(null);
     const { toast } = useToast();
+
     // ドラッグ機能の適用
     const { position, isDragging, handleMouseDown } = useDraggable(
         dialogPosition || { x: 0, y: 0 },
@@ -40,14 +92,13 @@ export function WorkLogDialog() {
 
     const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave({
         project_id: project?.id,
-        start_time: startTime?.toISOString(),
-        end_time: endTime?.toISOString(),
-        memo,
-        break_time: breakTime,
-        workLogId
+        start_time: state.startTime?.toISOString(),
+        end_time: state.endTime?.toISOString(),
+        memo: state.memo,
+        break_time: state.breakTime,
+        workLogId: state.workLogId
     });
 
-    const AUTO_SAVE_EXPIRATION = 30 * 60 * 1000; // 30分
 
     // ローカルストレージからの復元を行う。意図しない操作などに対応
     const restoreFromLocalStorage = useCallback((projectId: string) => {
@@ -65,15 +116,11 @@ export function WorkLogDialog() {
                     if (parsedData.memo) setMemo(parsedData.memo);
                     if (parsedData.break_time) setBreakTime(parsedData.break_time);
 
-                    toast({
-                        description: "未保存の変更を復元しました",
-                    });
-
-                    // 保存状態を復元
+                    toast({ description: "未保存の変更を復元しました" });
                     restoreState(lastModified);
                     return true;
                 } else {
-                    // 30分以上経過している場合はローカルストレージをクリア
+                    // 時間経過している場合はローカルストレージをクリア
                     localStorage.removeItem(`workLog_autosave_${projectId}`);
                 }
             }
@@ -81,49 +128,36 @@ export function WorkLogDialog() {
             console.error("ローカルストレージからの復元に失敗しました:", error);
         }
         return false;
-    }, [restoreState, toast]);
+    }, [setStartTime, setEndTime, setMemo, setBreakTime, restoreState, toast]);
 
-    // プロジェクト読み込み時
+    // プロジェクト読み込み
     useEffect(() => {
-        if (!state.isOpen || !state.projectId) return;
-        if (state.projectId === prevProjectId.current) return;
-
-        const getProject = async () => {
-            try {
-                const fetchedProject = await getProjectById(state.projectId!);
-                setProject(fetchedProject);
-                prevProjectId.current = state.projectId;
-
-                // プロジェクト読み込み後にローカルストレージから復元を試みる
-                restoreFromLocalStorage(state.projectId!);
-            } catch (error) {
-                console.error("プロジェクトの取得に失敗しました:", error);
-            }
-        };
-
-        getProject();
-    }, [state.isOpen, state.projectId, restoreFromLocalStorage]);
-
-    // ダイアログの位置を計算
-    const calculateDialogPosition = useCallback((clickPosition: { x: number; y: number }) => {
-        const dialogWidth = 384;
-        const dialogHeight = 500;
-        const padding = 16;
-        const buttonOffset = 8;
-
-        let x = clickPosition.x + buttonOffset;
-        let y = Math.max(padding, clickPosition.y - (dialogHeight / 2));
-
-        // 画面端での位置調整
-        if (x + dialogWidth + padding > window.innerWidth) {
-            x = x - dialogWidth - buttonOffset * 2;
-        }
-        if (y + dialogHeight > window.innerHeight) {
-            y = window.innerHeight - dialogHeight - padding;
+        if (!state.isOpen || !state.projectId) {
+            // ダイアログが閉じられた時のクリーンアップ
+            prevProjectId.current = null;
+            return;
         }
 
-        return { x, y };
-    }, []);
+        // プロジェクトが未取得、もしくは異なるプロジェクトの場合のみ取得
+        if (!project || project.id !== state.projectId) {
+            const getProject = async () => {
+                try {
+                    const fetchedProject = await getProjectById(state.projectId!);
+                    setProject(fetchedProject);
+                    prevProjectId.current = state.projectId;
+                    restoreFromLocalStorage(state.projectId!);
+                } catch (error) {
+                    console.error("プロジェクトの取得に失敗しました:", error);
+                    toast({
+                        variant: "destructive",
+                        description: "プロジェクト情報の取得に失敗しました"
+                    });
+                }
+            };
+
+            getProject();
+        }
+    }, [state.isOpen, state.projectId, project, restoreFromLocalStorage, toast]);
 
     // ダイアログの表示制御
     useEffect(() => {
@@ -143,7 +177,7 @@ export function WorkLogDialog() {
             });
         });
 
-    }, [state.isOpen, state.clickPosition, calculateDialogPosition]);
+    }, [state.isOpen, state.clickPosition]);
 
     // クリーンアップ処理
     const handleClose = useCallback(() => {
@@ -151,25 +185,20 @@ export function WorkLogDialog() {
 
         // アニメーション完了後にダイアログを閉じる
         setTimeout(() => {
-            dispatch({ type: 'CLOSE_WORK_LOG' });
-            // 全ての状態をリセット
-            setStartTime(null);
-            setEndTime(null);
-            setMemo("");
+            closeWorkLog();
+            resetWorkLog();
             setProject(null);
-            setWorkLogId(null);
-            prevProjectId.current = null;
-
-            // 位置情報も完全にリセット
             setDialogPosition(null);
+            prevProjectId.current = null;
 
             // ローカルストレージのクリーンアップ
             if (project?.id) {
                 localStorage.removeItem(`workLog_autosave_${project.id}`);
             }
         }, 200);
-    }, [dispatch, project?.id]);
+    }, [closeWorkLog, resetWorkLog, project?.id]);
 
+    // 作業開始処理
     const handleStartWork = async () => {
         const now = new Date();
         setStartTime(now);
@@ -181,74 +210,58 @@ export function WorkLogDialog() {
             const result = await createWorkLogAction({
                 project_id: project.id,
                 start_time: now.toISOString(),
-                memo: memo,
-                break_time: breakTime
+                memo: state.memo,
+                break_time: state.breakTime
             });
-            setWorkLogId(result.data.id);
 
-            if (!result.success) {
-                throw new Error(result.error);
-            }
+            if (!result.success) throw new Error(result.error);
+            setWorkLogId(result.data.id);
         } catch (error) {
             console.error('稼働開始の記録に失敗しました:', error);
-            // エラー時の状態を戻す
             setStartTime(null);
         }
     };
 
+    // 作業終了処理
     const handleEndWork = async () => {
-        // 既に終了時刻が設定されている場合は処理を中断
-        if (endTime) return;
-
+        if (state.endTime) return;
         const now = new Date();
 
-        // 開始時刻が設定されていない、または無効な場合は処理を中断
-        if (!startTime || isNaN(startTime.getTime())) {
+        const validation = validateWorkLogTimes(state.startTime, now);
+        if (!validation.isValid) {
             toast({
                 variant: "destructive",
-                description: "開始時刻が正しく設定されていません",
+                description: validation.error
             });
             return;
         }
 
-        // 開始時刻より前の時刻は設定不可
-        if (now < startTime) {
-            toast({
-                variant: "destructive",
-                description: "終了時刻は開始時刻より後に設定してください",
-            });
-            return;
-        }
-
-        if (!project?.id || !workLogId) return;
+        if (!project?.id || !state.workLogId) return;
 
         try {
-            const workTime = calculateWorkTime();
-            const result = await updateWorkLogAction(workLogId, {
+            const currentWorkTime = calculateWorkTime(state.startTime, state.endTime, state.breakTime);
+            const result = await updateWorkLogAction(state.workLogId, {
                 project_id: project.id,
-                start_time: startTime.toISOString(),
+                start_time: state.startTime!.toISOString(),
                 end_time: now.toISOString(),
-                memo: memo,
-                break_time: breakTime,
-                actual_work_minutes: workTime ? workTime.totalMinutes : undefined
+                memo: state.memo,
+                break_time: state.breakTime,
+                actual_work_minutes: currentWorkTime?.totalMinutes
             });
 
-            if (!result.success) {
-                throw new Error(result.error);
-            }
-
+            if (!result.success) throw new Error(result.error);
             setEndTime(now);
         } catch (error) {
             console.error('稼働終了の記録に失敗しました:', error);
             toast({
                 variant: "destructive",
-                description: "稼働終了の記録に失敗しました",
+                description: "稼働終了の記録に失敗しました"
             });
         }
     };
 
     const handleTimeEdit = async (type: 'start' | 'end', newDateTime: Date, isValid: boolean) => {
-        if (!isValid || !project?.id || !workLogId) return;
+        if (!isValid || !project?.id || !state.workLogId) return;
 
         try {
             // 状態のみ更新（APIの呼び出しはuseAutoSaveに任せる）
@@ -265,9 +278,9 @@ export function WorkLogDialog() {
             console.error('時刻の更新に失敗しました:', error);
             // エラー時は状態を元に戻す
             if (type === 'start') {
-                setStartTime(startTime);
+                setStartTime(state.startTime);
             } else {
-                setEndTime(endTime);
+                setEndTime(state.endTime);
             }
             toast({
                 variant: "destructive",
@@ -277,25 +290,22 @@ export function WorkLogDialog() {
     };
 
     const handlePause = () => {
-        if (!isPaused) {
-            setPauseStartTime(new Date());
-            setIsPaused(true);
+        if (!state.isPaused) {
+            const now = new Date();
+            setPauseStatus(true, now);
         } else {
-            const pauseDuration = Math.floor((new Date().getTime() - pauseStartTime!.getTime()) / 60000);
-            setBreakTime(prev => prev + pauseDuration);
-            setPauseStartTime(null);
-            setIsPaused(false);
+            const pauseDuration = Math.floor(
+                (new Date().getTime() - state.pauseStartTime!.getTime()) / 60000
+            );
+            setBreakTime(state.breakTime + pauseDuration);
+            setPauseStatus(false, null);
         }
     };
 
-    const calculateWorkTime = useCallback(() => {
-        if (!startTime || !endTime) return null;
-        const totalMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
-        const actualMinutes = totalMinutes - breakTime;
-        const hours = Math.floor(actualMinutes / 60);
-        const minutes = actualMinutes % 60;
-        return { hours, minutes, totalMinutes: actualMinutes };
-    }, [startTime, endTime, breakTime]);
+    // 作業時間計算（メモ化）
+    const workTime = useCallback(() => {
+        return calculateWorkTime(state.startTime, state.endTime, state.breakTime);
+    }, [state.startTime, state.endTime, state.breakTime]);
 
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
@@ -319,9 +329,9 @@ export function WorkLogDialog() {
             style={{
                 top: `${position.y}px`,
                 left: `${position.x}px`,
-                width: '384px',
+                width: `${DIALOG_DIMENSIONS.width}px`,
                 zIndex: 50,
-                transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                transition: isDragging ? 'none' : `transform ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1), opacity ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
                 visibility: isVisible && dialogPosition ? 'visible' : 'hidden'
             }}
             onMouseDown={handleMouseDown}
@@ -331,31 +341,31 @@ export function WorkLogDialog() {
             {project ? (
                 <div className="space-y-4 p-4 animate-fade-in">
                     <div className="text-center text-sm text-gray-600 mb-2">
-                        {format(currentDate, 'yyyy年M月d日（E）', { locale: ja })}の稼働記録
+                        {format(new Date(), 'yyyy年M月d日（E）', { locale: ja })}の稼働記録
                     </div>
 
                     <ActionButtons
-                        startTime={startTime}
-                        endTime={endTime}
-                        isPaused={isPaused}
+                        startTime={state.startTime}
+                        endTime={state.endTime}
+                        isPaused={state.isPaused}
                         onStart={handleStartWork}
                         onEnd={handleEndWork}
                         onPause={handlePause}
-                        isToday={isToday(currentDate)}
+                        isToday={isToday(new Date())}
                     />
 
                     <TimeInfo
-                        startTime={startTime}
-                        endTime={endTime}
-                        breakTime={breakTime}
-                        workTime={calculateWorkTime()}
+                        startTime={state.startTime}
+                        endTime={state.endTime}
+                        breakTime={state.breakTime}
+                        workTime={workTime()}
                         onTimeEdit={handleTimeEdit}
                     />
 
                     <div className="space-y-2">
                         <Textarea
                             id="memo"
-                            value={memo}
+                            value={state.memo}
                             onChange={(e) => setMemo(e.target.value)}
                             placeholder="作業内容を入力してください"
                             className="h-24 resize-none text-primary"
@@ -364,13 +374,9 @@ export function WorkLogDialog() {
 
                     {lastAutoSave && (
                         <div className="text-xs text-gray-400 text-center">
-                            {isSaving ? (
-                                "保存中..."
-                            ) : isDirty ? (
-                                '未保存の変更があります'
-                            ) : (
-                                `最終保存: ${format(lastAutoSave, 'HH:mm')}`
-                            )}
+                            {isSaving ? "保存中..." :
+                                isDirty ? '未保存の変更があります' :
+                                    `最終保存: ${format(lastAutoSave, 'HH:mm')}`}
                         </div>
                     )}
                 </div>
@@ -383,6 +389,6 @@ export function WorkLogDialog() {
             )}
         </div>
     );
-}
+};
 
 export default WorkLogDialog;
