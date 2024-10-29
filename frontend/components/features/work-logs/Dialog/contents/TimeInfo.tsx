@@ -1,20 +1,57 @@
 import React, { memo, useState } from 'react';
 import { Coffee, PencilIcon } from "lucide-react";
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { z } from "zod";
 
 interface TimeInfoProps {
     startTime: Date | null;
     endTime: Date | null;
     breakTime: number;
     workTime: { hours: number; minutes: number } | null;
-    onTimeEdit: (type: 'start' | 'end', newDateTime: Date) => void;
+    onTimeEdit: (type: 'start' | 'end', newDateTime: Date, isValid: boolean) => void;
 }
+
+const timeValidationSchema = z.object({
+    startTime: z.date(),
+    endTime: z.date().optional(),
+}).refine(data => {
+    if (!data.endTime) return true;
+    return data.startTime < data.endTime;
+}, {
+    message: "終了時刻は開始時刻より後に設定してください",
+}).refine(data => {
+    // 未来の日時をチェック
+    const now = new Date();
+    if (data.startTime > now || (data.endTime && data.endTime > now)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "未来の日時は設定できません",
+}).refine(data => {
+    // 極端に過去の日時をチェック（例：30日以上前）
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    if (data.startTime < thirtyDaysAgo || (data.endTime && data.endTime < thirtyDaysAgo)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "30日以上前の日時は設定できません",
+}).refine(data => {
+    if (!data.endTime) return true;
+    // 作業時間が24時間を超えていないかチェック
+    const diffHours = (data.endTime.getTime() - data.startTime.getTime()) / (1000 * 60 * 60);
+    return diffHours <= 24;
+}, {
+    message: "作業時間は24時間以内に収めてください",
+});
 
 export const TimeInfo = memo(
     ({ startTime, endTime, breakTime, workTime, onTimeEdit }: TimeInfoProps) => {
         const [editingTime, setEditingTime] = useState<'start' | 'end' | null>(null);
         const [tempDateTime, setTempDateTime] = useState<Date | null>(null);
+        const [validationError, setValidationError] = useState<string | null>(null);
 
         const handleEditClick = (type: 'start' | 'end') => {
             setEditingTime(type);
@@ -25,14 +62,40 @@ export const TimeInfo = memo(
             if (!tempDateTime) return;
             const newDateTime = new Date(e.target.value);
             setTempDateTime(newDateTime);
+            setValidationError(null);
         };
 
         const handleBlur = () => {
             if (editingTime && tempDateTime) {
-                onTimeEdit(editingTime, tempDateTime);
-                setEditingTime(null);
+                try {
+                    const validationData = {
+                        startTime: editingTime === 'start' ? tempDateTime : (startTime || new Date()),
+                        endTime: editingTime === 'end' ? tempDateTime : endTime,
+                    };
+
+                    // バリデーションチェック
+                    timeValidationSchema.parse(validationData);
+                    setValidationError(null);
+
+                    // 親コンポーネントに有効な値として通知
+                    onTimeEdit(editingTime, tempDateTime, true);
+                    setEditingTime(null);
+                } catch (error) {
+                    if (error instanceof z.ZodError) {
+                        const errorMessage = error.errors[0].message;
+                        setValidationError(errorMessage);
+                        // 親コンポーネントに無効な値として通知
+                        onTimeEdit(editingTime, tempDateTime, false);
+                    }
+                }
             }
         };
+
+        // 編集フィールドのスタイル
+        const inputClassName = `text-right w-48 focus:outline-none focus:ring-1 
+            ${validationError ? 'ring-red-500 text-red-500' : 'ring-primary text-primary'}
+            [&::-webkit-calendar-picker-indicator]:opacity-100  // カレンダーアイコンを常に表示
+            [&::-webkit-calendar-picker-indicator]:hover:cursor-pointer`;
 
         return (
             <div className="space-y-2 text-sm">
@@ -44,16 +107,16 @@ export const TimeInfo = memo(
                             value={tempDateTime ? format(tempDateTime, "yyyy-MM-dd'T'HH:mm") : ''}
                             onChange={handleTimeChange}
                             onBlur={handleBlur}
-                            className="text-right text-primary w-40 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className={inputClassName}
                             autoFocus
                         />
                     ) : (
                         <button
                             onClick={() => handleEditClick('start')}
-                            className="text-right text-primary hover:text-primary focus:outline-none group"
+                            className="text-right text-primary hover:text-primary focus:outline-none group flex items-center"
                         >
-                            {startTime ? format(startTime, 'M/d HH:mm') : '--:--'}
-                            <PencilIcon className="w-3 h-3 ml-1 inline opacity-0 group-hover:opacity-100" />
+                            <span>{startTime ? format(startTime, 'M/d HH:mm') : '--:--'}</span>
+                            <PencilIcon className="w-3 h-3 ml-1 text-gray-400 group-hover:text-primary" />
                         </button>
                     )}
                 </div>
@@ -66,17 +129,17 @@ export const TimeInfo = memo(
                             value={tempDateTime ? format(tempDateTime, "yyyy-MM-dd'T'HH:mm") : ''}
                             onChange={handleTimeChange}
                             onBlur={handleBlur}
-                            className="text-right text-primary w-40 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className={inputClassName}
                             autoFocus
                         />
                     ) : (
                         <button
                             onClick={() => handleEditClick('end')}
-                            className="text-right text-primary hover:text-primary focus:outline-none group"
+                            className="text-right text-primary hover:text-primary focus:outline-none group flex items-center"
                             disabled={!startTime}
                         >
-                            {endTime ? format(endTime, 'M/d HH:mm') : '--:--'}
-                            <PencilIcon className="w-3 h-3 ml-1 inline opacity-0 group-hover:opacity-100" />
+                            <span>{endTime ? format(endTime, 'M/d HH:mm') : '--:--'}</span>
+                            <PencilIcon className="w-3 h-3 ml-1 text-gray-400 group-hover:text-primary" />
                         </button>
                     )}
                 </div>
@@ -91,6 +154,12 @@ export const TimeInfo = memo(
                 {workTime && (
                     <div className="text-sm font-medium text-primary">
                         実作業時間: {workTime.hours}時間 {workTime.minutes}分
+                    </div>
+                )}
+
+                {validationError && (
+                    <div className="text-xs text-red-500 mt-1">
+                        {validationError}
                     </div>
                 )}
             </div>
