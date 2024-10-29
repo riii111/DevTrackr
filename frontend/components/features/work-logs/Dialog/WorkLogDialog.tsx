@@ -39,7 +39,7 @@ const validateWorkLogTimes = (startTime: Date | null, endTime: Date) => {
 // 作業時間の計算
 const calculateWorkTime = (startTime: Date | null, endTime: Date | null, breakTime: number) => {
     if (!startTime || !endTime) return null;
-    const totalMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
+    const totalMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / 60 * 1000);
     const actualMinutes = totalMinutes - breakTime;
     return {
         hours: Math.floor(actualMinutes / 60),
