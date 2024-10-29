@@ -89,9 +89,6 @@ export const useAutoSave = (state: AutoSaveState) => {
 
     const currentState = JSON.stringify({
       memo: state.memo,
-      break_time: state.break_time,
-      end_time: state.end_time,
-      start_time: state.start_time,
     });
 
     if (currentState !== lastSavedStateRef.current) {
@@ -104,22 +101,11 @@ export const useAutoSave = (state: AutoSaveState) => {
         clearTimeout(debounceTimerRef.current);
       }
 
-      // start_timeの変更は即時保存
-      // end_timeの設定も即時保存
-      if (
-        (state.start_time &&
-          !lastSavedStateRef.current.includes("start_time")) ||
-        state.end_time
-      ) {
+      // デバウンス処理
+      debounceTimerRef.current = setTimeout(() => {
         saveToAPI(state);
         lastSavedStateRef.current = currentState;
-      } else {
-        // その他の変更は1500msでデバウンス
-        debounceTimerRef.current = setTimeout(() => {
-          saveToAPI(state);
-          lastSavedStateRef.current = currentState;
-        }, 1500);
-      }
+      }, 1500);
     }
 
     return () => {
