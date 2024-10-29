@@ -13,9 +13,9 @@ interface TimeInfoProps {
 
 const timeValidationSchema = z.object({
     startTime: z.date(),
-    endTime: z.date().optional(),
+    endTime: z.date().nullable(),
 }).refine(data => {
-    if (!data.endTime) return true;
+    if (data.endTime === null) return true;
     return data.startTime < data.endTime;
 }, {
     message: "終了時刻は開始時刻より後に設定してください",
@@ -39,8 +39,7 @@ const timeValidationSchema = z.object({
 }, {
     message: "30日以上前の日時は設定できません",
 }).refine(data => {
-    if (!data.endTime) return true;
-    // 作業時間が24時間を超えていないかチェック
+    if (data.endTime === null) return true;
     const diffHours = (data.endTime.getTime() - data.startTime.getTime()) / (1000 * 60 * 60);
     return diffHours <= 24;
 }, {
@@ -59,34 +58,51 @@ export const TimeInfo = memo(
         };
 
         const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (!tempDateTime) return;
+            if (!e.target.value || e.target.value.length < 16) { // "yyyy-MM-ddTHH:mm"の長さをチェック
+                setValidationError("日時を完全に入力してください");
+                return;
+            }
+
             const newDateTime = new Date(e.target.value);
+            // 無効な日付の場合も早期リターン
+            if (isNaN(newDateTime.getTime())) {
+                setValidationError("無効な日時です");
+                return;
+            }
+
             setTempDateTime(newDateTime);
             setValidationError(null);
         };
 
         const handleBlur = () => {
-            if (editingTime && tempDateTime) {
-                try {
-                    const validationData = {
-                        startTime: editingTime === 'start' ? tempDateTime : (startTime || new Date()),
-                        endTime: editingTime === 'end' ? tempDateTime : endTime,
-                    };
+            if (!editingTime || !tempDateTime) {
+                setEditingTime(null);
+                return;
+            }
 
-                    // バリデーションチェック
-                    timeValidationSchema.parse(validationData);
-                    setValidationError(null);
+            try {
+                // 入力値が不完全な場合は処理を中断
+                if (!tempDateTime || isNaN(tempDateTime.getTime())) {
+                    setValidationError("日時を完全に入力してください");
+                    return;
+                }
 
-                    // 親コンポーネントに有効な値として通知
-                    onTimeEdit(editingTime, tempDateTime, true);
-                    setEditingTime(null);
-                } catch (error) {
-                    if (error instanceof z.ZodError) {
-                        const errorMessage = error.errors[0].message;
-                        setValidationError(errorMessage);
-                        // 親コンポーネントに無効な値として通知
-                        onTimeEdit(editingTime, tempDateTime, false);
-                    }
+                const validationData = {
+                    startTime: editingTime === 'start' ? tempDateTime : (startTime || new Date()),
+                    endTime: editingTime === 'end' ? tempDateTime : endTime,
+                };
+
+                // バリデーションチェック
+                timeValidationSchema.parse(validationData);
+                setValidationError(null);
+
+                // 親コンポーネントに有効な値として通知
+                onTimeEdit(editingTime, tempDateTime, true);
+                setEditingTime(null);
+            } catch (error) {
+                if (error instanceof z.ZodError) {
+                    const errorMessage = error.errors[0].message;
+                    setValidationError(errorMessage);
                 }
             }
         };

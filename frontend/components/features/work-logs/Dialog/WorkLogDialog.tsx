@@ -16,11 +16,6 @@ import '@/components/features/work-logs/Dialog/contents/dialog.css';
 import { createWorkLogAction, updateWorkLogAction } from "@/lib/actions/worklog";
 import { useToast } from "@/lib/hooks/use-toast";
 
-interface TimeEditMode {
-    type: 'start' | 'end' | 'break';
-    time: Date;
-}
-
 export function WorkLogDialog() {
     const { state, dispatch } = useWorkLog();
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -44,7 +39,7 @@ export function WorkLogDialog() {
         dialogRef
     );
 
-    const { lastAutoSave, isDirty, isSaving } = useAutoSave({
+    const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave({
         project_id: project?.id,
         start_time: startTime?.toISOString(),
         end_time: endTime?.toISOString(),
@@ -53,6 +48,41 @@ export function WorkLogDialog() {
         workLogId
     });
 
+    // ローカルストレージからの復元を行う。意図しない操作などに対応
+    const restoreFromLocalStorage = useCallback((projectId: string) => {
+        try {
+            const savedData = localStorage.getItem(`workLog_autosave_${projectId}`);
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                const lastModified = new Date(parsedData.lastModified);
+                const now = new Date();
+
+                // 30分以内の変更のみ復元
+                if ((now.getTime() - lastModified.getTime()) <= 30 * 60 * 1000) {
+                    if (parsedData.start_time) setStartTime(new Date(parsedData.start_time));
+                    if (parsedData.end_time) setEndTime(new Date(parsedData.end_time));
+                    if (parsedData.memo) setMemo(parsedData.memo);
+                    if (parsedData.break_time) setBreakTime(parsedData.break_time);
+
+                    toast({
+                        description: "未保存の変更を復元しました",
+                    });
+
+                    // 保存状態を復元
+                    restoreState(lastModified);
+                    return true;
+                } else {
+                    // 30分以上経過している場合はローカルストレージをクリア
+                    localStorage.removeItem(`workLog_autosave_${projectId}`);
+                }
+            }
+        } catch (error) {
+            console.error("ローカルストレージからの復元に失敗しました:", error);
+        }
+        return false;
+    }, [restoreState, toast]);
+
+    // プロジェクト読み込み時の処理を修正
     useEffect(() => {
         if (!state.isOpen || !state.projectId) return;
         if (state.projectId === prevProjectId.current) return;
@@ -62,13 +92,16 @@ export function WorkLogDialog() {
                 const fetchedProject = await getProjectById(state.projectId!);
                 setProject(fetchedProject);
                 prevProjectId.current = state.projectId;
+
+                // プロジェクト読み込み後にローカルストレージから復元を試みる
+                restoreFromLocalStorage(state.projectId!);
             } catch (error) {
                 console.error("プロジェクトの取得に失敗しました:", error);
             }
         };
 
         getProject();
-    }, [state.isOpen, state.projectId]);
+    }, [state.isOpen, state.projectId, restoreFromLocalStorage]);
 
     // 自動保存データの復元
     useEffect(() => {
@@ -115,19 +148,18 @@ export function WorkLogDialog() {
 
         const newPosition = calculateDialogPosition(state.clickPosition);
 
-        if (!lastPosition.current) {
-            // 初回表示: 位置を設定してから表示
-            setIsVisible(false);
-            requestAnimationFrame(() => {
-                setDialogPosition(newPosition);
-                lastPosition.current = newPosition;
-                requestAnimationFrame(() => setIsVisible(true));
-            });
-        } else {
-            // 再表示: 現在位置から新しい位置へアニメーション
-            setDialogPosition(newPosition);
-            lastPosition.current = newPosition;
-        }
+        // 初期表示時はクリック位置から開始
+        setDialogPosition(newPosition);
+        setIsVisible(false);
+
+        // 一瞬待ってからアニメーションを開始
+        requestAnimationFrame(() => {
+            setIsVisible(true);
+        });
+
+        // 位置を記憶
+        lastPosition.current = newPosition;
+
     }, [state.isOpen, state.clickPosition, calculateDialogPosition]);
 
     // クリーンアップ処理
@@ -181,15 +213,35 @@ export function WorkLogDialog() {
     };
 
     const handleEndWork = async () => {
+        // 既に終了時刻が設定されている場合は処理を中断
+        if (endTime) return;
+
         const now = new Date();
-        setEndTime(now);
+
+        // 開始時刻が設定されていない、または無効な場合は処理を中断
+        if (!startTime || isNaN(startTime.getTime())) {
+            toast({
+                variant: "destructive",
+                description: "開始時刻が正しく設定されていません",
+            });
+            return;
+        }
+
+        // 開始時刻より前の時刻は設定不可
+        if (now < startTime) {
+            toast({
+                variant: "destructive",
+                description: "終了時刻は開始時刻より後に設定してください",
+            });
+            return;
+        }
 
         if (!project?.id || !workLogId) return;
 
         try {
             const result = await updateWorkLogAction(workLogId, {
                 project_id: project.id,
-                start_time: startTime?.toISOString() || "",
+                start_time: startTime.toISOString(),
                 end_time: now.toISOString(),
                 memo: memo,
                 break_time: breakTime
@@ -198,9 +250,14 @@ export function WorkLogDialog() {
             if (!result.success) {
                 throw new Error(result.error);
             }
+
+            setEndTime(now);
         } catch (error) {
             console.error('稼働終了の記録に失敗しました:', error);
-            setEndTime(null);
+            toast({
+                variant: "destructive",
+                description: "稼働終了の記録に失敗しました",
+            });
         }
     };
 
@@ -208,28 +265,12 @@ export function WorkLogDialog() {
         if (!isValid || !project?.id || !workLogId) return;
 
         try {
-            // 状態を即時更新
+            // 状態のみ更新（APIの呼び出しはuseAutoSaveに任せる）
             if (type === 'start') {
                 setStartTime(newDateTime);
             } else {
                 setEndTime(newDateTime);
             }
-
-            // APIに即時反映
-            const result = await updateWorkLogAction(workLogId, {
-                project_id: project.id,
-                start_time: type === 'start' ? newDateTime.toISOString() : startTime?.toISOString() || "",
-                end_time: type === 'end' ? newDateTime.toISOString() : endTime?.toISOString(),
-                memo,
-                break_time: breakTime
-            });
-
-            if (!result.success) {
-                throw new Error(result.error);
-            }
-
-            // 実作業時間を再計算（useCallbackで定義された関数を直接呼び出し）
-            calculateWorkTime();
 
             toast({
                 description: "時刻を更新しました",
@@ -336,9 +377,13 @@ export function WorkLogDialog() {
 
                     {lastAutoSave && (
                         <div className="text-xs text-gray-400 text-center">
-                            {isDirty
-                                ? '未保存の変更があります'
-                                : `最終保存: ${format(lastAutoSave, 'HH:mm')}`}
+                            {isSaving ? (
+                                "保存中..."
+                            ) : isDirty ? (
+                                '未保存の変更があります'
+                            ) : (
+                                `最終保存: ${format(lastAutoSave, 'HH:mm')}`
+                            )}
                         </div>
                     )}
                 </div>

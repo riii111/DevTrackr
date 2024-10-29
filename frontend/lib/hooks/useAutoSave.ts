@@ -18,7 +18,6 @@ export const useAutoSave = (state: AutoSaveState) => {
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedStateRef = useRef<string>("");
 
   // デバウンス用のタイマー
@@ -65,6 +64,7 @@ export const useAutoSave = (state: AutoSaveState) => {
         localStorage.removeItem(`workLog_autosave_${data.project_id}`);
         setLastAutoSave(new Date());
         setIsDirty(false);
+        console.log("success!! memo : ", data.memo);
 
         toast({
           description: "保存しました",
@@ -114,11 +114,11 @@ export const useAutoSave = (state: AutoSaveState) => {
         saveToAPI(state);
         lastSavedStateRef.current = currentState;
       } else {
-        // その他の変更は1000msでデバウンス
+        // その他の変更は1500msでデバウンス
         debounceTimerRef.current = setTimeout(() => {
           saveToAPI(state);
           lastSavedStateRef.current = currentState;
-        }, 1000); // デバウンス時間を1000msに短縮
+        }, 1500);
       }
     }
 
@@ -129,9 +129,16 @@ export const useAutoSave = (state: AutoSaveState) => {
     };
   }, [state, saveToLocalStorage, saveToAPI]);
 
+  // 復元用の関数
+  const restoreState = useCallback((lastModified: Date) => {
+    setLastAutoSave(lastModified);
+    setIsDirty(true);
+  }, []);
+
   return {
     lastAutoSave,
     isDirty,
     isSaving,
+    restoreState, // 復元用の関数を公開
   };
 };
