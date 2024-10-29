@@ -25,7 +25,6 @@ export function WorkLogDialog() {
     const [memo, setMemo] = useState("");
     const prevProjectId = useRef<string | null>(null);
 
-    const lastPosition = useRef<{ x: number; y: number } | null>(null);
     const [dialogPosition, setDialogPosition] = useState<{ x: number; y: number } | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [breakTime, setBreakTime] = useState(0);
@@ -103,24 +102,6 @@ export function WorkLogDialog() {
         getProject();
     }, [state.isOpen, state.projectId, restoreFromLocalStorage]);
 
-    // 自動保存データの復元
-    useEffect(() => {
-        if (project?.id && !workLogId) { // workLogIdがない場合のみ復元
-            const savedData = localStorage.getItem(`workLog_autosave_${project.id}`);
-            if (savedData) {
-                try {
-                    const parsed = JSON.parse(savedData);
-                    setMemo(parsed.memo || "");
-                    if (parsed.start_time) setStartTime(new Date(parsed.start_time));
-                    if (parsed.end_time) setEndTime(new Date(parsed.end_time));
-                    if (parsed.break_time) setBreakTime(parsed.break_time);
-                } catch (error) {
-                    console.error("自動保存データの復元に失敗しました:", error);
-                }
-            }
-        }
-    }, [project?.id, workLogId]);
-
     // ダイアログの位置を計算
     const calculateDialogPosition = useCallback((clickPosition: { x: number; y: number }) => {
         const dialogWidth = 384;
@@ -178,7 +159,6 @@ export function WorkLogDialog() {
             prevProjectId.current = null;
 
             // 位置情報も完全にリセット
-            lastPosition.current = null;
             setDialogPosition(null);
 
             // ローカルストレージのクリーンアップ
