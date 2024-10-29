@@ -13,7 +13,6 @@ export const WorkLogButton: React.FC<WorkLogButtonProps> = React.memo(({ project
     const { dispatch } = useWorkLog();
 
     const handleClick = React.useCallback((e: React.MouseEvent) => {
-        console.log('handleClick position(x, y)=', e.clientX, e.clientY);
         dispatch({
             type: 'OPEN_WORK_LOG',
             projectId,

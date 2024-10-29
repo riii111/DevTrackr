@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Position {
   x: number;
@@ -10,6 +10,8 @@ export const useDraggable = (
   initialPosition: Position,
   dialogRef: React.RefObject<HTMLElement>
 ) => {
+  // 前回のinitialPositionを保持するref
+  const prevInitialPositionRef = useRef(initialPosition);
   // 現在の位置
   const [position, setPosition] = useState(initialPosition);
   // ドラッグ中かどうか
@@ -70,8 +72,15 @@ export const useDraggable = (
 
   // initialPositionの変更を監視して位置を更新
   useEffect(() => {
-    setPosition(initialPosition);
-  }, [initialPosition]);
+    // 前回のinitialPositionと現在のinitialPositionを比較
+    if (
+      prevInitialPositionRef.current.x !== initialPosition.x ||
+      prevInitialPositionRef.current.y !== initialPosition.y
+    ) {
+      setPosition(initialPosition);
+      prevInitialPositionRef.current = initialPosition;
+    }
+  }, [initialPosition, initialPosition.x, initialPosition.y]);
 
   return { position, isDragging, handleMouseDown };
 };

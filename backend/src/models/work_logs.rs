@@ -82,6 +82,9 @@ pub struct WorkLogsCreate {
     #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
+    #[serde(default)]
+    #[schema(value_type = Option<i32>, example = 30)]
+    pub break_time: Option<i32>,
     #[validate(length(min = 0, max = 1000, message = "メモは0〜1000文字である必要があります"))]
     #[schema(example = "今日はプロジェクトのキックオフミーティングを行いました。")]
     pub memo: Option<String>,
@@ -97,6 +100,9 @@ pub struct WorkLogsUpdate {
     #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
+    #[serde(default)]
+    #[schema(value_type = Option<i32>, example = 30)]
+    pub break_time: Option<i32>,
     #[validate(length(min = 0, max = 1000, message = "メモは0〜1000文字である必要があります"))]
     #[schema(example = "今日はプロジェクトのキックオフミーティングを行いました。")]
     pub memo: Option<String>,

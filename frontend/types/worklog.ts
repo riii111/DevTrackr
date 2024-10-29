@@ -13,6 +13,7 @@ export interface CreateWorkLogRequest {
   start_time: string;
   end_time?: string;
   memo?: string;
+  break_time?: number;
 }
 
 export interface UpdateWorkLogRequest {
@@ -20,6 +21,9 @@ export interface UpdateWorkLogRequest {
   start_time: string;
   end_time?: string;
   memo?: string;
+  break_time?: number;
 }
 
-export type WorkLogResponse = WorkLog;
+export type WorkLogResponse = WorkLog & {
+  id: string;
+};
