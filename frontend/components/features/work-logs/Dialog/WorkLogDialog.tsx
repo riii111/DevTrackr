@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -90,15 +90,23 @@ export function WorkLogDialog() {
         dialogRef
     );
 
-    const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave({
+    const autoSaveProps = useMemo(() => ({
         project_id: project?.id,
         start_time: state.startTime?.toISOString(),
         end_time: state.endTime?.toISOString(),
         memo: state.memo,
         break_time: state.breakTime,
         workLogId: state.workLogId
-    });
+    }), [
+        project?.id,
+        state.startTime,
+        state.endTime,
+        state.memo,
+        state.breakTime,
+        state.workLogId
+    ]);
 
+    const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave(autoSaveProps);
 
     // ローカルストレージからの復元を行う。意図しない操作などに対応
     const restoreFromLocalStorage = useCallback((projectId: string) => {
@@ -307,14 +315,27 @@ export function WorkLogDialog() {
         return calculateWorkTime(state.startTime, state.endTime, state.breakTime);
     }, [state.startTime, state.endTime, state.breakTime]);
 
-    const [currentDate, setCurrentDate] = useState<Date>(new Date());
+    // スタイル計算をメモ化（レンダリング毎に再計算されるのを防ぐ）
+    const dialogStyle = useMemo(() => ({
+        top: `${position.y}px`,
+        left: `${position.x}px`,
+        width: `${DIALOG_DIMENSIONS.width}px`,
+        zIndex: 50,
+        transition: isDragging ? 'none' :
+            `transform ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1), opacity ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+        visibility: isVisible && dialogPosition ? 'visible' : 'hidden'
+    }), [position.y, position.x, isDragging, isVisible, dialogPosition]);
 
-    useEffect(() => {
-        if (state.isOpen) {
-            const now = new Date();
-            setCurrentDate(now);
-        }
-    }, [state.isOpen]);
+    // メモ入力のハンドラをメモ化（イベントハンドラの再生成を防ぐ）
+    const handleMemoChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setMemo(e.target.value);
+    }, [setMemo]);
+
+    // 日付表示のメモ化（毎回のformat処理を防ぐ）
+    const formattedDate = useMemo(() =>
+        format(new Date(), 'yyyy年M月d日（E）', { locale: ja }),
+        []
+    );
 
     if (!state.isOpen || !dialogPosition) return null;
 
@@ -327,12 +348,8 @@ export function WorkLogDialog() {
                 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
             `}
             style={{
-                top: `${position.y}px`,
-                left: `${position.x}px`,
-                width: `${DIALOG_DIMENSIONS.width}px`,
-                zIndex: 50,
-                transition: isDragging ? 'none' : `transform ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1), opacity ${DIALOG_DIMENSIONS.animationDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
-                visibility: isVisible && dialogPosition ? 'visible' : 'hidden'
+                ...dialogStyle,
+                visibility: isVisible && dialogPosition ? 'visible' : 'hidden' as const
             }}
             onMouseDown={handleMouseDown}
         >
@@ -341,7 +358,7 @@ export function WorkLogDialog() {
             {project ? (
                 <div className="space-y-4 p-4 animate-fade-in">
                     <div className="text-center text-sm text-gray-600 mb-2">
-                        {format(new Date(), 'yyyy年M月d日（E）', { locale: ja })}の稼働記録
+                        {formattedDate}の稼働記録
                     </div>
 
                     <ActionButtons
@@ -366,7 +383,7 @@ export function WorkLogDialog() {
                         <Textarea
                             id="memo"
                             value={state.memo}
-                            onChange={(e) => setMemo(e.target.value)}
+                            onChange={handleMemoChange}
                             placeholder="作業内容を入力してください"
                             className="h-24 resize-none text-primary"
                         />
