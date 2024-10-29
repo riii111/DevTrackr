@@ -70,7 +70,6 @@ export const useAutoSave = (state: AutoSaveState) => {
         );
         setLastAutoSave(new Date());
         setIsDirty(false);
-        console.log("success!! memo : ", data.memo);
 
         // 成功時はDialog内に出力されるのでtoast不要
       } catch (error) {
