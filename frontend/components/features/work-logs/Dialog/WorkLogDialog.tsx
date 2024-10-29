@@ -272,10 +272,10 @@ export function WorkLogDialog() {
             }
 
             toast({
-                description: "時刻を更新しました",
+                description: "日時を更新しました",
             });
         } catch (error) {
-            console.error('時刻の更新に失敗しました:', error);
+            console.error('日時の更新に失敗しました:', error);
             // エラー時は状態を元に戻す
             if (type === 'start') {
                 setStartTime(state.startTime);
@@ -284,7 +284,7 @@ export function WorkLogDialog() {
             }
             toast({
                 variant: "destructive",
-                description: "時刻の更新に失敗しました",
+                description: "日時の更新に失敗しました",
             });
         }
     };
