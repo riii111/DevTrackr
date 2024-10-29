@@ -51,7 +51,7 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         let actual_work_minutes = work_logs.actual_work_minutes.unwrap_or(0);
         let updated_total_working_time =
             associated_project.total_working_time + actual_work_minutes as i64 * 60; // 分を秒に変換
-                                                                                     // 計算した総稼働時間をプロジェクトに反映して更新
+
         let project_update = ProjectUpdate {
             total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
@@ -84,7 +84,7 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         let actual_work_minutes = work_logs.actual_work_minutes.unwrap_or(0);
         let updated_total_working_time =
             associated_project.total_working_time + actual_work_minutes as i64 * 60; // 分を秒に変換
-                                                                                     // 計算した総稼働時間をプロジェクトに反映して更新
+
         let project_update = ProjectUpdate {
             total_working_time: updated_total_working_time,
             ..ProjectUpdate::from(associated_project)
