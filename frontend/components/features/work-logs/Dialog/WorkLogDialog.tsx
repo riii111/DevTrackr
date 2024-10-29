@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
