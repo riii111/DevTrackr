@@ -47,6 +47,8 @@ export function WorkLogDialog() {
         workLogId
     });
 
+    const AUTO_SAVE_EXPIRATION = 30 * 60 * 1000; // 30分
+
     // ローカルストレージからの復元を行う。意図しない操作などに対応
     const restoreFromLocalStorage = useCallback((projectId: string) => {
         try {
@@ -57,7 +59,7 @@ export function WorkLogDialog() {
                 const now = new Date();
 
                 // 30分以内の変更のみ復元
-                if ((now.getTime() - lastModified.getTime()) <= 30 * 60 * 1000) {
+                if ((now.getTime() - lastModified.getTime()) <= AUTO_SAVE_EXPIRATION) {
                     if (parsedData.start_time) setStartTime(new Date(parsedData.start_time));
                     if (parsedData.end_time) setEndTime(new Date(parsedData.end_time));
                     if (parsedData.memo) setMemo(parsedData.memo);
@@ -81,7 +83,7 @@ export function WorkLogDialog() {
         return false;
     }, [restoreState, toast]);
 
-    // プロジェクト読み込み時の処理を修正
+    // プロジェクト読み込み時
     useEffect(() => {
         if (!state.isOpen || !state.projectId) return;
         if (state.projectId === prevProjectId.current) return;
