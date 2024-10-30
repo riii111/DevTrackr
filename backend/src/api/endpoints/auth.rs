@@ -7,7 +7,7 @@ use crate::usecases::auth::AuthUseCase;
 use crate::utils::cookie_util::{
     set_access_token_cookie, set_first_login_cookie, set_refresh_token_cookie,
 };
-use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{post, web, HttpRequest, HttpResponse};
 use std::sync::Arc;
 use validator::Validate;
 
@@ -25,7 +25,7 @@ use validator::Validate;
 async fn login(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     login_dto: web::Json<AuthTokenLogin>,
-) -> Result<impl Responder, AppError> {
+) -> Result<HttpResponse, AppError> {
     // バリデーションの実行
     login_dto.validate().map_err(AppError::ValidationError)?;
 
@@ -73,7 +73,7 @@ async fn login(
 async fn register(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     register_dto: web::Json<UserCreate>,
-) -> Result<impl Responder, AppError> {
+) -> Result<HttpResponse, AppError> {
     // バリデーションの実行
     register_dto
         .0
@@ -107,7 +107,7 @@ async fn register(
 async fn logout(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
-) -> Result<impl Responder, AppError> {
+) -> Result<HttpResponse, AppError> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -131,7 +131,7 @@ async fn logout(
 async fn refresh(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
-) -> Result<impl Responder, AppError> {
+) -> Result<HttpResponse, AppError> {
     // クッキーからリフレッシュトークンを取得
     let refresh_token = req
         .cookie("refresh_token")

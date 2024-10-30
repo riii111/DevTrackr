@@ -91,16 +91,16 @@ pub async fn get_work_logs_by_id(
 #[post("/")]
 pub async fn create_work_logs(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
-    work_logs: web::Json<WorkLogsCreate>,
+    create_dto: web::Json<WorkLogsCreate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_work_logs!!");
 
     // バリデーションチェック
-    work_logs
+    create_dto
         .validate_all()
         .map_err(AppError::ValidationError)?;
 
-    let work_logs_id = usecase.create_work_logs(&work_logs.into_inner()).await?;
+    let work_logs_id = usecase.create_work_logs(&create_dto.into_inner()).await?;
 
     Ok(HttpResponse::Created().json(WorkLogsCreatedResponse::from(work_logs_id)))
 }
@@ -126,7 +126,7 @@ pub async fn create_work_logs(
 pub async fn update_work_logs_by_id(
     usecase: web::Data<Arc<WorkLogsUseCase<MongoWorkLogsRepository>>>,
     path: web::Path<String>,
-    work_logs: web::Json<WorkLogsUpdate>,
+    update_dto: web::Json<WorkLogsUpdate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called update_work_logs_by_id!!");
 
@@ -134,12 +134,12 @@ pub async fn update_work_logs_by_id(
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションチェック
-    work_logs
+    update_dto
         .validate_all()
         .map_err(AppError::ValidationError)?;
 
     usecase
-        .update_work_logs(&obj_id, &work_logs.into_inner())
+        .update_work_logs(&obj_id, &update_dto.into_inner())
         .await?;
 
     Ok(HttpResponse::NoContent().finish())

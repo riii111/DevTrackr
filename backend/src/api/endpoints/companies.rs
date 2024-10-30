@@ -154,7 +154,7 @@ pub async fn create_company(
 pub async fn update_company_by_id(
     usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
     path: web::Path<String>,
-    company: web::Json<CompanyUpdate>,
+    update_dto: web::Json<CompanyUpdate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called PUT update_company_by_id!!");
 
@@ -162,10 +162,12 @@ pub async fn update_company_by_id(
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションを実行
-    company.validate_all().map_err(AppError::ValidationError)?;
+    update_dto
+        .validate_all()
+        .map_err(AppError::ValidationError)?;
 
     usecase
-        .update_company_by_id(&obj_id, &company.into_inner())
+        .update_company_by_id(&obj_id, &update_dto.into_inner())
         .await?;
 
     Ok(HttpResponse::NoContent().finish())
