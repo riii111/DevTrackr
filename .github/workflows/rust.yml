@@ -4,7 +4,7 @@ name: Rust CI
 # - コードフォーマットのチェック
 # - Clippyによる静的解析
 # - セキュリティ監査
-# - ビルドテスト（Ubuntu/Windows）
+# - ビルドテスト（Ubuntu）
 # TODO: テストの実行
 
 on:
@@ -15,28 +15,25 @@ on:
     paths:
       - "backend/**"
 
+# GitHub Actionsの環境変数設定
+# - CARGO_TERM_COLOR: 出力の色付け
+# - RUST_BACKTRACE: エラー時のバックトレース表示
+# - RUSTFLAGS: コンパイラの警告を全てエラーとして扱う
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
 
+# 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
+# 各ジョブの実行結果は他のジョブに影響しない
 jobs:
-  check:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            name: Ubuntu
-          - os: windows-latest
-            name: Windows
-
-    name: Check on ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+  # フォーマットチェックのジョブ
+  format:
+    name: Format
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-
     steps:
       - uses: actions/checkout@v3
 
@@ -52,19 +49,116 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            backend/.cargo/registry
-            backend/.cargo/git
-            backend/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
+  # 静的解析のジョブ
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Clippy check
         run: cargo clippy -- -D warnings
 
+  # セキュリティチェックのジョブ
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Security audit
         run: cargo audit
+
+  # ビルドチェックのジョブ
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Build check
         run: cargo build --release
