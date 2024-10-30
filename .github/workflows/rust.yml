@@ -17,6 +17,7 @@ on:
       - master
     paths:
       - "backend/**"
+      - ".github/workflows/**" # ワークフロー自体の変更も検知
 
 # GitHub Actionsの環境変数設定
 # - CARGO_TERM_COLOR: 出力の色付け
