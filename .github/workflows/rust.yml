@@ -21,7 +21,6 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
-  CARGO_HOME: ${GITHUB_WORKSPACE}/backend/.cargo
 
 # 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
 # 各ジョブの実行結果は他のジョブに影響しない
@@ -44,13 +43,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -71,13 +71,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-
       - name: Clippy check
         run: cargo clippy -- -D warnings
@@ -98,13 +99,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-
       - name: Security audit
         run: cargo audit
@@ -125,13 +127,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-
       - name: Build check
         run: cargo build --release
@@ -152,13 +155,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-udeps-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-udeps-
       - name: Install cargo-udeps
         run: cargo install cargo-udeps --locked
@@ -182,13 +186,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-bloat-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-bloat-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-bloat-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-bloat-
       - name: Install cargo-bloat
         run: cargo install cargo-bloat
@@ -213,13 +218,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
-            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
-            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
-            ${GITHUB_WORKSPACE}/backend/target/
-          key: ${{ runner.os }}-cargo-deny-${{ hashFiles('backend/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-deny-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-deny-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-deny-
       - name: Install cargo-deny
         run: cargo install cargo-deny
