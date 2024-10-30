@@ -36,6 +36,8 @@ env:
   CARGO_HTTP_MULTIPLEXING: false
   CARGO_HTTP_CHECK_REVOKE: false
   CARGO_HTTP_TIMEOUT: 300
+  # キャッシュディレクトリをワークスペース内に設定
+  CARGO_HOME: ${GITHUB_WORKSPACE}/backend/.cargo
 
 # 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
 # 各ジョブの実行結果は他のジョブに影響しない
@@ -56,6 +58,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -64,11 +73,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -89,6 +98,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -97,11 +113,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -122,6 +138,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -130,11 +153,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -155,6 +178,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -163,11 +193,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -188,6 +218,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
@@ -196,11 +233,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-udeps-
@@ -229,6 +266,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -237,11 +281,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-bloat-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-bloat-
@@ -266,6 +310,13 @@ jobs:
           echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
           echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Rust 1.70/1.71 向けの特別な対応
+          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          fi
+          # キャッシュディレクトリの明示的な設定
+          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -274,11 +325,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            backend/.cargo/bin/
-            backend/.cargo/registry/index/
-            backend/.cargo/registry/cache/
-            backend/.cargo/git/db/
-            backend/target/
+            ${GITHUB_WORKSPACE}/backend/.cargo/bin/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/index/
+            ${GITHUB_WORKSPACE}/backend/.cargo/registry/cache/
+            ${GITHUB_WORKSPACE}/backend/.cargo/git/db/
+            ${GITHUB_WORKSPACE}/backend/target/
           key: ${{ runner.os }}-cargo-deny-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-deny-
