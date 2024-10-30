@@ -167,11 +167,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-udeps-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-udeps-
-      - name: Install cargo-udeps
-        run: cargo install cargo-udeps --locked
-
-      - name: Check unused dependencies
-        run: cargo +nightly udeps
+      - name: Check if dependencies changed # 依存関係に変更がない場合はチェックをスキップし、変更がある場合のみ実行
+        id: check-deps
+        run: |
+          if [ -f ~/.cargo/bin/cargo-udeps ] && [ "$(shasum Cargo.lock)" = "$(cat ~/.cargo/udeps-last-check 2>/dev/null)" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            shasum Cargo.lock > ~/.cargo/udeps-last-check
+          fi
+      - name: Install and run cargo-udeps
+        if: steps.check-deps.outputs.skip != 'true'
+        run: |
+          cargo install cargo-udeps --locked
+          cargo +nightly udeps
   # バイナリサイズ分析のジョブ
   binary-size:
     name: Binary Size Analysis
