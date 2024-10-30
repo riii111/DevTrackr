@@ -181,11 +181,15 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
             shasum Cargo.lock > ~/.cargo/udeps-last-check
           fi
-      - name: Install and run cargo-udeps
+      - name: Install cargo-udeps
         if: steps.check-deps.outputs.skip != 'true'
         run: |
-          cargo install cargo-udeps --locked
-          cargo +nightly udeps
+          if ! command -v cargo-udeps &> /dev/null; then
+            cargo install cargo-udeps --locked
+          fi
+      - name: Run cargo-udeps
+        if: steps.check-deps.outputs.skip != 'true'
+        run: cargo +nightly udeps
   # バイナリサイズ分析のジョブ
   binary-size:
     name: Binary Size Analysis
