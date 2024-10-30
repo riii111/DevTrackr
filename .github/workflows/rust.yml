@@ -15,6 +15,9 @@ on:
       - master
     paths:
       - "backend/**"
+  schedule:
+    - cron: "0 0 * * 0" # 毎週日曜日の午前0時に実行
+  workflow_dispatch: # 手動実行可
 
 # GitHub Actionsの環境変数設定
 env:
@@ -172,6 +175,7 @@ jobs:
   # バイナリサイズ分析のジョブ
   binary-size:
     name: Binary Size Analysis
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
