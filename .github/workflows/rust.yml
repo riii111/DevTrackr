@@ -16,11 +16,8 @@ on:
     paths:
       - "backend/**"
       - ".github/workflows/**" # ワークフロー自体の変更も検知
+
 # GitHub Actionsの環境変数設定
-# - CARGO_TERM_COLOR: 出力の色付け
-# - RUST_BACKTRACE: エラー時のバックトレース表示
-# - RUSTFLAGS: コンパイラの警告を全てエラーとして扱う
-# - CARGO_HOME: キャッシュディレクトリをワークスペース内に設定
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -169,11 +166,6 @@ jobs:
 
       - name: Check unused dependencies
         run: cargo +nightly udeps
-      # CURL関連の問題を回避するための設定
-      - name: Configure CURL
-        run: |
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
   # バイナリサイズ分析のジョブ
   binary-size:
     name: Binary Size Analysis
@@ -236,21 +228,34 @@ jobs:
         run: |
           cat > deny.toml << 'EOF'
           [advisories]
+          db-path = "~/.cargo/advisory-db"
+          db-urls = ["https://github.com/rustsec/advisory-db"]
           vulnerability = "deny"
           unmaintained = "warn"
+          yanked = "warn"
           notice = "warn"
-          ignore = []
+
           [licenses]
+          default = "deny"
           unlicensed = "deny"
+          copyleft = "warn"
           allow = [
               "MIT",
               "Apache-2.0",
               "BSD-3-Clause",
               "ISC",
           ]
-          default = "deny"
+
           [bans]
           multiple-versions = "warn"
+          wildcards = "allow"
+          highlight = "all"
+
+          [sources]
+          unknown-registry = "warn"
+          unknown-git = "warn"
+          allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+          allow-git = []
           EOF
       - name: Run cargo-deny check
         run: cargo deny check
