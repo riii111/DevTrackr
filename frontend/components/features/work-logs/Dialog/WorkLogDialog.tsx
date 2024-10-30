@@ -90,23 +90,14 @@ export function WorkLogDialog() {
         dialogRef
     );
 
-    const autoSaveProps = useMemo(() => ({
-        project_id: project?.id,
-        start_time: state.startTime?.toISOString(),
-        end_time: state.endTime?.toISOString(),
+    const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave({
+        project_id: project?.id || '',
+        start_time: state.startTime?.toISOString() || '',
+        end_time: state.endTime?.toISOString() || '',
         memo: state.memo,
         break_time: state.breakTime,
         workLogId: state.workLogId
-    }), [
-        project?.id,
-        state.startTime,
-        state.endTime,
-        state.memo,
-        state.breakTime,
-        state.workLogId
-    ]);
-
-    const { lastAutoSave, isDirty, isSaving, restoreState } = useAutoSave(autoSaveProps);
+    });
 
     // ローカルストレージからの復元を行う。意図しない操作などに対応
     const restoreFromLocalStorage = useCallback((projectId: string) => {
