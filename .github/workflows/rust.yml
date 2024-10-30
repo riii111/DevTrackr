@@ -1,9 +1,13 @@
+name: Rust CI
+# バックエンドのRustコードの品質チェックを行うワークフロー
 # - コードフォーマットのチェック
 # - Clippyによる静的解析
 # - セキュリティ監査
 # - ビルドテスト（Ubuntu）
+# - 未使用依存関係の検出
+# - バイナリサイズ分析
+# - 拡張セキュリティチェック
 # TODO: テストの実行
-
 on:
   pull_request:
     branches:
@@ -11,18 +15,31 @@ on:
       - master
     paths:
       - "backend/**"
-
+      - ".github/workflows/**" # ワークフロー自体の変更も検知
 # GitHub Actionsの環境変数設定
 # - CARGO_TERM_COLOR: 出力の色付け
 # - RUST_BACKTRACE: エラー時のバックトレース表示
 # - RUSTFLAGS: コンパイラの警告を全てエラーとして扱う
+# - CARGO_INCREMENTAL: インクリメンタルコンパイルを無効化し、ビルドの安定性を向上
+# - CARGO_NET_GIT_FETCH_WITH_CLI: ネットワーク関連の設定を各ジョブレベルで確実に適用
+# - CARGO_NET_RETRY: ネットワークエラー時の再試行回数を増加
+# - CARGO_HTTP_MULTIPLEXING: CURL 8.0との互換性問題を解決するための設定
+# - CARGO_HTTP_CHECK_REVOKE: 追加
+# - CARGO_HTTP_TIMEOUT: 追加
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_HTTP_MULTIPLEXING: false
+  CARGO_HTTP_CHECK_REVOKE: false
+  CARGO_HTTP_TIMEOUT: 300
 
 # 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
 # 各ジョブの実行結果は他のジョブに影響しない
+# なお、依存関係に変更がない場合はキャッシュを使うのでビルド高速化
 jobs:
   # フォーマットチェックのジョブ
   format:
@@ -32,17 +49,19 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             backend/.cargo/bin/
@@ -50,12 +69,11 @@ jobs:
             backend/.cargo/registry/cache/
             backend/.cargo/git/db/
             backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
       - name: Check formatting
         run: cargo fmt --all -- --check
-
   # 静的解析のジョブ
   lint:
     name: Lint
@@ -64,18 +82,19 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
-
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             backend/.cargo/bin/
@@ -88,7 +107,6 @@ jobs:
             ${{ runner.os }}-cargo-
       - name: Clippy check
         run: cargo clippy -- -D warnings
-
   # セキュリティチェックのジョブ
   security:
     name: Security Check
@@ -97,18 +115,19 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
-
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             backend/.cargo/bin/
@@ -121,7 +140,6 @@ jobs:
             ${{ runner.os }}-cargo-
       - name: Security audit
         run: cargo audit
-
   # ビルドチェックのジョブ
   build:
     name: Build
@@ -130,18 +148,19 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
-
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             backend/.cargo/bin/
@@ -154,3 +173,136 @@ jobs:
             ${{ runner.os }}-cargo-
       - name: Build check
         run: cargo build --release
+  # 未使用依存関係の検出のジョブ
+  unused-dependencies:
+    name: Unused Dependencies Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-udeps-
+      - name: Install cargo-udeps
+        run: cargo install cargo-udeps --locked
+
+      - name: Check unused dependencies
+        run: cargo +nightly udeps
+      # CURL関連の問題を回避するための設定
+      - name: Configure CURL
+        run: |
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+  # バイナリサイズ分析のジョブ
+  binary-size:
+    name: Binary Size Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-bloat-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bloat-
+      - name: Install cargo-bloat
+        run: cargo install cargo-bloat
+      - name: Analyze binary size
+        run: |
+          cargo bloat --release --crates
+          cargo bloat --release -n 20
+  # 拡張セキュリティチェックのジョブ
+  security-advanced:
+    name: Advanced Security Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure cargo environment
+        run: |
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
+          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/.cargo/bin/
+            backend/.cargo/registry/index/
+            backend/.cargo/registry/cache/
+            backend/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-deny-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-deny-
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+      - name: Create cargo-deny config
+        run: |
+          cat > deny.toml << 'EOF'
+          [advisories]
+          vulnerability = "deny"
+          unmaintained = "warn"
+          notice = "warn"
+          ignore = []
+          [licenses]
+          unlicensed = "deny"
+          allow = [
+              "MIT",
+              "Apache-2.0",
+              "BSD-3-Clause",
+              "ISC",
+          ]
+          default = "deny"
+          [bans]
+          multiple-versions = "warn"
+          EOF
+      - name: Run cargo-deny check
+        run: cargo deny check
