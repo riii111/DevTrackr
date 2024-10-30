@@ -229,26 +229,27 @@ jobs:
           [advisories]
           db-path = "~/.cargo/advisory-db"
           db-urls = ["https://github.com/rustsec/advisory-db"]
-          vulnerability = "deny"
-          unmaintained = "warn"
-          yanked = "warn"
-          notice = "warn"
+          criteria = { vulnerability = "deny", unmaintained = "warn", notice = "warn", yanked = "warn" }
 
           [licenses]
-          default = "deny"
-          unlicensed = "deny"
-          copyleft = "warn"
+          clarify = [
+            { name = "ring", expression = "MIT AND ISC AND OpenSSL", license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }] },
+          ]
           allow = [
               "MIT",
               "Apache-2.0",
               "BSD-3-Clause",
               "ISC",
           ]
+          confidence-threshold = 0.8
+          exceptions = []
 
           [bans]
-          multiple-versions = "warn"
+          multiple-versions = { confidence-threshold = 0.95, allow = [] }
           wildcards = "allow"
           highlight = "all"
+          skip = []
+          deny = []
 
           [sources]
           unknown-registry = "warn"
