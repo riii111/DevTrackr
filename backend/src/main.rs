@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    // テストアップロードの実行
+    // テスト用アップロードの実行
     let run_test_upload = env::var("RUN_TEST_UPLOAD").unwrap_or_default() == "true";
 
     if run_test_upload {
