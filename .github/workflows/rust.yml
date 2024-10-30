@@ -214,65 +214,48 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            backend/target/
-          key: ${{ runner.os }}-cargo-deny-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-deny-${{ hashFiles('**/Cargo.lock') }}-
-            ${{ runner.os }}-cargo-deny-
       - name: Install cargo-deny
-        run: cargo install cargo-deny
+        run: cargo install --locked cargo-deny
       - name: Create cargo-deny config
         run: |
           cat > deny.toml << 'EOF'
           [advisories]
-          version = 2
           db-path = "~/.cargo/advisory-db"
           db-urls = ["https://github.com/rustsec/advisory-db"]
           vulnerability = "deny"
           unmaintained = "warn"
           yanked = "warn"
           notice = "warn"
-          unsound = "deny"
-          ignore = []
+          severity-threshold = "none"
 
           [licenses]
-          version = 2
-          clarify = [
-            { name = "ring", expression = "MIT AND ISC AND OpenSSL", license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }] },
-          ]
+          default = "deny"
+          unlicensed = "deny"
+          copyleft = "warn"
           allow = [
               "MIT",
               "Apache-2.0",
               "BSD-3-Clause",
               "ISC",
+              "Unicode-DFS-2016",
           ]
-          confidence-threshold = 0.8
           exceptions = []
 
           [bans]
           multiple-versions = "warn"
-          wildcards = "allow"
           highlight = "all"
           skip = []
           deny = []
 
           [sources]
-          unknown-registry = "warn"
-          unknown-git = "warn"
+          unknown-registry = "deny"
+          unknown-git = "deny"
           allow-registry = ["https://github.com/rust-lang/crates.io-index"]
           allow-git = []
           EOF
-      - name: Run cargo-deny check
-        run: cargo deny check
+      - name: Run cargo-deny checks
+        run: |
+          cargo deny check advisories
+          cargo deny check licenses
+          cargo deny check bans
+          cargo deny check sources
