@@ -27,9 +27,7 @@ async fn login(
     login_dto: web::Json<AuthTokenLogin>,
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
-    login_dto
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    login_dto.validate().map_err(AppError::ValidationError)?;
 
     match auth_usecase
         .login(&login_dto.email, &login_dto.password)
@@ -78,8 +76,9 @@ async fn register(
 ) -> Result<impl Responder, AppError> {
     // バリデーションの実行
     register_dto
+        .0
         .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
     let auth_token = auth_usecase.register(&register_dto).await?;
 

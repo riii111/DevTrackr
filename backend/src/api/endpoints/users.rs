@@ -56,7 +56,7 @@ pub async fn update_me(
     req: HttpRequest,
     update_me_dto: web::Json<UserUpdate>,
 ) -> Result<impl Responder, AppError> {
-    let mut update_me_dto = update_me_dto.into_inner();
+    let update_me_dto = update_me_dto.into_inner();
 
     let auth_header = req
         .headers()
@@ -69,8 +69,8 @@ pub async fn update_me(
     // バリデーションの実行
     update_me_dto
         .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
-    auth_usecase.update_me(token, &mut update_me_dto).await?;
+    auth_usecase.update_me(token, &update_me_dto).await?;
     Ok(HttpResponse::NoContent().finish())
 }

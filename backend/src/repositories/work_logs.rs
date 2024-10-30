@@ -64,7 +64,7 @@ impl WorkLogsRepository for MongoWorkLogsRepository {
         let work_logs_in_db = WorkLogsInDB {
             id: None, // MongoDBにID生成を任せる
             project_id: work_logs.project_id,
-            start_time: BsonDateTime::from(work_logs.start_time),
+            start_time: work_logs.start_time,
             end_time: work_logs.end_time.map(BsonDateTime::from),
             memo: work_logs.memo.clone(),
             break_time: work_logs.break_time,

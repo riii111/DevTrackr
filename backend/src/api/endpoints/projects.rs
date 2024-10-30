@@ -41,7 +41,7 @@ pub async fn get_projects(
         title: query.title.clone(),
         status: query.status.clone(),
         skill_labels: query.skill_labels.clone(),
-        company_id: query.company_id.clone(),
+        company_id: query.company_id,
     };
 
     // ソート条件のパース
@@ -155,9 +155,7 @@ pub async fn create_project(
     info!("called POST create_project!!");
 
     // バリデーションを実行
-    project
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    project.validate().map_err(AppError::ValidationError)?;
 
     let project_id = usecase.create_project(project.into_inner()).await?;
 
@@ -189,13 +187,11 @@ pub async fn update_project_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called PUT update_project_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner())
+    let obj_id = ObjectId::parse_str(path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションチェック
-    project
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    project.validate().map_err(AppError::ValidationError)?;
 
     usecase
         .update_project(&obj_id, &project.into_inner())

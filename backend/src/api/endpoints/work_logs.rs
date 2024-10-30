@@ -98,7 +98,7 @@ pub async fn create_work_logs(
     // バリデーションチェック
     work_logs
         .validate_all()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
     let work_logs_id = usecase.create_work_logs(&work_logs.into_inner()).await?;
 
@@ -130,13 +130,13 @@ pub async fn update_work_logs_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called update_work_logs_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner())
+    let obj_id = ObjectId::parse_str(path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションチェック
     work_logs
         .validate_all()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
     usecase
         .update_work_logs(&obj_id, &work_logs.into_inner())

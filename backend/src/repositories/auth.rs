@@ -82,13 +82,14 @@ impl AuthRepository for MongoAuthRepository {
                     "挿入されたドキュメントのIDが無効です",
                 ))),
             Err(e) => {
-                if let mongodb::error::ErrorKind::Write(write_failure) = e.kind.as_ref() {
-                    if let mongodb::error::WriteFailure::WriteError(write_error) = write_failure {
-                        if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
-                            return Err(RepositoryError::DuplicateError(
-                                "メールアドレスが既に使用されています".to_string(),
-                            ));
-                        }
+                if let mongodb::error::ErrorKind::Write(mongodb::error::WriteFailure::WriteError(
+                    write_error,
+                )) = e.kind.as_ref()
+                {
+                    if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
+                        return Err(RepositoryError::DuplicateError(
+                            "メールアドレスが既に使用されています".to_string(),
+                        ));
                     }
                 }
                 Err(RepositoryError::DatabaseError(e))
@@ -201,13 +202,14 @@ impl AuthRepository for MongoAuthRepository {
         {
             Ok(result) => Ok(result.modified_count > 0),
             Err(e) => {
-                if let mongodb::error::ErrorKind::Write(write_failure) = e.kind.as_ref() {
-                    if let mongodb::error::WriteFailure::WriteError(write_error) = write_failure {
-                        if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
-                            return Err(RepositoryError::DuplicateError(
-                                "メールアドレスが既に使用されています".to_string(),
-                            ));
-                        }
+                if let mongodb::error::ErrorKind::Write(mongodb::error::WriteFailure::WriteError(
+                    write_error,
+                )) = e.kind.as_ref()
+                {
+                    if write_error.code == mongodb_error_codes::DUPLICATE_KEY {
+                        return Err(RepositoryError::DuplicateError(
+                            "メールアドレスが既に使用されています".to_string(),
+                        ));
                     }
                 }
                 Err(RepositoryError::DatabaseError(e))

@@ -118,12 +118,14 @@ where
                         config.max_requests + 1,
                         config.max_requests
                     );
-                    Err(actix_web::error::ErrorTooManyRequests("Rate limit exceeded").into())
+                    Err(actix_web::error::ErrorTooManyRequests(
+                        "Rate limit exceeded",
+                    ))
                 }
                 // それ以外のエラー（Redisの接続エラーなど）
                 Err(e) => {
                     warn!("Rate limiter error for {}: {}", key, e);
-                    Err(actix_web::error::ErrorInternalServerError(e).into())
+                    Err(actix_web::error::ErrorInternalServerError(e))
                 }
             }
         })
