@@ -59,6 +59,7 @@ jobs:
       - name: Check formatting
         uses: actions-rs/cargo@v1
         with:
+          path: backend
           command: fmt
           args: --all -- --check
 
