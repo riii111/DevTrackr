@@ -2,8 +2,12 @@
 unlicensed = "deny"
 allow = [
     "MIT",
-    "Apache-2.0",
-    "MIT WITH \"Apache-2.0\"",
+    "Apache-2.0", 
     "BSD-3-Clause",
     "ISC"
 ]
+
+[[licenses.license-set]]
+name = "MIT or Apache"
+allow = ["MIT", "Apache-2.0"]
+joint = "or"
