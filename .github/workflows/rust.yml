@@ -20,23 +20,11 @@ on:
 # - CARGO_TERM_COLOR: 出力の色付け
 # - RUST_BACKTRACE: エラー時のバックトレース表示
 # - RUSTFLAGS: コンパイラの警告を全てエラーとして扱う
-# - CARGO_INCREMENTAL: インクリメンタルコンパイルを無効化し、ビルドの安定性を向上
-# - CARGO_NET_GIT_FETCH_WITH_CLI: ネットワーク関連の設定を各ジョブレベルで確実に適用
-# - CARGO_NET_RETRY: ネットワークエラー時の再試行回数を増加
-# - CARGO_HTTP_MULTIPLEXING: CURL 8.0との互換性問題を解決するための設定
-# - CARGO_HTTP_CHECK_REVOKE: 追加
-# - CARGO_HTTP_TIMEOUT: 追加
+# - CARGO_HOME: キャッシュディレクトリをワークスペース内に設定
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
-  CARGO_INCREMENTAL: 0
-  CARGO_NET_GIT_FETCH_WITH_CLI: true
-  CARGO_NET_RETRY: 10
-  CARGO_HTTP_MULTIPLEXING: false
-  CARGO_HTTP_CHECK_REVOKE: false
-  CARGO_HTTP_TIMEOUT: 300
-  # キャッシュディレクトリをワークスペース内に設定
   CARGO_HOME: ${GITHUB_WORKSPACE}/backend/.cargo
 
 # 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
@@ -52,19 +40,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -92,19 +67,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -132,19 +94,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -172,19 +121,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -212,19 +148,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
@@ -260,19 +183,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -304,19 +214,6 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Configure cargo environment
-        run: |
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-          echo "CARGO_HTTP_TIMEOUT=300" >> $GITHUB_ENV
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          # Rust 1.70/1.71 向けの特別な対応
-          if rustc --version --verbose | grep -q '^release: 1\.7[01]\.'; then
-            echo "CARGO_HTTP_MULTIPLEXING=false" >> $GITHUB_ENV
-            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
-          fi
-          # キャッシュディレクトリの明示的な設定
-          echo "CARGO_HOME=${GITHUB_WORKSPACE}/backend/.cargo" >> $GITHUB_ENV
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
