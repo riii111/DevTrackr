@@ -8,12 +8,10 @@ name: Rust CI
 # TODO: テストの実行
 
 on:
-  push:
-    branches: [develop]
-    paths:
-      - "backend/**"
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
+      - master
     paths:
       - "backend/**"
 
@@ -35,6 +33,9 @@ jobs:
 
     name: Check on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v3
@@ -51,31 +52,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            backend/.cargo/registry
+            backend/.cargo/git
+            backend/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
 
       - name: Check formatting
-        uses: actions-rs/cargo@v1
-        with:
-          path: backend
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Clippy check
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+        run: cargo clippy -- -D warnings
 
       - name: Security audit
-        uses: actions-rs/audit-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo audit
 
       - name: Build check
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+        run: cargo build --release
