@@ -229,7 +229,10 @@ jobs:
           [advisories]
           db-path = "~/.cargo/advisory-db"
           db-urls = ["https://github.com/rustsec/advisory-db"]
-          criteria = { vulnerability = "deny", unmaintained = "warn", notice = "warn", yanked = "warn" }
+          vulnerability = "deny"
+          unmaintained = "warn"
+          yanked = "warn"
+          notice = "warn"
 
           [licenses]
           clarify = [
@@ -245,7 +248,7 @@ jobs:
           exceptions = []
 
           [bans]
-          multiple-versions = { confidence-threshold = 0.95, allow = [] }
+          multiple-versions = "warn"
           wildcards = "allow"
           highlight = "all"
           skip = []
