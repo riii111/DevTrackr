@@ -14,7 +14,6 @@ actix-web-httpauth = "0.8.2"
 aes-gcm = "0.10.3"
 anyhow = "1.0.86"
 async-trait = "0.1.82"
-aws-config = "1.5.8"
 aws-sdk-s3 = { version = "1.56.0", features = ["behavior-version-latest"] }
 base64 = "0.22.1"
 bcrypt = "0.15.1"
@@ -31,7 +30,6 @@ mongodb = { version = "2.7.0", features = ["tokio-runtime"] }
 openssl = { version = "0.10.66", features = ["vendored"] }
 rand = "0.8.5"
 redis = { version = "0.27.2", features = ["tokio-comp"] }
-reqwest = { version = "0.12.8", features = ["json"] }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.122"
 serde_with = "3.9.0"
