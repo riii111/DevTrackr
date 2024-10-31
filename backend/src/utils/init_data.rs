@@ -108,7 +108,6 @@
 //     Ok(())
 // }
 
-
 // pub async fn initialize_data() -> Result<(), Box<dyn Error>> {
 //     let client = Client::new();
 

@@ -3,7 +3,7 @@ use crate::errors::app_error::AppError;
 use crate::models::users::UserUpdate;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::usecases::auth::AuthUseCase;
-use actix_web::{get, put, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, put, web, HttpRequest, HttpResponse};
 use std::sync::Arc;
 use validator::Validate;
 
@@ -23,7 +23,7 @@ use validator::Validate;
 pub async fn get_current_user(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
-) -> Result<impl Responder, AppError> {
+) -> Result<HttpResponse, AppError> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -54,9 +54,9 @@ pub async fn get_current_user(
 pub async fn update_me(
     auth_usecase: web::Data<Arc<AuthUseCase<MongoAuthRepository>>>,
     req: HttpRequest,
-    update_me_dto: web::Json<UserUpdate>,
-) -> Result<impl Responder, AppError> {
-    let mut update_me_dto = update_me_dto.into_inner();
+    update_dto: web::Json<UserUpdate>,
+) -> Result<HttpResponse, AppError> {
+    let update_dto = update_dto.into_inner();
 
     let auth_header = req
         .headers()
@@ -67,10 +67,8 @@ pub async fn update_me(
     let token = auth_header.trim_start_matches("Bearer ");
 
     // バリデーションの実行
-    update_me_dto
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    update_dto.validate().map_err(AppError::ValidationError)?;
 
-    auth_usecase.update_me(token, &mut update_me_dto).await?;
+    auth_usecase.update_me(token, &update_dto).await?;
     Ok(HttpResponse::NoContent().finish())
 }

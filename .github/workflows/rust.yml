@@ -1,0 +1,223 @@
+name: Rust CI
+# バックエンドのRustコードの品質チェックを行うワークフロー
+# - コードフォーマットのチェック
+# - Clippyによる静的解析
+# - セキュリティ監査
+# - ビルドテスト（Ubuntu）
+# - 未使用依存関係の検出
+# - バイナリサイズ分析
+# TODO: テストの実行
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+    paths:
+      - "backend/**"
+  schedule:
+    - cron: "0 0 * * 0" # 毎週日曜日の午前0時に実行
+  workflow_dispatch: # 手動実行可
+
+# 連続pushの対策
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true # 実行中のワークフローをキャンセル
+
+# GitHub Actionsの環境変数設定
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: "-D warnings"
+
+# 各jobsは独立したワークフローとして実行されるので、各ジョブが同時に開始される
+# なお、依存関係に変更がない場合はキャッシュを使うのでビルド高速化
+jobs:
+  # フォーマットチェックのジョブ
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+  # 静的解析のジョブ
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-
+      - name: Clippy check
+        run: cargo clippy -- -D warnings
+  # セキュリティチェックのジョブ
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-
+      - name: Security audit
+        run: cargo audit
+  # ビルドチェックのジョブ
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-
+      - name: Build check
+        run: cargo build --release
+  # 未使用依存関係の検出のジョブ
+  unused-dependencies:
+    name: Unused Dependencies Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-udeps-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-udeps-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-udeps-
+      - name: Check if dependencies changed # 依存関係に変更がない場合はチェックをスキップし、変更がある場合のみ実行
+        id: check-deps
+        run: |
+          if [ -f ~/.cargo/bin/cargo-udeps ] && [ "$(shasum Cargo.lock)" = "$(cat ~/.cargo/udeps-last-check 2>/dev/null)" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            shasum Cargo.lock > ~/.cargo/udeps-last-check
+          fi
+      - name: Install cargo-udeps
+        if: steps.check-deps.outputs.skip != 'true'
+        run: |
+          if ! command -v cargo-udeps &> /dev/null; then
+            cargo install cargo-udeps --locked
+          fi
+      - name: Run cargo-udeps
+        if: steps.check-deps.outputs.skip != 'true'
+        run: cargo +nightly udeps
+  # バイナリサイズ分析のジョブ
+  binary-size:
+    name: Binary Size Analysis
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-bloat-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bloat-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-bloat-
+      - name: Install cargo-bloat
+        run: cargo install cargo-bloat
+      - name: Analyze binary size
+        run: |
+          cargo bloat --release --crates
+          cargo bloat --release -n 20

@@ -119,16 +119,16 @@ pub async fn get_company_by_id(
 #[post("/")]
 pub async fn create_company(
     usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
-    company: web::Json<CompanyCreate>,
+    company_dto: web::Json<CompanyCreate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_company!!");
 
     // バリデーションを実行
-    company
+    company_dto
         .validate_all()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
-    let company_id = usecase.create_company(company.into_inner()).await?;
+    let company_id = usecase.create_company(company_dto.into_inner()).await?;
 
     Ok(HttpResponse::Created().json(CompanyCreatedResponse::from(company_id)))
 }
@@ -154,20 +154,20 @@ pub async fn create_company(
 pub async fn update_company_by_id(
     usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
     path: web::Path<String>,
-    company: web::Json<CompanyUpdate>,
+    update_dto: web::Json<CompanyUpdate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called PUT update_company_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner())
+    let obj_id = ObjectId::parse_str(path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションを実行
-    company
+    update_dto
         .validate_all()
-        .map_err(|e| AppError::ValidationError(e))?;
+        .map_err(AppError::ValidationError)?;
 
     usecase
-        .update_company_by_id(&obj_id, &company.into_inner())
+        .update_company_by_id(&obj_id, &update_dto.into_inner())
         .await?;
 
     Ok(HttpResponse::NoContent().finish())

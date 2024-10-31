@@ -39,7 +39,7 @@ impl TryFrom<ProjectInDB> for ProjectResponse {
             title: db_project.title,
             description: db_project.description.unwrap_or("".to_string()),
             status: db_project.status,
-            skill_labels: db_project.skill_labels.unwrap_or(vec![]),
+            skill_labels: db_project.skill_labels.unwrap_or_default(),
             company_id: db_project.company_id,
             total_working_time: Some(db_project.total_working_time),
             hourly_pay: db_project.hourly_pay,

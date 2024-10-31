@@ -41,7 +41,7 @@ pub async fn get_projects(
         title: query.title.clone(),
         status: query.status.clone(),
         skill_labels: query.skill_labels.clone(),
-        company_id: query.company_id.clone(),
+        company_id: query.company_id,
     };
 
     // ソート条件のパース
@@ -150,16 +150,14 @@ pub async fn get_project_by_id(
 #[post("/")]
 pub async fn create_project(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
-    project: web::Json<ProjectCreate>,
+    create_dto: web::Json<ProjectCreate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called POST create_project!!");
 
     // バリデーションを実行
-    project
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    create_dto.validate().map_err(AppError::ValidationError)?;
 
-    let project_id = usecase.create_project(project.into_inner()).await?;
+    let project_id = usecase.create_project(create_dto.into_inner()).await?;
 
     Ok(HttpResponse::Created().json(ProjectCreatedResponse::from(project_id)))
 }
@@ -185,20 +183,18 @@ pub async fn create_project(
 pub async fn update_project_by_id(
     usecase: web::Data<Arc<ProjectUseCase<MongoProjectRepository>>>,
     path: web::Path<String>,
-    project: web::Json<ProjectUpdate>,
+    update_dto: web::Json<ProjectUpdate>,
 ) -> Result<HttpResponse, AppError> {
     info!("called PUT update_project_by_id!!");
 
-    let obj_id = ObjectId::parse_str(&path.into_inner())
+    let obj_id = ObjectId::parse_str(path.into_inner())
         .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
 
     // バリデーションチェック
-    project
-        .validate()
-        .map_err(|e| AppError::ValidationError(e))?;
+    update_dto.validate().map_err(AppError::ValidationError)?;
 
     usecase
-        .update_project(&obj_id, &project.into_inner())
+        .update_project(&obj_id, &update_dto.into_inner())
         .await?;
 
     Ok(HttpResponse::NoContent().finish())

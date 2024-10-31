@@ -1,3 +1,4 @@
+use dotenvy::dotenv;
 use std::env;
 use std::time::Duration;
 
@@ -9,7 +10,7 @@ pub struct RateLimitConfig {
 
 impl RateLimitConfig {
     pub fn from_env() -> Self {
-        dotenv::dotenv().ok();
+        dotenv().ok();
         let duration = env::var("RATE_LIMIT_DURATION")
             .unwrap_or_else(|_| "60".to_string())
             .parse()

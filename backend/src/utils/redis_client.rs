@@ -58,8 +58,6 @@ impl RedisClient {
         expiry: u64,
     ) -> Result<bool> {
         let key = key.to_string();
-        let max_requests = max_requests;
-        let expiry = expiry;
 
         self.with_connection(move |mut con| {
             Box::pin(async move {

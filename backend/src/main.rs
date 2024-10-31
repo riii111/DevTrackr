@@ -6,7 +6,7 @@ use actix_web::cookie::{time::Duration as CookieDuration, Key};
 use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db_index;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use env_logger::Env;
 use std::env;
 use std::io::Result;
@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    // テストアップロードの実行
+    // テスト用アップロードの実行
     let run_test_upload = env::var("RUN_TEST_UPLOAD").unwrap_or_default() == "true";
 
     if run_test_upload {
@@ -203,7 +203,7 @@ async fn main() -> Result<()> {
     })
     .bind(format!(
         "0.0.0.0:{}",
-        dotenv::var("BACKEND_PORT").unwrap_or("8088".to_string())
+        dotenvy::var("BACKEND_PORT").unwrap_or("8088".to_string())
     ))?
     .run()
     .await

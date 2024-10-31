@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database};
 
 use crate::models::auth::AuthTokenInDB;
@@ -8,7 +8,7 @@ use crate::models::work_logs::WorkLogsInDB;
 
 pub async fn init_db() -> Result<Database> {
     dotenv().ok();
-    let uri = dotenv::var("DATABASE_URL").expect("DATABASE_URL is not set");
+    let uri = dotenvy::var("DATABASE_URL").expect("DATABASE_URL is not set");
     let client = Client::with_uri_str(uri).await?;
     let database = client.database("devtrackr_db");
     Ok(database)
