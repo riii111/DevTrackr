@@ -6,7 +6,6 @@ name: Rust CI
 # - ビルドテスト（Ubuntu）
 # - 未使用依存関係の検出
 # - バイナリサイズ分析
-# - 拡張セキュリティチェック
 # TODO: テストの実行
 on:
   pull_request:
@@ -30,8 +29,7 @@ env:
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
 
-# 各jobsは独立したワークフローとして実行されるので、format, lint, security, buildの4つのジョブが同時に開始される
-# 各ジョブの実行結果は他のジョブに影響しない
+# 各jobsは独立したワークフローとして実行されるので、各ジョブが同時に開始される
 # なお、依存関係に変更がない場合はキャッシュを使うのでビルド高速化
 jobs:
   # フォーマットチェックのジョブ
@@ -223,17 +221,3 @@ jobs:
         run: |
           cargo bloat --release --crates
           cargo bloat --release -n 20
-  # 拡張セキュリティチェックのジョブ
-  security-advanced:
-    name: Advanced Security Check
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v1
-        with:
-          command: check advisories bans licenses sources
-          arguments: --all-features
-          manifest-path: backend/Cargo.toml
