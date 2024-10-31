@@ -1,8 +1,8 @@
+use crate::clients::aws_s3::S3Client;
 use crate::errors::app_error::AppError;
 use crate::models::auth::AuthTokenInDB;
 use crate::models::users::{UserCreate, UserInDB, UserUpdate, UserUpdateInternal};
 use crate::repositories::auth::AuthRepository;
-use crate::services::s3_service::S3Service;
 use crate::utils::jwt;
 use crate::utils::jwt::Claims;
 use crate::utils::password::{hash_password, verify_password};
@@ -16,15 +16,15 @@ use std::sync::Arc;
 pub struct AuthUseCase<R: AuthRepository> {
     repository: Arc<R>,
     jwt_secret: Vec<u8>,
-    s3_service: Arc<S3Service>,
+    s3_client: Arc<S3Client>,
 }
 
 impl<R: AuthRepository> AuthUseCase<R> {
-    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_service: Arc<S3Service>) -> Self {
+    pub fn new(repository: Arc<R>, jwt_secret: &[u8], s3_client: Arc<S3Client>) -> Self {
         Self {
             repository,
             jwt_secret: jwt_secret.to_vec(),
-            s3_service,
+            s3_client,
         }
     }
 
@@ -93,8 +93,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
                 .decode(base64_data)
                 .map_err(|e| AppError::BadRequest(format!("無効なbase64データ: {}", e)))?;
 
-            let new_avatar_key = self.s3_service.upload_avatar(&image_data).await?;
-            let new_avatar_url = self.s3_service.get_public_url(&new_avatar_key);
+            let new_avatar_key = self.s3_client.upload_avatar(&image_data).await?;
+            let new_avatar_url = self.s3_client.get_public_url(&new_avatar_key);
             user_update_internal.avatar_url = Some(new_avatar_url);
         }
 
@@ -122,7 +122,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
             .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
 
         if let Some(avatar_url) = &user.avatar_url {
-            let public_url = self.s3_service.get_public_url(avatar_url);
+            let public_url = self.s3_client.get_public_url(avatar_url);
             user.avatar_url = Some(public_url);
         }
 

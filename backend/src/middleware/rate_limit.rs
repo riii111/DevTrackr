@@ -1,5 +1,5 @@
+use crate::clients::redis::RedisClient;
 use crate::config::rate_limit::RateLimitConfig;
-use crate::utils::redis_client::RedisClient;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::Error;
 use log::{info, warn};

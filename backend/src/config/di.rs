@@ -1,8 +1,8 @@
+use crate::clients::aws_s3::S3Client;
 use crate::repositories::auth::MongoAuthRepository;
 use crate::repositories::companies::MongoCompanyRepository;
 use crate::repositories::projects::MongoProjectRepository;
 use crate::repositories::work_logs::MongoWorkLogsRepository;
-use crate::services::s3_service::S3Service;
 use crate::usecases::auth::AuthUseCase;
 use crate::usecases::companies::CompanyUseCase;
 use crate::usecases::projects::ProjectUseCase;
@@ -38,12 +38,12 @@ pub fn init_company_usecase(db: &Database) -> Arc<CompanyUseCase<MongoCompanyRep
 // auth
 pub fn init_auth_usecase(
     db: &Database,
-    s3_service: Arc<S3Service>,
+    s3_client: Arc<S3Client>,
 ) -> Arc<AuthUseCase<MongoAuthRepository>> {
     let auth_repository = Arc::new(MongoAuthRepository::new(db));
 
     let jwt_secret = env::var("JWT_SECRET")
         .expect("JWT_SECRETが設定されていません")
         .into_bytes();
-    Arc::new(AuthUseCase::new(auth_repository, &jwt_secret, s3_service))
+    Arc::new(AuthUseCase::new(auth_repository, &jwt_secret, s3_client))
 }

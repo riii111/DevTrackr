@@ -6,11 +6,11 @@ use uuid::Uuid;
 use crate::config::s3::S3Config;
 use crate::errors::app_error::AppError;
 
-pub struct S3Service {
+pub struct S3Client {
     config: Arc<S3Config>,
 }
 
-impl S3Service {
+impl S3Client {
     pub fn new(config: Arc<S3Config>) -> Self {
         Self { config }
     }
