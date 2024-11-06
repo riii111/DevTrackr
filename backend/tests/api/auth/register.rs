@@ -46,17 +46,17 @@ async fn test_register_duplicate_email() {
         let test_app = TestApp::new().await;
         let app = test_app.build_test_app().await;
 
-        // 最初のユーザーを登録
+        // 1人目のユーザーを登録
         test_app
-            .create_test_user()
+            .create_new_user("duplicate@example.com", "password123", "firstuser")
             .await
-            .expect("Failed to create test user");
+            .expect("Failed to create first user");
 
-        // 同じメールアドレスで再度登録を試みる
+        // 2人目のユーザーを同じメールアドレスで登録
         let payload = json!({
-            "email": test_app.test_user.email,
+            "email": "duplicate@example.com",
             "password": "different_password",
-            "username": "duplicate_user".to_string()
+            "username": "seconduser"
         });
 
         let req = test::TestRequest::post()
@@ -67,6 +67,9 @@ async fn test_register_duplicate_email() {
         let res = test::call_service(&app, req).await;
 
         assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+        let body: serde_json::Value = test::read_body_json(res).await;
+        assert_eq!(body["error"], "ユニーク制約違反");
     })
     .await
     .expect("Test timed out");

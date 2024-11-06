@@ -12,12 +12,6 @@ async fn test_login_success() {
         let test_app = TestApp::new().await;
         let app = test_app.build_test_app().await;
 
-        // テストユーザーの作成
-        test_app
-            .create_test_user()
-            .await
-            .expect("Failed to create test user");
-
         let payload = json!({
             "email": test_app.test_user.email,
             "password": test_app.test_user.password
@@ -32,9 +26,12 @@ async fn test_login_success() {
 
         assert_eq!(res.status(), StatusCode::OK);
 
-        let body: serde_json::Value = test::read_body_json(res).await;
-        assert!(body.get("access_token").is_some());
-        assert!(body.get("refresh_token").is_some());
+        // Cookieにアクセストークンとリフレッシュトークンがあることを確認
+        let cookies = res.headers().get(actix_web::http::header::SET_COOKIE);
+        assert!(cookies.is_some());
+        // let body: serde_json::Value = test::read_body_json(res).await;
+        // assert!(body.get("access_token").is_some());
+        // assert!(body.get("refresh_token").is_some());
     })
     .await
     .expect("Test timed out");

@@ -25,7 +25,9 @@ use devtrackr_api::{
     clients::aws_s3::S3Client, config::s3, models::users::UserCreate,
     repositories::auth::MongoAuthRepository, usecases::auth::AuthUseCase,
 };
+use mongodb::bson::doc;
 use std::sync::Arc;
+use uuid::Uuid;
 
 #[allow(dead_code)]
 pub struct TestApp {
@@ -57,15 +59,40 @@ impl TestApp {
         // 環境変数がなぜか上書きされないので明示的に記述
         std::env::set_var("MINIO_ENDPOINT", "http://localhost:9000");
 
-        // テスト用ユーザーのセットアップ
+        // テスト用ユーザーのセットアップ（テストは並行実行されるためUUIDで一意にする）
+        let uuid = Uuid::now_v7();
         let test_user = UserCreate {
-            email: String::from("test@example.com"),
+            email: format!("test_{}@example.com", uuid),
             password: String::from("password123"),
-            username: String::from("testuser"),
+            username: format!("testuser_{}", uuid),
         };
 
         // テスト用DBのセットアップ
         let db = TestDb::new().await;
+
+        // コレクションをクリーンアップ（エラーを無視）
+        let _ = db
+            .db
+            .collection::<mongodb::bson::Document>("users")
+            .drop(None)
+            .await;
+
+        // インデックスが存在しない場合のみ作成（エラーを無視）
+        let _ = db
+            .db
+            .collection::<mongodb::bson::Document>("users")
+            .create_index(
+                mongodb::IndexModel::builder()
+                    .keys(doc! { "email": 1 })
+                    .options(Some(
+                        mongodb::options::IndexOptions::builder()
+                            .unique(true)
+                            .build(),
+                    ))
+                    .build(),
+                None,
+            )
+            .await;
 
         // S3クライアントの初期化
         let s3_config = s3::init_s3_config()
@@ -86,12 +113,21 @@ impl TestApp {
             s3_client.clone(),
         ));
 
-        Self {
+        let instance = Self {
             auth_usecase,
             db: db.db.clone(),
             s3_client,
             test_user,
-        }
+        };
+
+        // インスタンス生成時にテストユーザーを登録
+        instance
+            .auth_usecase
+            .register(&web::Json(&instance.test_user))
+            .await
+            .expect("Failed to register test user");
+
+        instance
     }
 
     pub async fn build_test_app(
@@ -109,11 +145,20 @@ impl TestApp {
         .await
     }
 
-    // テストデータ作成用のヘルパーメソッド
-    pub async fn create_test_user(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.auth_usecase
-            .register(&web::Json(&self.test_user))
-            .await?;
+    // 新しいテストユーザーを作成するヘルパーメソッド
+    pub async fn create_new_user(
+        &self,
+        email: &str,
+        password: &str,
+        username: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let new_user = UserCreate {
+            email: email.to_string(),
+            password: password.to_string(),
+            username: username.to_string(),
+        };
+
+        self.auth_usecase.register(&web::Json(&new_user)).await?;
         Ok(())
     }
 }
