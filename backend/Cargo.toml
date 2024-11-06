@@ -3,9 +3,14 @@ name = "devtrackr_api"
 version = "0.1.0"
 edition = "2021"
 
+[[test]]
+name = "integration"
+path = "tests/lib.rs"
+
 [dependencies]
 actix-cors = "0.7.0"
 actix-csrf = "0.7.0"
+actix-http = "3.9.0"
 actix-rt = "2.10.0"
 # cookie-sessionを使用する場合はfeaturesにcookie-sessionを指定する必要があるので注意
 actix-session = { version = "0.7.0", features = ["redis-rs-tls-session"] }
