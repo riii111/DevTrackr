@@ -65,7 +65,6 @@ async fn login(
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthTokenCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
-        (status = 409, description = "既に存在するユーザー", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
