@@ -64,7 +64,7 @@ async fn test_register_success() {
 
         // リフレッシュトークンのCookie属性を確認
         assert!(refresh_token_cookie.contains("Path=/"));
-        assert!(refresh_token_cookie.contains("HttpOnly")); // セキュリティのためJSからアクセス不可
+        assert!(refresh_token_cookie.contains("HttpOnly")); // セキュリティ対策のためJSからアクセス不可
 
         // 初回ログインのCookie属性を確認
         assert!(first_login_cookie.contains("Path=/"));
