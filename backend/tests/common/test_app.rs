@@ -32,6 +32,7 @@ pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
     pub db: mongodb::Database,
     pub s3_client: Arc<S3Client>,
+    pub test_user: UserCreate,
 }
 
 impl TestApp {
@@ -53,11 +54,18 @@ impl TestApp {
             std::env::var("MINIO_SECRET_KEY").unwrap_or_default()
         );
 
-        // テスト用DBのセットアップ
-        let db = TestDb::new().await;
-
         // 環境変数がなぜか上書きされないので明示的に記述
         std::env::set_var("MINIO_ENDPOINT", "http://localhost:9000");
+
+        // テスト用ユーザーのセットアップ
+        let test_user = UserCreate {
+            email: String::from("test@example.com"),
+            password: String::from("password123"),
+            username: String::from("testuser"),
+        };
+
+        // テスト用DBのセットアップ
+        let db = TestDb::new().await;
 
         // S3クライアントの初期化
         let s3_config = s3::init_s3_config()
@@ -82,6 +90,7 @@ impl TestApp {
             auth_usecase,
             db: db.db.clone(),
             s3_client,
+            test_user,
         }
     }
 
@@ -101,19 +110,10 @@ impl TestApp {
     }
 
     // テストデータ作成用のヘルパーメソッド
-    pub async fn create_test_user(
-        &self,
-        email: &str,
-        password: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let user = UserCreate {
-            email: email.to_string(),
-            password: password.to_string(),
-            username: "testuser".to_string(),
-            // その他必要なフィールド
-        };
-
-        self.auth_usecase.register(&web::Json(user)).await?;
+    pub async fn create_test_user(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.auth_usecase
+            .register(&web::Json(&self.test_user))
+            .await?;
         Ok(())
     }
 }
