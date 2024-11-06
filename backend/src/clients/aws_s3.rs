@@ -17,7 +17,7 @@ impl S3Client {
 
     /// アバターをS3にアップロード
     pub async fn upload_avatar(&self, image_data: &[u8]) -> Result<String, AppError> {
-        let file_name = format!("avatars/{}.png", Uuid::new_v4());
+        let file_name = format!("avatars/{}.png", Uuid::now_v7());
 
         // 画像フォーマットを明示的に判別
         let format = image::guess_format(image_data).map_err(|e| {
