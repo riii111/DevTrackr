@@ -30,8 +30,45 @@ async fn test_register_success() {
 
         assert_eq!(res.status(), StatusCode::CREATED);
 
-        let body: serde_json::Value = test::read_body_json(res).await;
-        assert_eq!(body["message"], "ユーザー登録に成功しました");
+        // let body: serde_json::Value = test::read_body_json(res).await;
+        // assert_eq!(body["message"], "ユーザー登録に成功しました");
+
+        // Cookieヘッダーの取得と検証
+        let cookies: Vec<_> = res
+            .headers()
+            .get_all(actix_web::http::header::SET_COOKIE)
+            .map(|v| v.to_str().unwrap())
+            .collect();
+
+        // 必要なCookieが存在することを確認
+        assert!(cookies.iter().any(|c| c.starts_with("access_token=")));
+        assert!(cookies.iter().any(|c| c.starts_with("refresh_token=")));
+
+        // Cookieの属性を確認
+        let access_token_cookie = cookies
+            .iter()
+            .find(|c| c.starts_with("access_token="))
+            .unwrap();
+        let refresh_token_cookie = cookies
+            .iter()
+            .find(|c| c.starts_with("refresh_token="))
+            .unwrap();
+        let first_login_cookie = cookies
+            .iter()
+            .find(|c| c.starts_with("firstLogin="))
+            .unwrap();
+
+        // アクセストークンのCookie属性を確認
+        assert!(access_token_cookie.contains("Path=/"));
+        assert!(!access_token_cookie.contains("HttpOnly")); // フロントエンドでJSから読み取れる必要がある
+
+        // リフレッシュトークンのCookie属性を確認
+        assert!(refresh_token_cookie.contains("Path=/"));
+        assert!(refresh_token_cookie.contains("HttpOnly")); // セキュリティのためJSからアクセス不可
+
+        // 初回ログインのCookie属性を確認
+        assert!(first_login_cookie.contains("Path=/"));
+        assert!(!first_login_cookie.contains("HttpOnly")); // JavaScriptからアクセスできるようにする
     })
     .await
     .expect("Test timed out");
