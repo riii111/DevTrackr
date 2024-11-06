@@ -26,12 +26,34 @@ async fn test_login_success() {
 
         assert_eq!(res.status(), StatusCode::OK);
 
-        // Cookieにアクセストークンとリフレッシュトークンがあることを確認
-        let cookies = res.headers().get(actix_web::http::header::SET_COOKIE);
-        assert!(cookies.is_some());
-        // let body: serde_json::Value = test::read_body_json(res).await;
-        // assert!(body.get("access_token").is_some());
-        // assert!(body.get("refresh_token").is_some());
+        // Cookieヘッダーの取得と検証
+        let cookies: Vec<_> = res
+            .headers()
+            .get_all(actix_web::http::header::SET_COOKIE)
+            .map(|v| v.to_str().unwrap())
+            .collect();
+
+        // 必要なCookieが存在することを確認
+        assert!(cookies.iter().any(|c| c.starts_with("access_token=")));
+        assert!(cookies.iter().any(|c| c.starts_with("refresh_token=")));
+
+        // Cookieの属性を確認
+        let access_token_cookie = cookies
+            .iter()
+            .find(|c| c.starts_with("access_token="))
+            .unwrap();
+        let refresh_token_cookie = cookies
+            .iter()
+            .find(|c| c.starts_with("refresh_token="))
+            .unwrap();
+
+        // アクセストークンのCookie属性を確認
+        assert!(access_token_cookie.contains("Path=/"));
+        assert!(!access_token_cookie.contains("HttpOnly")); // フロントエンドでJSから読み取れる必要がある
+
+        // リフレッシュトークンのCookie属性を確認
+        assert!(refresh_token_cookie.contains("Path=/"));
+        assert!(refresh_token_cookie.contains("HttpOnly")); // セキュリティのためJSからアクセス不可
     })
     .await
     .expect("Test timed out");
