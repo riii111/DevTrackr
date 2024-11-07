@@ -1,5 +1,6 @@
 use crate::clients::aws_s3::S3Client;
 use crate::errors::app_error::AppError;
+use crate::errors::repositories_error::RepositoryError;
 use crate::models::auth::AuthTokenInDB;
 use crate::models::users::{UserCreate, UserInDB, UserUpdate, UserUpdateInternal};
 use crate::repositories::auth::AuthRepository;
@@ -60,7 +61,18 @@ impl<R: AuthRepository> AuthUseCase<R> {
         let user_id = self
             .repository
             .create_user(&user_create.email, &password_hash, &user_create.username)
-            .await?;
+            .await
+            .map_err(|e| {
+                if let RepositoryError::DuplicateError(e) = e {
+                    // 他者の個人情報を推測できないようにするため、実際のエラー内容はログ出力のみとし返す文言を変更する
+                    log::info!("ユーザー登録でユニーク制約違反が発生: {}", e);
+                    AppError::BadRequest(
+                        "バリデーションに失敗したか、処理中にエラーが発生しました".to_string(),
+                    )
+                } else {
+                    AppError::from(e)
+                }
+            })?;
 
         let auth_token = self.create_auth_token(&user_id.to_string())?;
         self.repository.save_auth_token(&auth_token).await?;
