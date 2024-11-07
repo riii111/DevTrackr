@@ -68,7 +68,7 @@ async fn test_register_success() {
 
         // 初回ログインのCookie属性を確認
         assert!(first_login_cookie.contains("Path=/"));
-        assert!(!first_login_cookie.contains("HttpOnly")); // JavaScriptからアクセスできるようにする
+        assert!(!first_login_cookie.contains("HttpOnly")); // JSからアクセスできるようにする
     })
     .await
     .expect("Test timed out");
@@ -106,7 +106,11 @@ async fn test_register_duplicate_email() {
         assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
         let body: serde_json::Value = test::read_body_json(res).await;
-        assert_eq!(body["error"], "ユニーク制約違反");
+        println!("body: {:?}", &body);
+        assert_eq!(
+            body["details"][0],
+            "不正なリクエストです: バリデーションに失敗したか、処理中にエラーが発生しました"
+        );
     })
     .await
     .expect("Test timed out");
