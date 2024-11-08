@@ -42,21 +42,7 @@ impl TestApp {
         // 環境変数のセットアップを行う
         crate::setup().await;
 
-        // 環境変数が正しく設定されているか確認
-        println!(
-            "Current MINIO_ENDPOINT: {}",
-            std::env::var("MINIO_ENDPOINT").unwrap_or_default()
-        );
-        println!(
-            "Current MINIO_ACCESS_KEY: {}",
-            std::env::var("MINIO_ACCESS_KEY").unwrap_or_default()
-        );
-        println!(
-            "Current MINIO_SECRET_KEY: {}",
-            std::env::var("MINIO_SECRET_KEY").unwrap_or_default()
-        );
-
-        // 環境変数がなぜか上書きされないので明示的に記述
+        // MinIOの環境変数を明示的に設定
         std::env::set_var("MINIO_ENDPOINT", "http://localhost:9000");
 
         // テスト用ユーザーのセットアップ（テストは並行実行されるためUUIDで一意にする）
@@ -70,17 +56,10 @@ impl TestApp {
         // テスト用DBのセットアップ
         let db = TestDb::new().await;
 
-        // コレクションをクリーンアップ（エラーを無視）
-        let _ = db
-            .db
-            .collection::<mongodb::bson::Document>("users")
-            .drop(None)
-            .await;
-
-        // インデックスが存在しない場合のみ作成（エラーを無視）
-        let _ = db
-            .db
-            .collection::<mongodb::bson::Document>("users")
+        // コレクションのセットアップ
+        let users_collection = db.db.collection::<mongodb::bson::Document>("users");
+        let _ = users_collection.drop(None).await;
+        let _ = users_collection
             .create_index(
                 mongodb::IndexModel::builder()
                     .keys(doc! { "email": 1 })
@@ -94,19 +73,15 @@ impl TestApp {
             )
             .await;
 
-        // S3クライアントの初期化
+        // 依存関係の初期化
         let s3_config = s3::init_s3_config()
             .await
             .expect("Failed to initialize S3 config");
-
         let s3_client = Arc::new(S3Client::new(s3_config));
-
-        // AuthUseCaseの初期化
         let auth_repository = Arc::new(MongoAuthRepository::new(&db.db));
         let jwt_secret = std::env::var("JWT_SECRET")
             .expect("JWT_SECRET must be set")
             .into_bytes();
-
         let auth_usecase = Arc::new(AuthUseCase::new(
             auth_repository,
             &jwt_secret,
@@ -145,7 +120,6 @@ impl TestApp {
         .await
     }
 
-    // 新しいテストユーザーを作成するヘルパーメソッド
     pub async fn create_new_user(
         &self,
         email: &str,
