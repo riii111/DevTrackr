@@ -1,5 +1,6 @@
 use crate::config::api_doc::ApiDoc;
 use crate::config::di;
+use crate::errors::app_error::json_error_handler;
 use crate::utils::test_s3_upload;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
@@ -200,6 +201,7 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(project_usecase.clone()))
             .app_data(web::Data::new(company_usecase.clone()))
             .app_data(web::Data::new(auth_usecase_clone.clone()))
+            .app_data(json_error_handler())
     })
     .bind(format!(
         "0.0.0.0:{}",
