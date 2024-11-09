@@ -17,7 +17,7 @@ use validator::Validate;
     request_body = AuthTokenLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
-        (status = 422, description = "認証に失敗しました", body = ErrorResponse),
+        (status = 400, description = "無効なリクエストデータor認証に失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
@@ -49,8 +49,8 @@ async fn login(
                         "error": "サーバーエラーが発生しました"
                     })))
                 }
-                // 他者の個人情報を推測できないようにするため、他のエラーは422で統一
-                _ => Ok(HttpResponse::UnprocessableEntity().json(serde_json::json!({
+                // 他者の個人情報を推測できないようにするため、他のエラーは400で統一
+                _ => Ok(HttpResponse::BadRequest().json(serde_json::json!({
                     "error": "認証に失敗しました"
                 }))),
             }
