@@ -22,8 +22,9 @@ use crate::common::test_db::TestDb;
 use crate::common::test_routes::api_config;
 use actix_web::{test, web, App};
 use devtrackr_api::{
-    clients::aws_s3::S3Client, config::s3, models::users::UserCreate,
-    repositories::auth::MongoAuthRepository, usecases::auth::AuthUseCase,
+    clients::aws_s3::S3Client, config::s3, errors::app_error::json_error_handler,
+    models::users::UserCreate, repositories::auth::MongoAuthRepository,
+    usecases::auth::AuthUseCase,
 };
 use mongodb::bson::doc;
 use std::sync::Arc;
@@ -115,6 +116,7 @@ impl TestApp {
         test::init_service(
             App::new()
                 .app_data(web::Data::new(self.auth_usecase.clone()))
+                .app_data(json_error_handler())
                 .configure(api_config),
         )
         .await

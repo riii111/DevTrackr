@@ -1,11 +1,11 @@
 use actix_web::error::JsonPayloadError;
 use actix_web::web::JsonConfig;
+use actix_web::ResponseError;
 use actix_web::{http::StatusCode, HttpResponse};
 use log;
 use serde::de;
 use serde::{Deserialize, Serialize};
 use serde_json::Error as SerdeError;
-use serde_path_to_error::Error as SerdePathError;
 use thiserror::Error;
 use utoipa::ToSchema;
 use validator::ValidationErrors;
@@ -17,7 +17,7 @@ pub enum AppError {
     ValidationError(ValidationErrors),
 
     #[error("デシリアライズエラー: {0}")]
-    DeserializeError(String),
+    DeserializeError(ErrorResponse),
 
     #[error("不正なリクエストです: {0}")]
     BadRequest(String),
@@ -42,7 +42,7 @@ pub enum AppError {
 }
 
 // エラーレスポンスの構造体
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema, Clone)]
 pub struct ErrorResponse {
     error: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -54,10 +54,22 @@ pub struct ErrorResponse {
 }
 
 // フィールドに関連するエラー用
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct FieldError {
     field: String,
     message: String,
+}
+
+impl std::fmt::Display for ErrorResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // JSONとして整形して出力
+        if let Ok(json) = serde_json::to_string(self) {
+            write!(f, "{}", json)
+        } else {
+            // JSONシリアライズに失敗した場合のフォールバック
+            write!(f, "Error: {}", self.error)
+        }
+    }
 }
 
 // Swagger用に実装
@@ -180,7 +192,7 @@ impl AppError {
         match self {
             AppError::InternalServerError(msg) => log::error!("内部エラー: {}", msg),
             AppError::DatabaseError(err) => log::error!("DBエラー: {}", err),
-            AppError::DeserializeError(msg) => log::debug!("デシリアライズエラー: {}", msg),
+            AppError::DeserializeError(_) => log::debug!("デシリアライズエラー: {}", self),
             _ => log::debug!("アプリケーションエラー: {}", self),
         }
     }
@@ -194,15 +206,9 @@ impl AppError {
                 message: None,
                 code: None,
             },
-            AppError::DeserializeError(msg) => {
-                // JSON文字列からFieldErrorのVecに戻す
-                let field_errors: Vec<FieldError> = serde_json::from_str(msg).unwrap_or_default();
-                ErrorResponse {
-                    error: "入力エラー".to_string(),
-                    field_errors,
-                    message: None,
-                    code: None,
-                }
+            AppError::DeserializeError(error_response) => {
+                // ErrorResponseをそのまま使用
+                error_response.clone()
             }
             AppError::BadRequest(_) => ErrorResponse {
                 error: "不正なリクエスト".to_string(),
@@ -264,33 +270,27 @@ impl AppError {
 // 一般的なSerdeErrorのハンドリング
 impl From<SerdeError> for AppError {
     fn from(err: SerdeError) -> Self {
-        AppError::DeserializeError(format!("デシリアライズエラー: {}", err))
+        AppError::DeserializeError(ErrorResponse {
+            error: "入力エラー".to_string(),
+            field_errors: AppError::format_deserialize_errors(&err.to_string()),
+            message: None,
+            code: None,
+        })
     }
 }
 
 // カスタムデシリアライズエラーのハンドリング
 impl From<de::value::Error> for AppError {
-    fn from(err: de::value::Error) -> Self {
-        AppError::DeserializeError(format!("デシリアライズエラー: {}", err))
-    }
-}
-
-impl From<SerdePathError<SerdeError>> for AppError {
-    fn from(err: SerdePathError<SerdeError>) -> Self {
-        let path = err.path().to_string().trim_start_matches('.').to_string();
-        let error_message = match err.inner().classify() {
-            serde_json::error::Category::Data => {
-                if err.inner().to_string().contains("missing field") {
-                    format!("{}: 必須項目です", path)
-                } else {
-                    format!("{}: 入力形式が正しくありません", path)
-                }
-            }
-            serde_json::error::Category::Syntax => "リクエストの形式が正しくありません".to_string(),
-            serde_json::error::Category::Eof => "リクエストデータが不完全です".to_string(),
-            _ => "入力データの形式が正しくありません".to_string(),
-        };
-        AppError::DeserializeError(error_message)
+    fn from(_: de::value::Error) -> Self {
+        AppError::DeserializeError(ErrorResponse {
+            error: "デシリアライズエラー".to_string(),
+            field_errors: vec![FieldError {
+                field: "unknown".to_string(),
+                message: "入力形式が正しくありません".to_string(),
+            }],
+            message: None,
+            code: None,
+        })
     }
 }
 
@@ -299,37 +299,70 @@ pub fn json_error_handler() -> JsonConfig {
     JsonConfig::default()
         .limit(262_144)
         .error_handler(|err, _| {
-            let error_details = match &err {
-                JsonPayloadError::Deserialize(err) => {
-                    log::debug!("デシリアライズエラー: {}", err);
-                    AppError::format_deserialize_errors(&err.to_string())
+            let error: AppError = match &err {
+                JsonPayloadError::Deserialize(json_err) => {
+                    let error_msg = json_err.to_string();
+
+                    if error_msg.contains("missing field") {
+                        // 必須フィールドの欠落エラー
+                        let field = error_msg.split('`').nth(1).unwrap_or("unknown").to_string();
+
+                        AppError::DeserializeError(ErrorResponse {
+                            error: "入力エラー".to_string(),
+                            field_errors: vec![FieldError {
+                                field,
+                                message: "必須項目です".to_string(),
+                            }],
+                            message: None,
+                            code: None,
+                        })
+                    } else {
+                        // その他のデシリアライズエラー
+                        AppError::DeserializeError(ErrorResponse {
+                            error: "入力エラー".to_string(),
+                            field_errors: AppError::format_deserialize_errors(&error_msg),
+                            message: None,
+                            code: None,
+                        })
+                    }
                 }
-                JsonPayloadError::ContentType => vec![FieldError {
-                    field: "content-type".to_string(),
-                    message: "Content-Typeはapplication/jsonである必要があります".to_string(),
-                }],
-                JsonPayloadError::Payload(_) => vec![FieldError {
-                    field: "body".to_string(),
-                    message: "リクエストの処理中にエラーが発生しました".to_string(),
-                }],
-                JsonPayloadError::Overflow { .. } => vec![FieldError {
-                    field: "body".to_string(),
-                    message: "リクエストデータが大きすぎます（上限: 256KB）".to_string(),
-                }],
-                _ => vec![FieldError {
-                    field: "unknown".to_string(),
-                    message: "リクエストの形式が正しくありません".to_string(),
-                }],
+                JsonPayloadError::ContentType => AppError::DeserializeError(ErrorResponse {
+                    error: "入力エラー".to_string(),
+                    field_errors: vec![FieldError {
+                        field: "content-type".to_string(),
+                        message: "Content-Typeはapplication/jsonである必要があります".to_string(),
+                    }],
+                    message: None,
+                    code: None,
+                }),
+                _ => AppError::DeserializeError(ErrorResponse {
+                    error: "入力エラー".to_string(),
+                    field_errors: vec![FieldError {
+                        field: "body".to_string(),
+                        message: "リクエストの形式が正しくありません".to_string(),
+                    }],
+                    message: None,
+                    code: None,
+                }),
             };
 
-            AppError::DeserializeError(serde_json::to_string(&error_details).unwrap_or_default())
-                .into()
+            // エラーレスポンスを生成
+            let response = error.error_response();
+            actix_web::error::InternalError::from_response("", response).into()
         })
 }
 
 impl actix_web::ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         self.log_error();
-        HttpResponse::build(self.status_code()).json(self.to_response())
+
+        let response = match self {
+            AppError::DeserializeError(error_response) => error_response,
+            _ => &self.to_response(),
+        };
+
+        HttpResponse::build(self.status_code())
+            .content_type("application/json")
+            .json(response)
     }
 }
