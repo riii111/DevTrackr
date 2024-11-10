@@ -10,8 +10,7 @@ use crate::utils::password::{hash_password, verify_password};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use bson::DateTime as BsonDateTime;
-use chrono::{Duration, Utc};
-use std::env;
+use chrono::Utc;
 use std::sync::Arc;
 
 pub struct AuthUseCase<R: AuthRepository> {
@@ -145,7 +144,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     ///
     /// - アクセストークンとリフレッシュトークンを削除
     pub async fn logout(&self, auth_header: &str) -> Result<(), AppError> {
-        let token = self.extract_token(auth_header);
+        let token = jwt::extract_token(auth_header);
 
         // アクセストークンをキーに削除
         let result = self.repository.delete_auth_tokens(&token).await?;
@@ -227,6 +226,11 @@ impl<R: AuthRepository> AuthUseCase<R> {
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthTokenInDB, AppError> {
         let claims = self.verify_refresh_token(refresh_token).await?;
 
+        // リフレッシュ専用の関数を使用
+        let (new_access_token, new_expires_at) =
+            jwt::create_refreshed_access_token(&claims.sub, &self.jwt_secret)
+                .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+
         // 既存のAuthTokenInDBを取得
         let mut auth_token = self
             .repository
@@ -237,50 +241,22 @@ impl<R: AuthRepository> AuthUseCase<R> {
                 AppError::BadRequest("無効なリクエストです".to_string()) // あえて曖昧なエラーメッセージを返す
             })?;
 
-        // 新しいアクセストークンを生成
-        let new_access_token = jwt::create_access_token(&claims.sub, &self.jwt_secret)
-            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-
-        let access_token_exp = env::var("ACCESS_TOKEN_EXPIRY_HOURS")
-            .expect("ACCESS_TOKEN_EXPIRY_HOURSが設定されていません")
-            .parse::<i64>()
-            .expect("ACCESS_TOKEN_EXPIRY_HOURSは有効な整数である必要があります");
-
-        // アクセストークンと有効期限を更新
+        // 更新内容を設定
         auth_token.access_token = new_access_token;
-        auth_token.expires_at =
-            BsonDateTime::from_chrono(Utc::now() + Duration::hours(access_token_exp));
+        auth_token.expires_at = new_expires_at;
         auth_token.updated_at = Some(BsonDateTime::now());
 
-        // 更新されたトークンを保存
+        // DBを更新
         self.repository.update_auth_token(&auth_token).await?;
 
         Ok(auth_token)
     }
 
     /// 認証トークンを生成
-    ///
-    /// - アクセストークンとリフレッシュトークンを生成
-    /// - 環境変数から有効期限を取得
     fn create_auth_token(&self, user_id: &str) -> Result<AuthTokenInDB, AppError> {
-        let access_token = jwt::create_access_token(user_id, &self.jwt_secret)
-            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-        let refresh_token = jwt::create_refresh_token(user_id, &self.jwt_secret)
-            .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-
-        // 環境変数から有効期限を取得
-        let access_token_exp = env::var("ACCESS_TOKEN_EXPIRY_HOURS")
-            .expect("ACCESS_TOKEN_EXPIRY_HOURSが設定されていません")
-            .parse::<i64>()
-            .expect("ACCESS_TOKEN_EXPIRY_HOURSは有効な整数である必要があります");
-        let refresh_token_exp = env::var("REFRESH_TOKEN_EXPIRY_DAYS")
-            .expect("REFRESH_TOKEN_EXPIRY_DAYSが設定されていません")
-            .parse::<i64>()
-            .expect("REFRESH_TOKEN_EXPIRY_DAYSは有効な整数である必要があります");
-
-        let expires_at = BsonDateTime::from_chrono(Utc::now() + Duration::hours(access_token_exp));
-        let refresh_expires_at =
-            BsonDateTime::from_chrono(Utc::now() + Duration::days(refresh_token_exp));
+        let (access_token, refresh_token, expires_at, refresh_expires_at) =
+            jwt::create_token_pair(user_id, &self.jwt_secret)
+                .map_err(|e| AppError::InternalServerError(e.to_string()))?;
 
         Ok(AuthTokenInDB {
             id: None,
@@ -292,10 +268,5 @@ impl<R: AuthRepository> AuthUseCase<R> {
             created_at: BsonDateTime::now(),
             updated_at: None,
         })
-    }
-
-    /// 認証ヘッダーからトークンを抽出
-    fn extract_token(&self, auth_header: &str) -> String {
-        auth_header.trim_start_matches("Bearer ").to_string()
     }
 }

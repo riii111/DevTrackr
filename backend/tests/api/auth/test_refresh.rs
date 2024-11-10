@@ -2,6 +2,7 @@ use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
 use chrono::{Duration, Utc};
 use devtrackr_api::models::auth::AuthTokenInDB;
+use devtrackr_api::utils::jwt;
 use mongodb::bson::{doc, DateTime as BsonDateTime};
 use serde_json::Value;
 
@@ -35,6 +36,19 @@ async fn test_refresh_success() {
         .login_and_create_next_request(test::TestRequest::post().uri(REFRESH_ENDPOINT))
         .await;
 
+    // 初回ログイン時のアクセストークンを取得
+    let original_access_token = login_response
+        .response()
+        .cookies()
+        .find(|c| c.name() == "access_token")
+        .expect("初回ログイン時のアクセストークンが見つかりません")
+        .value()
+        .to_string();
+
+    // 少し待機して時間差を作る
+    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+
+    // リフレッシュを実行
     let refresh_token = login_response
         .response()
         .cookies()
@@ -60,15 +74,65 @@ async fn test_refresh_success() {
         .collect();
 
     // アクセストークンのCookieが存在することを確認
-    let access_token_cookie = cookies
+    let new_access_token_cookie = cookies
         .iter()
         .find(|c| c.starts_with("access_token="))
         .expect("アクセストークンのCookieが見つかりません");
 
-    assert!(access_token_cookie.contains("Path=/"));
+    // アクセストークンの値を抽出
+    let new_access_token = new_access_token_cookie
+        .split(';')
+        .next()
+        .unwrap()
+        .trim_start_matches("access_token=");
+
+    // デバッグ出力を先に行う
+    println!("\n=== Token Comparison ===");
+    println!("Original token: {}", original_access_token);
+    println!("New token: {}", new_access_token);
+
+    // トークンをデコードして中身を確認
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .expect("JWT_SECRET must be set")
+        .into_bytes();
+    let decoded_original = jwt::verify_token(&original_access_token, &jwt_secret)
+        .expect("Failed to decode original token");
+    let decoded_new =
+        jwt::verify_token(new_access_token, &jwt_secret).expect("Failed to decode new token");
+
+    println!("\n=== Decoded Claims ===");
+    println!("Original claims: {:?}", decoded_original);
+    println!("New claims: {:?}", decoded_new);
+    println!("=====================\n");
+
+    // アサーションを後に行う
+    assert_ne!(
+        original_access_token, new_access_token,
+        "アクセストークンが更新されていません"
+    );
+
+    assert!(new_access_token_cookie.contains("Path=/"));
     assert!(
-        !access_token_cookie.contains("HttpOnly"),
+        !new_access_token_cookie.contains("HttpOnly"),
         "アクセストークンのCookieはHttpOnlyであるべきではありません"
+    );
+
+    // アクセストークンが更新されていることをDBでも確認
+    let collection = test_app.db.collection::<AuthTokenInDB>("auth_tokens");
+    let updated_token = collection
+        .find_one(doc! { "refresh_token": refresh_token.value() }, None)
+        .await
+        .expect("DBクエリに失敗")
+        .expect("トークンが見つかりません");
+
+    assert_eq!(
+        updated_token.access_token, new_access_token,
+        "DBに保存されているアクセストークンが更新されていません"
+    );
+
+    assert!(
+        decoded_new.iat > decoded_original.iat,
+        "新しいトークンの発行時刻が古いトークン以降になっていません"
     );
 }
 
