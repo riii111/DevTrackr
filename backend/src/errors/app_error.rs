@@ -117,23 +117,13 @@ impl AppError {
     // UX観点で見ると、ユーザーは通常、一度に1つの問題を修正する傾向があるため複数エラーを集計しない(実装も面倒そう)
     // Googleフォームなども同様
     fn format_validation_errors(errors: &ValidationErrors) -> Vec<FieldError> {
-        // ValidationErrorsのfield_errorsメソッドの戻り値型に合わせて修正
         if let Some((field, error_vec)) = errors.field_errors().iter().next() {
             if let Some(error) = error_vec.first() {
                 let message = error
                     .message
                     .as_ref()
                     .map(|cow| cow.to_string())
-                    .unwrap_or_else(|| {
-                        match error.code.as_ref() {
-                            "required" => "必須項目です",
-                            "email" => "有効なメールアドレスを入力してください",
-                            "length" => "入力された文字数が無効です",
-                            "range" => "入力された値が範囲外です",
-                            _ => "不正な値です",
-                        }
-                        .to_string()
-                    });
+                    .unwrap_or_else(|| "不正な値です".to_string());
 
                 vec![FieldError {
                     field: field.to_string(),
