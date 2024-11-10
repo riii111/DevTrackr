@@ -218,10 +218,7 @@ impl AppError {
             },
             AppError::DuplicateError(msg) => ErrorResponse {
                 error: "重複エラー".to_string(),
-                field_errors: vec![FieldError {
-                    field: "email".to_string(),
-                    message: "このメールアドレスは既に使用されています".to_string(),
-                }],
+                field_errors: vec![],
                 message: Some(msg.clone()),
                 code: Some("DUPLICATE_ENTRY".to_string()),
             },
@@ -295,7 +292,7 @@ impl From<de::value::Error> for AppError {
 // JsonConfigのエラーハンドラー
 pub fn json_error_handler() -> JsonConfig {
     JsonConfig::default()
-        .limit(262_144)
+        .limit(262_144) // リクエストボディのサイズ（256 * 1024 = 262,144）. リソース枯渇を防ぐ
         .error_handler(|err, _| {
             let error: AppError = match &err {
                 JsonPayloadError::Deserialize(json_err) => {
@@ -329,6 +326,15 @@ pub fn json_error_handler() -> JsonConfig {
                     field_errors: vec![FieldError {
                         field: "content-type".to_string(),
                         message: "Content-Typeはapplication/jsonである必要があります".to_string(),
+                    }],
+                    message: None,
+                    code: None,
+                }),
+                JsonPayloadError::Overflow { .. } => AppError::DeserializeError(ErrorResponse {
+                    error: "入力エラー".to_string(),
+                    field_errors: vec![FieldError {
+                        field: "body".to_string(),
+                        message: "リクエストデータが大きすぎます（上限: 256KB）".to_string(),
                     }],
                     message: None,
                     code: None,
