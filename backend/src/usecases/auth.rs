@@ -187,7 +187,7 @@ impl<R: AuthRepository> AuthUseCase<R> {
     /// リフレッシュトークンの有効期限を検証
     pub async fn verify_refresh_token(&self, refresh_token: &str) -> Result<Claims, AppError> {
         let claims = jwt::verify_token(refresh_token, &self.jwt_secret)
-            .map_err(|_| AppError::BadRequest("無効なリフレッシュトークンです".to_string()))?;
+            .map_err(|_| AppError::BadRequest("無効なリクエストです".to_string()))?; // あえて曖昧なエラーメッセージを返す
 
         log::info!("refresh_token: {}", refresh_token);
         // DBからリフレッシュトークンを取得
@@ -200,19 +200,21 @@ impl<R: AuthRepository> AuthUseCase<R> {
                     "リフレッシュトークンの検証中にエラーが発生しました: {:?}",
                     e
                 );
-                AppError::InternalServerError(
-                    "リフレッシュトークンの検証に失敗しました".to_string(),
-                )
+                AppError::InternalServerError("サーバーエラーが発生しました".to_string())
+                // エラー内容はログ出力のみとし返す文言を変更する
             })?
             .ok_or_else(|| {
-                AppError::BadRequest("リフレッシュトークンが見つかりません".to_string())
+                AppError::BadRequest("無効なリクエストです".to_string()) // あえて曖昧なエラーメッセージを返す
             })?;
 
         // リフレッシュトークンの有効期限を比較
         if Utc::now() > auth_token.refresh_expires_at.into() {
-            return Err(AppError::BadRequest(
-                "リフレッシュトークンの有効期限が切れています".to_string(),
-            ));
+            log::error!(
+                "リフレッシュトークンの有効期限が切れています: {}",
+                refresh_token
+            );
+            return Err(AppError::BadRequest("無効なリクエストです".to_string()));
+            // あえて曖昧なエラーメッセージを返す
         }
 
         Ok(claims)
@@ -231,7 +233,8 @@ impl<R: AuthRepository> AuthUseCase<R> {
             .find_by_refresh_token(refresh_token)
             .await?
             .ok_or_else(|| {
-                AppError::BadRequest("リフレッシュトークンが見つかりません".to_string())
+                log::error!("リフレッシュトークンが見つかりません: {}", refresh_token);
+                AppError::BadRequest("無効なリクエストです".to_string()) // あえて曖昧なエラーメッセージを返す
             })?;
 
         // 新しいアクセストークンを生成

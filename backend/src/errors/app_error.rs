@@ -210,12 +210,10 @@ impl AppError {
                 // ErrorResponseをそのまま使用
                 error_response.clone()
             }
-            AppError::BadRequest(_) => ErrorResponse {
+            AppError::BadRequest(msg) => ErrorResponse {
                 error: "不正なリクエスト".to_string(),
                 field_errors: vec![],
-                message: Some(
-                    "バリデーションに失敗したか、処理中にエラーが発生しました".to_string(),
-                ),
+                message: Some(msg.clone()),
                 code: Some("BAD_REQUEST".to_string()),
             },
             AppError::DuplicateError(msg) => ErrorResponse {
