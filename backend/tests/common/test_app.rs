@@ -25,14 +25,15 @@ use devtrackr_api::{
     api,
     api::endpoints::auth::{login, logout, refresh, register},
     clients::aws_s3::S3Client,
-    config::s3,
+    config::{db_index, di, s3},
     errors::app_error::json_error_handler,
     middleware::{csrf, jwt, security_headers::SecurityHeaders},
     models::users::UserCreate,
     repositories::auth::MongoAuthRepository,
+    repositories::companies::MongoCompanyRepository,
     usecases::auth::AuthUseCase,
+    usecases::companies::CompanyUseCase,
 };
-use mongodb::bson::doc;
 use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -40,13 +41,14 @@ use uuid::Uuid;
 #[allow(dead_code)]
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
+    pub company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
     pub db: mongodb::Database,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
 }
 
 impl TestApp {
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self, TestSetupError> {
         // 環境変数のセットアップを行う
         crate::setup().await;
 
@@ -64,53 +66,48 @@ impl TestApp {
         // テスト用DBのセットアップ
         let db = TestDb::new().await;
 
-        // コレクションのセットアップ
-        let users_collection = db.db.collection::<mongodb::bson::Document>("users");
-        let _ = users_collection.drop(None).await;
-        let _ = users_collection
-            .create_index(
-                mongodb::IndexModel::builder()
-                    .keys(doc! { "email": 1 })
-                    .options(Some(
-                        mongodb::options::IndexOptions::builder()
-                            .unique(true)
-                            .build(),
-                    ))
-                    .build(),
-                None,
-            )
-            .await;
-
+        // インデックスの作成
+        if let Err(e) = db_index::create_indexes(&db.db).await {
+            return Err(TestSetupError::DatabaseSetup(format!(
+                "インデックスの作成に失敗: {}",
+                e
+            )));
+        }
         // 依存関係の初期化
-        let s3_config = s3::init_s3_config()
-            .await
-            .expect("Failed to initialize S3 config");
-        let s3_client = Arc::new(S3Client::new(s3_config));
-        let auth_repository = Arc::new(MongoAuthRepository::new(&db.db));
-        let jwt_secret = std::env::var("JWT_SECRET")
-            .expect("JWT_SECRET must be set")
-            .into_bytes();
-        let auth_usecase = Arc::new(AuthUseCase::new(
-            auth_repository,
-            &jwt_secret,
-            s3_client.clone(),
-        ));
+        let s3_client = Self::init_s3_client().await;
+
+        // ユースケースの初期化
+        let auth_usecase = di::init_auth_usecase(&db.db, s3_client.clone());
+        let company_usecase = di::init_company_usecase(&db.db);
 
         let instance = Self {
             auth_usecase,
+            company_usecase,
             db: db.db.clone(),
             s3_client,
             test_user,
         };
 
-        // インスタンス生成時にテストユーザーを登録
-        instance
-            .auth_usecase
-            .register(&web::Json(&instance.test_user))
+        // テストユーザーの登録
+        instance.register_test_user().await;
+
+        Ok(instance)
+    }
+
+    /// S3クライアントの初期化
+    async fn init_s3_client() -> Arc<S3Client> {
+        let s3_config = s3::init_s3_config()
+            .await
+            .expect("Failed to initialize S3 config");
+        Arc::new(S3Client::new(s3_config))
+    }
+
+    /// テストユーザーの登録
+    async fn register_test_user(&self) {
+        self.auth_usecase
+            .register(&web::Json(&self.test_user))
             .await
             .expect("Failed to register test user");
-
-        instance
     }
 
     pub async fn build_test_app(
@@ -131,10 +128,10 @@ impl TestApp {
 
         test::init_service(
             App::new()
-                // main.rsと同じ順序でセキュリティミドルウェアを適用
                 .wrap(csrf::csrf_middleware())
                 .wrap(SecurityHeaders)
                 .app_data(web::Data::new(self.auth_usecase.clone()))
+                .app_data(web::Data::new(self.company_usecase.clone()))
                 .app_data(json_error_handler())
                 .service(
                     web::scope("/api")
