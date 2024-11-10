@@ -48,7 +48,7 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn new() -> Result<Self, TestSetupError> {
+    pub async fn new() -> Self {
         // 環境変数のセットアップを行う
         crate::setup().await;
 
@@ -68,10 +68,7 @@ impl TestApp {
 
         // インデックスの作成
         if let Err(e) = db_index::create_indexes(&db.db).await {
-            return Err(TestSetupError::DatabaseSetup(format!(
-                "インデックスの作成に失敗: {}",
-                e
-            )));
+            panic!("インデックスの作成に失敗: {}", e);
         }
         // 依存関係の初期化
         let s3_client = Self::init_s3_client().await;
@@ -91,7 +88,7 @@ impl TestApp {
         // テストユーザーの登録
         instance.register_test_user().await;
 
-        Ok(instance)
+        instance
     }
 
     /// S3クライアントの初期化
