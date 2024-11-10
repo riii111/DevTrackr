@@ -90,8 +90,6 @@ pub fn create_refreshed_access_token(
         sub: user_id.to_owned(),
         exp: exp.timestamp() as usize,
         iat: now.timestamp() as usize,
-        // リフレッシュで生成されたことを示すフラグを追加することも検討可能
-        // refresh: true,
     };
 
     let token = encode(
