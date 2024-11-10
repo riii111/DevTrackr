@@ -15,6 +15,7 @@ use std::sync::Arc;
     path = "/api/companies/",
     responses(
         (status = 200, description = "企業の取得に成功", body = Vec<CompanyResponse>),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     security(
@@ -41,6 +42,7 @@ pub async fn get_all_companies(
     path = "/api/companies/with-projects/",
     responses(
         (status = 200, description = "企業の取得に成功", body = CompaniesWithProjectsResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     security(
@@ -74,6 +76,7 @@ pub async fn get_all_companies_with_projects(
     responses(
         (status = 200, description = "企業の取得に成功", body = CompanyResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 404, description = "企業が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
@@ -110,6 +113,7 @@ pub async fn get_company_by_id(
     responses(
         (status = 201, description = "企業の作成に成功", body = CompanyCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     security(
@@ -140,6 +144,7 @@ pub async fn create_company(
     responses(
         (status = 204, description = "企業の更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 404, description = "企業が見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),

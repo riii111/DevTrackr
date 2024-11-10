@@ -23,6 +23,7 @@ use validator::Validate;
     ),
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = Vec<ProjectResponse>),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     security(
@@ -101,6 +102,7 @@ pub async fn get_projects(
     responses(
         (status = 200, description = "プロジェクトの取得に成功", body = ProjectResponse),
         (status = 400, description = "無効なIDです", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 404, description = "プロジェクトが見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
@@ -141,6 +143,7 @@ pub async fn get_project_by_id(
     responses(
         (status = 201, description = "プロジェクトの作成に成功", body = ProjectCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),
     security(
@@ -169,6 +172,7 @@ pub async fn create_project(
     responses(
         (status = 204, description = "プロジェクトの更新に成功"),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 404, description = "プロジェクトが見つかりません", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     ),

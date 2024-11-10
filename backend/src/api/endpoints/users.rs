@@ -43,6 +43,7 @@ pub async fn get_current_user(
     responses(
         (status = 204, description = "ユーザー情報の更新に成功"),
         (status = 400, description = "無効なリクエストデータ"),
+        (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 404, description = "ユーザーが見つかりません"),
         (status = 500, description = "内部サーバーエラー")
     ),
