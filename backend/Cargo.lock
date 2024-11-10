@@ -1292,6 +1292,7 @@ dependencies = [
  "futures",
  "image",
  "jsonwebtoken",
+ "lazy_static",
  "log",
  "mongodb",
  "openssl",
