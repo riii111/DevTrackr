@@ -17,7 +17,7 @@ use validator::Validate;
     request_body = AuthTokenLogin,
     responses(
         (status = 200, description = "ログインに成功", body = AuthResponse),
-        (status = 422, description = "認証に失敗しました", body = ErrorResponse),
+        (status = 400, description = "無効なリクエストデータor認証に失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
@@ -49,8 +49,8 @@ async fn login(
                         "error": "サーバーエラーが発生しました"
                     })))
                 }
-                // 他者の個人情報を推測できないようにするため、他のエラーは422で統一
-                _ => Ok(HttpResponse::UnprocessableEntity().json(serde_json::json!({
+                // 他者の個人情報を推測できないようにするため、他のエラーは400で統一
+                _ => Ok(HttpResponse::BadRequest().json(serde_json::json!({
                     "error": "認証に失敗しました"
                 }))),
             }
@@ -65,7 +65,6 @@ async fn login(
     responses(
         (status = 201, description = "ユーザー登録に成功", body = AuthTokenCreatedResponse),
         (status = 400, description = "無効なリクエストデータ", body = ErrorResponse),
-        (status = 409, description = "既に存在するユーザー", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
 )]
@@ -123,6 +122,7 @@ async fn logout(
     path = "/api/auth/refresh/",
     responses(
         (status = 200, description = "トークンのリフレッシュに成功", body = AuthResponse),
+        (status = 400, description = "無効なリクエスト", body = ErrorResponse),
         (status = 401, description = "認証失敗", body = ErrorResponse),
         (status = 500, description = "サーバーエラー", body = ErrorResponse)
     )
@@ -135,7 +135,7 @@ async fn refresh(
     // クッキーからリフレッシュトークンを取得
     let refresh_token = req
         .cookie("refresh_token")
-        .ok_or_else(|| AppError::BadRequest("リフレッシュトークンが見つかりません".to_string()))?
+        .ok_or_else(|| AppError::BadRequest("無効なリクエストです".to_string()))? // あえて曖昧なエラーメッセージを返す
         .value()
         .to_string();
 

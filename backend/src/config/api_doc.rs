@@ -6,6 +6,7 @@ use crate::dto::responses::companies::{
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::users::UserResponse;
 use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
+use crate::errors::app_error::FieldError;
 use crate::errors::app_error::{AppError, ErrorResponse};
 use crate::models::auth::{AuthTokenInDB, AuthTokenLogin};
 use crate::models::companies::{
@@ -71,6 +72,7 @@ use utoipa::OpenApi;
             UserCreate,
             UserUpdate,
             EngineerRole,
+            FieldError,
         )
     ),
     tags(

@@ -4,7 +4,11 @@
 .env
 データ設計メモ.md
 
+# backend
+backend/.env.test
+
 # log
 /traefik-logs/access.log
 
 .DS_Store
+
