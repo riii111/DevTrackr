@@ -19,14 +19,21 @@
 //!    - テスト実行時間の最適化
 
 use crate::common::test_db::TestDb;
-use crate::common::test_routes::api_config;
-use actix_web::{test, web, App};
+use actix_web::{dev::ServiceResponse, test, web, App};
+use actix_web_httpauth::middleware::HttpAuthentication;
 use devtrackr_api::{
-    clients::aws_s3::S3Client, config::s3, errors::app_error::json_error_handler,
-    models::users::UserCreate, repositories::auth::MongoAuthRepository,
+    api,
+    api::endpoints::auth::{login, logout, refresh, register},
+    clients::aws_s3::S3Client,
+    config::s3,
+    errors::app_error::json_error_handler,
+    middleware::{csrf, jwt, security_headers::SecurityHeaders},
+    models::users::UserCreate,
+    repositories::auth::MongoAuthRepository,
     usecases::auth::AuthUseCase,
 };
 use mongodb::bson::doc;
+use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -113,11 +120,44 @@ impl TestApp {
         Response = actix_web::dev::ServiceResponse,
         Error = actix_web::Error,
     > {
+        // JWT認証のミドルウェアを設定
+        let auth_usecase = self.auth_usecase.clone();
+        let jwt_auth = HttpAuthentication::bearer(move |req, credentials| {
+            let auth_usecase = auth_usecase.clone();
+            Box::pin(
+                async move { jwt::validator(req, credentials, web::Data::new(auth_usecase)).await },
+            )
+        });
+
         test::init_service(
             App::new()
+                // main.rsと同じ順序でセキュリティミドルウェアを適用
+                .wrap(csrf::csrf_middleware())
+                .wrap(SecurityHeaders)
                 .app_data(web::Data::new(self.auth_usecase.clone()))
                 .app_data(json_error_handler())
-                .configure(api_config),
+                .service(
+                    web::scope("/api")
+                        .service(
+                            web::scope("/auth")
+                                .service(login)
+                                .service(register)
+                                .service(refresh)
+                                .service(
+                                    // logoutのみ認証ミドルウェアを適用
+                                    web::scope("").wrap(jwt_auth.clone()).service(logout),
+                                ),
+                        )
+                        // 認証が必要なAPIルート
+                        .service(
+                            web::scope("")
+                                .wrap(jwt_auth)
+                                .service(api::routes::users_scope())
+                                .service(api::routes::projects_scope())
+                                .service(api::routes::work_logs_scope())
+                                .service(api::routes::companies_scope()),
+                        ),
+                ),
         )
         .await
     }
@@ -136,5 +176,40 @@ impl TestApp {
 
         self.auth_usecase.register(&web::Json(&new_user)).await?;
         Ok(())
+    }
+
+    /// ログインを実行し、認証済みのリクエストを作成する
+    pub async fn login_and_create_next_request(
+        &self,
+        method: test::TestRequest,
+    ) -> (ServiceResponse, test::TestRequest) {
+        let payload = json!({
+            "email": self.test_user.email,
+            "password": self.test_user.password
+        });
+
+        // ログイン実行
+        let login_response = test::call_service(
+            &self.build_test_app().await,
+            test::TestRequest::post()
+                .uri("/api/auth/login/")
+                .set_json(&payload)
+                .to_request(),
+        )
+        .await;
+
+        // レスポンスからアクセストークンを取得
+        let token = login_response
+            .response()
+            .cookies()
+            .find(|c| c.name() == "access_token")
+            .expect("アクセストークンが見つかりません")
+            .value()
+            .to_string();
+
+        // 次のリクエストにアクセストークンを挿入
+        let authenticated_request =
+            method.insert_header(("Authorization", format!("Bearer {}", token)));
+        (login_response, authenticated_request)
     }
 }
