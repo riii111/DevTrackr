@@ -105,7 +105,6 @@ async fn test_refresh_success() {
     println!("New claims: {:?}", decoded_new);
     println!("=====================\n");
 
-    // アサーションを後に行う
     assert_ne!(
         original_access_token, new_access_token,
         "アクセストークンが更新されていません"

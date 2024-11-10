@@ -55,16 +55,4 @@ async fn test_logout_unauthorized() {
     .await;
 
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
-
-    // 不正なトークンでリクエスト
-    // let res = test::call_service(
-    //     &app,
-    //     test::TestRequest::post()
-    //         .uri(LOGOUT_ENDPOINT)
-    //         .insert_header(("Authorization", "Bearer invalid_token"))
-    //         .to_request(),
-    // )
-    // .await;
-
-    // assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
