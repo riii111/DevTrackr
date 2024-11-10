@@ -1,9 +1,29 @@
+use crate::api::helper::validation::{
+    assert_validation_error, assert_validation_error_with_custom_error,
+};
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
 use rstest::rstest;
 use serde_json::json;
 
 const LOGIN_ENDPOINT: &str = "/api/auth/login/";
+
+// Cookie検証用の構造体
+struct CookieCheck<'a> {
+    name: &'a str,
+    should_be_http_only: bool,
+}
+
+const COOKIE_CHECKS: &[CookieCheck<'static>] = &[
+    CookieCheck {
+        name: "access_token",
+        should_be_http_only: false,
+    },
+    CookieCheck {
+        name: "refresh_token",
+        should_be_http_only: true,
+    },
+];
 
 #[actix_web::test]
 async fn test_login_success() {
@@ -29,30 +49,13 @@ async fn test_login_success() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    // Cookie検証用の構造体
-    struct CookieCheck<'a> {
-        name: &'a str,
-        should_be_http_only: bool,
-    }
-
-    let cookie_checks = vec![
-        CookieCheck {
-            name: "access_token",
-            should_be_http_only: false,
-        },
-        CookieCheck {
-            name: "refresh_token",
-            should_be_http_only: true,
-        },
-    ];
-
     let cookies: Vec<_> = res
         .headers()
         .get_all(actix_web::http::header::SET_COOKIE)
         .map(|v| v.to_str().unwrap())
         .collect();
 
-    for check in cookie_checks {
+    for check in COOKIE_CHECKS {
         let cookie = cookies
             .iter()
             .find(|c| c.starts_with(&format!("{}=", check.name)))
@@ -191,42 +194,15 @@ async fn test_login_invalid_input(#[case] test_case: ValidationTestCase) {
     );
 
     let body: serde_json::Value = test::read_body_json(resp).await;
-
-    // 必須フィールドが欠落している場合
-    if test_case.name.contains("欠落") {
-        let field_name = if test_case.name.contains("メールアドレス") {
-            "email"
-        } else {
-            "password"
-        };
-
-        assert_eq!(
-            body,
-            json!({
-                "error": "入力エラー",
-                "field_errors": [{
-                    "field": field_name,
-                    "message": "必須項目です"
-                }]
-            })
-        );
+    let field_name = if test_case.name.contains("メールアドレス") {
+        "email"
     } else {
-        // その他のバリデーションエラーの場合
-        let field_name = if test_case.name.contains("メールアドレス") {
-            "email"
-        } else {
-            "password"
-        };
+        "password"
+    };
 
-        assert_eq!(
-            body,
-            json!({
-                "error": "バリデーションエラー",
-                "field_errors": [{
-                    "field": field_name,
-                    "message": test_case.expected_message
-                }]
-            })
-        );
+    if test_case.name.contains("欠落") {
+        assert_validation_error(&body, field_name, "必須項目です");
+    } else {
+        assert_validation_error_with_custom_error(&body, field_name, test_case.expected_message);
     }
 }
