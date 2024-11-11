@@ -1,4 +1,3 @@
-use devtrackr_api::config::db_index;
 use devtrackr_api::models::auth::AuthTokenInDB;
 use devtrackr_api::models::projects::ProjectInDB;
 use devtrackr_api::models::users::UserInDB;
@@ -40,9 +39,11 @@ impl TestDb {
         {
             panic!("Database connection test failed: {}", e);
         }
+        // データベース名にもUUIDを付与して完全に分離する
+        let db_name = format!("devtrackr_test_{}", Uuid::now_v7());
+        let db = client.database(&db_name);
 
         let collection_prefix = format!("test_{}", Uuid::now_v7());
-        let db = client.database("devtrackr_test");
 
         let instance = Self {
             db,
@@ -172,6 +173,19 @@ impl TestDb {
             .create_index(project_id_index, None)
             .await?;
 
+        Ok(())
+    }
+
+    // データベースを明示的に削除するメソッドを追加
+    pub async fn cleanup(&self) -> mongodb::error::Result<()> {
+        for collection_name in TEST_COLLECTIONS {
+            let prefixed_name = format!("{}_{}", self.collection_prefix, collection_name);
+            let _ = self
+                .db
+                .collection::<mongodb::bson::Document>(&prefixed_name)
+                .drop(None)
+                .await;
+        }
         Ok(())
     }
 }

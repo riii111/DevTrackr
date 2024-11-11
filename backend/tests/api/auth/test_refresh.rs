@@ -11,7 +11,7 @@ const REFRESH_ENDPOINT: &str = "/api/auth/refresh/";
 /// テスト用ヘルパー関数. リフレッシュトークンを期限切れにする
 pub async fn expire_refresh_token(test_app: &TestApp, refresh_token: &str) {
     let expired_time = Utc::now() - Duration::days(1);
-    let collection = test_app.db.collection::<AuthTokenInDB>("auth_tokens");
+    let collection = test_app.db().collection::<AuthTokenInDB>("auth_tokens");
 
     collection
         .update_one(
@@ -125,7 +125,7 @@ async fn test_refresh_success() {
     );
 
     // アクセストークンが更新されていることをDBでも確認
-    let collection = test_app.db.collection::<AuthTokenInDB>("auth_tokens");
+    let collection = test_app.db().collection::<AuthTokenInDB>("auth_tokens");
     let updated_token = collection
         .find_one(doc! { "refresh_token": refresh_token }, None)
         .await

@@ -39,6 +39,7 @@ use devtrackr_api::{
     usecases::auth::AuthUseCase,
     usecases::companies::CompanyUseCase,
 };
+use mongodb::Database;
 use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -71,7 +72,7 @@ impl ApiError {
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
     pub company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
-    pub db: mongodb::Database,
+    test_db: TestDb,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
     pub access_token: Option<String>,
@@ -95,19 +96,20 @@ impl TestApp {
         };
 
         // テスト用DBのセットアップ
-        let db = TestDb::new().await;
+        let test_db = TestDb::new().await;
+        let db = test_db.db.clone();
 
         // 依存関係の初期化
         let s3_client = Self::init_s3_client().await;
 
         // ユースケースの初期化
-        let auth_usecase = di::init_auth_usecase(&db.db, s3_client.clone());
-        let company_usecase = di::init_company_usecase(&db.db);
+        let auth_usecase = di::init_auth_usecase(&db, s3_client.clone());
+        let company_usecase = di::init_company_usecase(&db);
 
         let instance = Self {
             auth_usecase,
             company_usecase,
-            db: db.db.clone(),
+            test_db,
             s3_client,
             test_user,
             access_token: None,
@@ -256,5 +258,13 @@ impl TestApp {
         } else {
             Err(ApiError { status, body })
         }
+    }
+
+    pub fn db(&self) -> &Database {
+        &self.test_db.db
+    }
+
+    pub async fn cleanup(&mut self) -> mongodb::error::Result<()> {
+        self.test_db.cleanup().await
     }
 }
