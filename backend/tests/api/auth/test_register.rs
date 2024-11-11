@@ -43,7 +43,8 @@ async fn test_register_success() {
         "username": "newuser"
     });
 
-    let res = test::call_service(
+    // 認証不要のAPIなのでtest::call_serviceを直接使用
+    let response = test::call_service(
         &app,
         test::TestRequest::post()
             .uri(REGISTER_ENDPOINT)
@@ -52,9 +53,10 @@ async fn test_register_success() {
     )
     .await;
 
-    assert_eq!(res.status(), StatusCode::CREATED);
+    assert_eq!(response.status(), StatusCode::CREATED);
 
-    let cookies: Vec<_> = res
+    // Cookieの検証
+    let cookies: Vec<_> = response
         .headers()
         .get_all(actix_web::http::header::SET_COOKIE)
         .map(|v| v.to_str().unwrap())
@@ -85,32 +87,45 @@ async fn test_register_duplicate_email() {
     let app = test_app.build_test_app().await;
 
     // 1人目のユーザーを登録
-    test_app
-        .create_new_user("duplicate@example.com", "password123", "firstuser")
-        .await
-        .expect("Failed to create first user");
+    let first_user = json!({
+        "email": "duplicate@example.com",
+        "password": "password123",
+        "username": "firstuser"
+    });
+
+    // 認証不要のAPIなのでtest::call_serviceを直接使用
+    let response = test::call_service(
+        &app,
+        test::TestRequest::post()
+            .uri(REGISTER_ENDPOINT)
+            .set_json(&first_user)
+            .to_request(),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::CREATED);
 
     // 2人目のユーザーを同じメールアドレスで登録
-    let payload = json!({
+    let second_user = json!({
         "email": "duplicate@example.com",
         "password": "different_password",
         "username": "seconduser"
     });
 
-    let res = test::call_service(
+    let response = test::call_service(
         &app,
         test::TestRequest::post()
             .uri(REGISTER_ENDPOINT)
-            .set_json(&payload)
+            .set_json(&second_user)
             .to_request(),
     )
     .await;
 
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let error_body: serde_json::Value = test::read_body_json(response).await;
 
-    let body: serde_json::Value = test::read_body_json(res).await;
     assert_eq!(
-        body,
+        error_body,
         json!({
             "error": "不正なリクエスト",
             "message": "バリデーションに失敗したか、処理中にエラーが発生しました",

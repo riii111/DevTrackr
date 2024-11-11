@@ -38,6 +38,7 @@ async fn test_login_success() {
         "password": test_app.test_user.password
     });
 
+    // 認証不要のAPIなのでtest::call_serviceを直接使用
     let res = test::call_service(
         &app,
         test::TestRequest::post()
@@ -84,6 +85,7 @@ async fn test_login_invalid_credentials() {
         "password": "wrongpassword"
     });
 
+    // 認証不要のAPIなのでtest::call_serviceを直接使用
     let res = test::call_service(
         &app,
         test::TestRequest::post()
@@ -177,6 +179,7 @@ async fn test_login_invalid_input(#[case] test_case: ValidationTestCase) {
     let test_app = TestApp::new().await;
     let app = test_app.build_test_app().await;
 
+    // 認証不要のAPIなのでtest::call_serviceを直接使用
     let resp = test::call_service(
         &app,
         test::TestRequest::post()

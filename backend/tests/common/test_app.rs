@@ -19,13 +19,18 @@
 //!    - テスト実行時間の最適化
 
 use crate::common::test_db::TestDb;
-use actix_web::{dev::ServiceResponse, test, web, App};
+use actix_http::StatusCode;
+use actix_web::{
+    test,
+    web::{self, Bytes},
+    App,
+};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use devtrackr_api::{
     api,
     api::endpoints::auth::{login, logout, refresh, register},
     clients::aws_s3::S3Client,
-    config::{db_index, di, s3},
+    config::{di, s3},
     errors::app_error::json_error_handler,
     middleware::{csrf, jwt, security_headers::SecurityHeaders},
     models::users::UserCreate,
@@ -38,6 +43,30 @@ use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
 
+/// フェッチ用APIレスポンスの構造体
+#[derive(Debug)]
+pub struct ApiResponse<T> {
+    pub status: StatusCode,
+    pub body: T,
+}
+
+/// エラーレスポンス用の構造体
+#[derive(Debug)]
+pub struct ApiError {
+    status: StatusCode,
+    body: Bytes,
+}
+
+impl ApiError {
+    pub fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    pub async fn json<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_slice(&self.body)
+    }
+}
+
 #[allow(dead_code)]
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
@@ -45,6 +74,8 @@ pub struct TestApp {
     pub db: mongodb::Database,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 impl TestApp {
@@ -66,10 +97,6 @@ impl TestApp {
         // テスト用DBのセットアップ
         let db = TestDb::new().await;
 
-        // インデックスの作成
-        if let Err(e) = db_index::create_indexes(&db.db).await {
-            panic!("インデックスの作成に失敗: {}", e);
-        }
         // 依存関係の初期化
         let s3_client = Self::init_s3_client().await;
 
@@ -83,6 +110,8 @@ impl TestApp {
             db: db.db.clone(),
             s3_client,
             test_user,
+            access_token: None,
+            refresh_token: None,
         };
 
         // テストユーザーの登録
@@ -156,35 +185,16 @@ impl TestApp {
         .await
     }
 
-    pub async fn create_new_user(
-        &self,
-        email: &str,
-        password: &str,
-        username: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let new_user = UserCreate {
-            email: email.to_string(),
-            password: password.to_string(),
-            username: username.to_string(),
-        };
-
-        self.auth_usecase.register(&web::Json(&new_user)).await?;
-        Ok(())
-    }
-
-    /// ログインを実行し、認証済みのリクエストを作成する
-    pub async fn login_and_create_next_request(
-        &self,
-        method: test::TestRequest,
-    ) -> (ServiceResponse, test::TestRequest) {
+    /// ログインしてトークンを保存
+    pub async fn login(&mut self) {
         let payload = json!({
             "email": self.test_user.email,
             "password": self.test_user.password
         });
 
-        // ログイン実行
+        let app = self.build_test_app().await;
         let login_response = test::call_service(
-            &self.build_test_app().await,
+            &app,
             test::TestRequest::post()
                 .uri("/api/auth/login/")
                 .set_json(&payload)
@@ -192,18 +202,59 @@ impl TestApp {
         )
         .await;
 
-        // レスポンスからアクセストークンを取得
-        let token = login_response
-            .response()
-            .cookies()
-            .find(|c| c.name() == "access_token")
-            .expect("アクセストークンが見つかりません")
-            .value()
-            .to_string();
+        let cookies: Vec<_> = login_response.response().cookies().collect();
 
-        // 次のリクエストにアクセストークンを挿入
-        let authenticated_request =
-            method.insert_header(("Authorization", format!("Bearer {}", token)));
-        (login_response, authenticated_request)
+        self.access_token = cookies
+            .iter()
+            .find(|c| c.name() == "access_token")
+            .map(|c| c.value().to_string());
+
+        self.refresh_token = cookies
+            .iter()
+            .find(|c| c.name() == "refresh_token")
+            .map(|c| c.value().to_string());
+
+        assert!(
+            self.access_token.is_some(),
+            "アクセストークンの取得に失敗しました"
+        );
+        assert!(
+            self.refresh_token.is_some(),
+            "リフレッシュトークンの取得に失敗しました"
+        );
+    }
+
+    /// 認証付き共通リクエストを実行
+    pub async fn request<T: serde::de::DeserializeOwned>(
+        &mut self,
+        method: test::TestRequest,
+        endpoint: &str,
+        app: &impl actix_web::dev::Service<
+            actix_http::Request,
+            Response = actix_web::dev::ServiceResponse,
+            Error = actix_web::Error,
+        >,
+    ) -> Result<ApiResponse<T>, ApiError> {
+        if self.access_token.is_none() || self.refresh_token.is_none() {
+            panic!("未ログインです。先にlogin()を実行してください。");
+        }
+
+        let request = method.uri(endpoint).insert_header((
+            "Authorization",
+            format!("Bearer {}", self.access_token.as_ref().unwrap()),
+        ));
+
+        let response = test::call_service(app, request.to_request()).await;
+
+        let status = response.status();
+        let body = test::read_body(response).await;
+
+        if status.is_success() {
+            let body: T =
+                serde_json::from_slice(&body).expect("Failed to deserialize response body");
+            Ok(ApiResponse { status, body })
+        } else {
+            Err(ApiError { status, body })
+        }
     }
 }

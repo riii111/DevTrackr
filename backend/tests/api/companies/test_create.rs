@@ -37,26 +37,37 @@ async fn test_create_company_success() {
     /*
     企業の新規作成が成功することを確認するテスト
      */
-    let test_app = TestApp::new().await;
+    let mut test_app = TestApp::new().await;
     let app = test_app.build_test_app().await;
 
-    // ログインを実行し、認証済みリクエストを作成
-    let (_, request) = test_app
-        .login_and_create_next_request(
-            test::TestRequest::post()
-                .uri(COMPANIES_ENDPOINT)
-                .set_json(&*TEST_PAYLOAD),
+    // ログイン
+    test_app.login().await;
+
+    // 企業作成APIの実行
+    let create_response = test_app
+        .request::<serde_json::Value>(
+            test::TestRequest::post().set_json(&*TEST_PAYLOAD),
+            COMPANIES_ENDPOINT,
+            &app,
         )
-        .await;
+        .await
+        .expect("Failed to create company");
 
-    let res = test::call_service(&app, request.to_request()).await;
+    let company_id = create_response.body["id"]
+        .as_str()
+        .expect("Company ID not found in response");
 
-    assert_eq!(res.status(), StatusCode::CREATED);
+    // 企業取得APIの実行
+    let get_response = test_app
+        .request::<serde_json::Value>(
+            test::TestRequest::get(),
+            &format!("{}{}", COMPANIES_ENDPOINT, company_id),
+            &app,
+        )
+        .await
+        .expect("Failed to get company");
 
-    // レスポンスボディの検証
-    let body: serde_json::Value = test::read_body_json(res).await;
-    assert!(body.get("id").is_some());
-    assert_eq!(body["company_name"], "テスト企業");
+    assert_eq!(get_response.body["company_name"], "テスト企業");
 }
 
 #[actix_web::test]
@@ -277,27 +288,34 @@ struct ValidationTestCase {
 )]
 #[actix_web::test]
 async fn test_create_company_validation(#[case] test_case: ValidationTestCase) {
-    let test_app = TestApp::new().await;
+    let mut test_app = TestApp::new().await;
     let app = test_app.build_test_app().await;
 
-    // ログインを実行し、認証済みリクエストを作成
-    let (_, request) = test_app
-        .login_and_create_next_request(
-            test::TestRequest::post()
-                .uri(COMPANIES_ENDPOINT)
-                .set_json(&test_case.payload),
+    // ログイン
+    test_app.login().await;
+
+    // リクエスト実行
+    let response = test_app
+        .request::<serde_json::Value>(
+            test::TestRequest::post().set_json(&test_case.payload),
+            COMPANIES_ENDPOINT,
+            &app,
         )
         .await;
 
-    let resp = test::call_service(&app, request.to_request()).await;
+    match response {
+        Ok(_) => panic!("Expected validation error"),
+        Err(error) => {
+            assert_eq!(error.status(), StatusCode::BAD_REQUEST);
+            let error_body: serde_json::Value =
+                error.json().await.expect("Failed to parse error response");
 
-    assert_eq!(
-        resp.status(),
-        StatusCode::BAD_REQUEST,
-        "バリデーションテスト失敗: {}",
-        test_case.name
-    );
-
-    let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_validation_error_with_custom_error(&body, test_case.field, test_case.expected_message);
+            // バリデーションエラーの検証
+            assert_validation_error_with_custom_error(
+                &error_body,
+                test_case.field,
+                test_case.expected_message,
+            );
+        }
+    }
 }
