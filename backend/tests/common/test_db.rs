@@ -1,84 +1,84 @@
-use devtrackr_api::models::auth::AuthTokenInDB;
-use devtrackr_api::models::projects::ProjectInDB;
-use devtrackr_api::models::users::UserInDB;
-use devtrackr_api::models::work_logs::WorkLogsInDB;
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::options::IndexOptions;
 use mongodb::{Client, Collection, Database};
-use std::time::Duration;
-use tokio::time::timeout;
 use uuid::Uuid;
 
 // コレクション名を定数として定義
 const TEST_COLLECTIONS: &[&str] = &["auth_tokens", "users", "companies", "projects", "work_logs"];
 
+#[derive(Clone)]
 pub struct TestDb {
     pub db: Database,
-    collection_prefix: String,
+    client: Client,
 }
 
 impl TestDb {
     pub async fn new() -> Self {
         let mongodb_url =
             std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
+        let client = Client::with_uri_str(&mongodb_url)
+            .await
+            .expect("Failed to connect to MongoDB");
 
-        let client = match timeout(Duration::from_secs(5), Client::with_uri_str(&mongodb_url)).await
-        {
-            Ok(Ok(client)) => client,
-            Ok(Err(e)) => panic!("Failed to connect to MongoDB: {}", e),
-            Err(e) => panic!("Connection timeout: {}", e),
-        };
-
-        // 接続テスト
-        if let Err(e) = timeout(
-            Duration::from_secs(5),
-            client.list_database_names(None, None),
-        )
-        .await
-        {
-            panic!("Database connection test failed: {}", e);
-        }
-        // データベース名にもUUIDを付与して完全に分離する
         let db_name = format!("devtrackr_test_{}", Uuid::now_v7());
         let db = client.database(&db_name);
 
-        let collection_prefix = format!("test_{}", Uuid::now_v7());
-
         let instance = Self {
             db,
-            collection_prefix,
+            client: client.clone(),
         };
 
-        // テスト用のインデックスをセットアップ
-        let _ = instance.setup_test_indexes().await;
-
+        // セットアップ処理を実行
+        instance
+            .setup()
+            .await
+            .expect("Failed to setup test database");
         instance
     }
 
-    // コレクション名にプレフィックスを付けて取得
-    pub fn get_collection<T>(&self, name: &str) -> Collection<T> {
-        self.db
-            .collection(&format!("{}_{}", self.collection_prefix, name))
+    async fn setup(&self) -> mongodb::error::Result<()> {
+        // 1. まずコレクションを作成
+        self.create_collections().await?;
+
+        // 2. 既存のインデックスをドロップ（必要な場合）
+        self.drop_existing_indexes().await?;
+
+        // 3. 新しいインデックスを作成
+        self.create_indexes().await?;
+
+        Ok(())
     }
 
-    // テスト用インデックスのセットアップ
-    async fn setup_test_indexes(&self) -> mongodb::error::Result<()> {
-        self.drop_existing_indexes().await?;
-        self.drop_collections().await?;
-        self.create_collections().await?;
-        self.create_indexes().await?;
+    async fn create_collections(&self) -> mongodb::error::Result<()> {
+        for collection_name in TEST_COLLECTIONS {
+            // コレクションが存在しない場合のみ作成を試みる
+            if !self.collection_exists(collection_name).await? {
+                self.db.create_collection(collection_name, None).await?;
+            }
+        }
         Ok(())
+    }
+
+    // コレクションの存在チェック用のヘルパーメソッド
+    async fn collection_exists(&self, name: &str) -> mongodb::error::Result<bool> {
+        let filter = doc! { "name": name };
+        let collections = self.db.list_collections(Some(filter), None).await?;
+        Ok(collections.count().await as i32 > 0)
     }
 
     async fn drop_existing_indexes(&self) -> mongodb::error::Result<()> {
         for collection_name in TEST_COLLECTIONS {
-            let collection = self.get_collection::<mongodb::bson::Document>(collection_name);
-            let mut indexes = collection.list_indexes(None).await?;
-            while let Some(index) = indexes.try_next().await? {
-                if let Some(name) = index.keys.get("name").and_then(|name| name.as_str()) {
-                    if name != "_id_" {
-                        collection.drop_index(name, None).await?;
+            let collection = self
+                .db
+                .collection::<mongodb::bson::Document>(collection_name);
+
+            // インデックスが存在する場合のみドロップを試みる
+            if let Ok(mut indexes) = collection.list_indexes(None).await {
+                while let Ok(Some(index)) = indexes.try_next().await {
+                    if let Some(name) = index.keys.get("name").and_then(|name| name.as_str()) {
+                        if name != "_id_" {
+                            let _ = collection.drop_index(name, None).await;
+                        }
                     }
                 }
             }
@@ -86,106 +86,48 @@ impl TestDb {
         Ok(())
     }
 
-    async fn drop_collections(&self) -> mongodb::error::Result<()> {
-        for collection_name in TEST_COLLECTIONS {
-            let collection = self.get_collection::<mongodb::bson::Document>(collection_name);
-            collection.drop(None).await?;
-        }
-        Ok(())
-    }
-
-    async fn create_collections(&self) -> mongodb::error::Result<()> {
-        for collection_name in TEST_COLLECTIONS {
-            let prefixed_name = format!("{}_{}", self.collection_prefix, collection_name);
-            self.db.create_collection(&prefixed_name, None).await?;
-        }
-        Ok(())
-    }
-
     async fn create_indexes(&self) -> mongodb::error::Result<()> {
-        // usersコレクションのインデックス
-        let users_collection = self.get_collection::<UserInDB>("users");
-        let email_index = mongodb::IndexModel::builder()
-            .keys(doc! { "email": 1 })
-            .options(
-                IndexOptions::builder()
-                    .unique(true)
-                    .name("idx_email_unique".to_string())
-                    .build(),
-            )
-            .build();
-        users_collection.create_index(email_index, None).await?;
-
-        // auth_tokensコレクションのインデックス
-        let auth_collection = self.get_collection::<AuthTokenInDB>("auth_tokens");
-        let access_token_index = mongodb::IndexModel::builder()
-            .keys(doc! { "access_token": 1 })
-            .options(
-                IndexOptions::builder()
-                    .unique(true)
-                    .name("idx_access_token_unique".to_string())
-                    .build(),
-            )
-            .build();
-        auth_collection
-            .create_index(access_token_index, None)
-            .await?;
-
-        let refresh_token_index = mongodb::IndexModel::builder()
-            .keys(doc! { "refresh_token": 1 })
-            .options(
-                IndexOptions::builder()
-                    .unique(true)
-                    .name("idx_refresh_token_unique".to_string())
-                    .build(),
-            )
-            .build();
-        auth_collection
-            .create_index(refresh_token_index, None)
-            .await?;
-
-        // projectsコレクションのインデックス
-        let projects_collection = self.get_collection::<ProjectInDB>("projects");
-        let indexes = vec![
-            mongodb::IndexModel::builder()
-                .keys(doc! { "company_id": 1 })
-                .options(
-                    IndexOptions::builder()
-                        .name("idx_company_id".to_string())
-                        .build(),
-                )
-                .build(),
-            // ... 他のプロジェクト関連のインデックス
-        ];
-        projects_collection.create_indexes(indexes, None).await?;
-
-        // work_logsコレクションのインデックス
-        let work_logs_collection = self.get_collection::<WorkLogsInDB>("work_logs");
-        let project_id_index = mongodb::IndexModel::builder()
-            .keys(doc! { "project_id": 1 })
-            .options(
-                IndexOptions::builder()
-                    .name("idx_project_id".to_string())
-                    .build(),
-            )
-            .build();
-        work_logs_collection
-            .create_index(project_id_index, None)
-            .await?;
-
-        Ok(())
+        devtrackr_api::config::db_index::create_indexes(&self.db).await
     }
 
-    // データベースを明示的に削除するメソッドを追加
+    pub fn get_collection<T>(&self, name: &str) -> Collection<T> {
+        self.db.collection(name)
+    }
+
     pub async fn cleanup(&self) -> mongodb::error::Result<()> {
+        // 1. まずコレクションをドロップ
         for collection_name in TEST_COLLECTIONS {
-            let prefixed_name = format!("{}_{}", self.collection_prefix, collection_name);
-            let _ = self
+            if let Err(e) = self
                 .db
-                .collection::<mongodb::bson::Document>(&prefixed_name)
+                .collection::<mongodb::bson::Document>(collection_name)
                 .drop(None)
-                .await;
+                .await
+            {
+                eprintln!("Failed to drop collection {}: {}", collection_name, e);
+            }
         }
-        Ok(())
+
+        // 2. データベース自体をドロップ
+        let db_name = self.db.name().to_string();
+        if let Err(e) = self.db.drop(None).await {
+            eprintln!("Failed to drop database {}: {}", db_name, e);
+            return Err(e);
+        }
+
+        // 3. データベースが実際に削除されたことを確認
+        let mut retries = 3;
+        while retries > 0 {
+            let dbs = self.client.list_database_names(None, None).await?;
+            if !dbs.contains(&db_name) {
+                return Ok(());
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+            retries -= 1;
+        }
+
+        Err(mongodb::error::Error::custom(format!(
+            "Failed to confirm deletion of database {}",
+            db_name
+        )))
     }
 }
