@@ -82,11 +82,6 @@ impl TestDb {
     async fn create_indexes(&self) -> mongodb::error::Result<()> {
         devtrackr_api::config::db_index::create_indexes(&self.db).await
     }
-
-    // コレクション取得メソッド
-    pub fn get_collection<T>(&self, name: &str) -> Collection<T> {
-        self.db.collection(name)
-    }
 }
 
 impl Drop for TestDb {
