@@ -30,46 +30,46 @@ async fn test_login_success() {
     /*
     ログインが成功することを確認するテスト
      */
-    let test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_test(|context| async move {
+        let payload = json!({
+            "email": context.app.test_user.email,
+            "password": context.app.test_user.password
+        });
 
-    let payload = json!({
-        "email": test_app.test_user.email,
-        "password": test_app.test_user.password
-    });
+        // 認証不要のAPIなのでtest::call_serviceを直接使用
+        let response = test::call_service(
+            context.service(),
+            test::TestRequest::post()
+                .uri(LOGIN_ENDPOINT)
+                .set_json(&payload)
+                .to_request(),
+        )
+        .await;
 
-    // 認証不要のAPIなのでtest::call_serviceを直接使用
-    let res = test::call_service(
-        &app,
-        test::TestRequest::post()
-            .uri(LOGIN_ENDPOINT)
-            .set_json(&payload)
-            .to_request(),
-    )
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let cookies: Vec<_> = response
+            .headers()
+            .get_all(actix_web::http::header::SET_COOKIE)
+            .map(|v| v.to_str().unwrap())
+            .collect();
+
+        for check in COOKIE_CHECKS {
+            let cookie = cookies
+                .iter()
+                .find(|c| c.starts_with(&format!("{}=", check.name)))
+                .unwrap_or_else(|| panic!("{} cookie not found", check.name));
+
+            assert!(cookie.contains("Path=/"));
+            assert_eq!(
+                cookie.contains("HttpOnly"),
+                check.should_be_http_only,
+                "Unexpected HttpOnly flag for {} cookie",
+                check.name
+            );
+        }
+    })
     .await;
-
-    assert_eq!(res.status(), StatusCode::OK);
-
-    let cookies: Vec<_> = res
-        .headers()
-        .get_all(actix_web::http::header::SET_COOKIE)
-        .map(|v| v.to_str().unwrap())
-        .collect();
-
-    for check in COOKIE_CHECKS {
-        let cookie = cookies
-            .iter()
-            .find(|c| c.starts_with(&format!("{}=", check.name)))
-            .unwrap_or_else(|| panic!("{} cookie not found", check.name));
-
-        assert!(cookie.contains("Path=/"));
-        assert_eq!(
-            cookie.contains("HttpOnly"),
-            check.should_be_http_only,
-            "Unexpected HttpOnly flag for {} cookie",
-            check.name
-        );
-    }
 }
 
 #[actix_web::test]
@@ -77,28 +77,27 @@ async fn test_login_invalid_credentials() {
     /*
     無効なメールアドレスかパスワードの場合は400エラーが返ることを確認するテスト
      */
-    let test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_test(|context| async move {
+        let payload = json!({
+            "email": "test@example.com",
+            "password": "wrongpassword"
+        });
+        // 認証不要のAPIなのでtest::call_serviceを直接使用
+        let res = test::call_service(
+            context.service(),
+            test::TestRequest::post()
+                .uri(LOGIN_ENDPOINT)
+                .set_json(&payload)
+                .to_request(),
+        )
+        .await;
 
-    let payload = json!({
-        "email": "test@example.com",
-        "password": "wrongpassword"
-    });
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
-    // 認証不要のAPIなのでtest::call_serviceを直接使用
-    let res = test::call_service(
-        &app,
-        test::TestRequest::post()
-            .uri(LOGIN_ENDPOINT)
-            .set_json(&payload)
-            .to_request(),
-    )
+        let body: serde_json::Value = test::read_body_json(res).await;
+        assert_eq!(body, json!({"error": "認証に失敗しました"}));
+    })
     .await;
-
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
-
-    let body: serde_json::Value = test::read_body_json(res).await;
-    assert_eq!(body, json!({"error": "認証に失敗しました"}));
 }
 
 // バリデーションテスト用の構造体
@@ -176,36 +175,40 @@ async fn test_login_invalid_input(#[case] test_case: ValidationTestCase) {
     /*
     パラメータに不備がある場合、バリデーションエラーが発生することを確認するテスト
     */
-    let test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_test(|context| async move {
+        // 認証不要のAPIなのでtest::call_serviceを直接使用
+        let resp = test::call_service(
+            context.service(),
+            test::TestRequest::post()
+                .uri(LOGIN_ENDPOINT)
+                .set_json(&test_case.payload)
+                .to_request(),
+        )
+        .await;
 
-    // 認証不要のAPIなのでtest::call_serviceを直接使用
-    let resp = test::call_service(
-        &app,
-        test::TestRequest::post()
-            .uri(LOGIN_ENDPOINT)
-            .set_json(&test_case.payload)
-            .to_request(),
-    )
+        assert_eq!(
+            resp.status(),
+            StatusCode::BAD_REQUEST,
+            "バリデーションテスト失敗: {}",
+            test_case.name
+        );
+
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        let field_name = if test_case.name.contains("メールアドレス") {
+            "email"
+        } else {
+            "password"
+        };
+
+        if test_case.name.contains("欠落") {
+            assert_validation_error(&body, field_name, "必須項目です");
+        } else {
+            assert_validation_error_with_custom_error(
+                &body,
+                field_name,
+                test_case.expected_message,
+            );
+        }
+    })
     .await;
-
-    assert_eq!(
-        resp.status(),
-        StatusCode::BAD_REQUEST,
-        "バリデーションテスト失敗: {}",
-        test_case.name
-    );
-
-    let body: serde_json::Value = test::read_body_json(resp).await;
-    let field_name = if test_case.name.contains("メールアドレス") {
-        "email"
-    } else {
-        "password"
-    };
-
-    if test_case.name.contains("欠落") {
-        assert_validation_error(&body, field_name, "必須項目です");
-    } else {
-        assert_validation_error_with_custom_error(&body, field_name, test_case.expected_message);
-    }
 }

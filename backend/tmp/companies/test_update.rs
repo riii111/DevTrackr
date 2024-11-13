@@ -1,6 +1,7 @@
 use crate::api::helper::validation::assert_validation_error_with_custom_error;
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
+use bson::oid::ObjectId;
 use lazy_static::lazy_static;
 use rstest::rstest;
 use serde_json::json;
@@ -135,7 +136,9 @@ async fn test_update_company_not_found() {
     let app = test_app.build_test_app().await;
 
     test_app.login().await;
-    let non_existent_id = "507f1f77bcf86cd799439011";
+
+    // 存在しない企業ID
+    let non_existent_id = ObjectId::new();
 
     let response = test_app
         .request::<serde_json::Value>(

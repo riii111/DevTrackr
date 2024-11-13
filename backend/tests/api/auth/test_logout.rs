@@ -8,39 +8,19 @@ async fn test_logout_success() {
     /*
     ログアウトが成功することを確認するテスト
      */
-    let mut test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_authenticated_test(|context| async move {
+        // ログアウトを実行
+        let res = context
+            .authenticated_request(test::TestRequest::post(), LOGOUT_ENDPOINT)
+            .await;
 
-    // ログインを実行
-    test_app.login().await;
+        // レスポンスの検証
+        assert_eq!(res.status(), StatusCode::OK);
 
-    // ログアウトを実行
-    let res = test::call_service(
-        &app,
-        test::TestRequest::post()
-            .uri(LOGOUT_ENDPOINT)
-            .insert_header((
-                "Authorization",
-                format!("Bearer {}", test_app.access_token.as_ref().unwrap()),
-            ))
-            .to_request(),
-    )
+        // Cookieの検証
+        context.assert_auth_cookies_cleared(&res);
+    })
     .await;
-
-    // レスポンスの検証
-    assert_eq!(res.status(), StatusCode::OK);
-
-    // Cookieの検証
-    let cookies_after: Vec<_> = res.response().cookies().collect();
-    for cookie in cookies_after {
-        if cookie.name() == "access_token" || cookie.name() == "refresh_token" {
-            assert!(cookie.value().is_empty());
-            assert_eq!(
-                cookie.max_age(),
-                Some(actix_web::cookie::time::Duration::ZERO)
-            );
-        }
-    }
 }
 
 #[actix_web::test]
@@ -48,15 +28,15 @@ async fn test_logout_unauthorized() {
     /*
     認証トークンなしでリクエストした場合は401エラーが返ることを確認するテスト
      */
-    let test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_test(|context| async move {
+        // 認証トークンなしでリクエスト
+        let response = test::call_service(
+            context.service(),
+            test::TestRequest::post().uri(LOGOUT_ENDPOINT).to_request(),
+        )
+        .await;
 
-    // 認証トークンなしでリクエスト
-    let res = test::call_service(
-        &app,
-        test::TestRequest::post().uri(LOGOUT_ENDPOINT).to_request(),
-    )
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
     .await;
-
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }

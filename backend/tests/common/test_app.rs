@@ -18,61 +18,37 @@
 //!    - 必要な機能のみを含む最小構成
 //!    - テスト実行時間の最適化
 
+use crate::common::test_context::TestContext;
 use crate::common::test_db::TestDb;
-use actix_http::StatusCode;
 use actix_web::{
     test,
-    web::{self, Bytes},
+    web::{self},
     App,
 };
 use actix_web_httpauth::middleware::HttpAuthentication;
 use devtrackr_api::{
-    api,
-    api::endpoints::auth::{login, logout, refresh, register},
-    clients::aws_s3::S3Client,
-    config::{di, s3},
+    api::{
+        self,
+        endpoints::auth::{login, logout, refresh, register},
+    },
+    clients::{self, aws_s3::S3Client},
+    config::{self, di},
     errors::app_error::json_error_handler,
     middleware::{csrf, jwt, security_headers::SecurityHeaders},
     models::users::UserCreate,
-    repositories::auth::MongoAuthRepository,
-    repositories::companies::MongoCompanyRepository,
-    usecases::auth::AuthUseCase,
-    usecases::companies::CompanyUseCase,
+    repositories::{auth::MongoAuthRepository, companies::MongoCompanyRepository},
+    usecases::{auth::AuthUseCase, companies::CompanyUseCase},
 };
-use mongodb::Database;
 use serde_json::json;
+use std::future::Future;
 use std::sync::Arc;
 use uuid::Uuid;
-
-/// フェッチ用APIレスポンスの構造体
-#[derive(Debug)]
-pub struct ApiResponse<T> {
-    pub status: StatusCode,
-    pub body: T,
-}
-
-/// エラーレスポンス用の構造体
-#[derive(Debug)]
-pub struct ApiError {
-    status: StatusCode,
-    body: Bytes,
-}
-
-impl ApiError {
-    pub fn status(&self) -> StatusCode {
-        self.status
-    }
-
-    pub async fn json<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
-        serde_json::from_slice(&self.body)
-    }
-}
 
 #[allow(dead_code)]
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
     pub company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
-    test_db: TestDb,
+    pub test_db: TestDb,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
     pub access_token: Option<String>,
@@ -80,10 +56,9 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn new() -> Self {
-        // 環境変数のセットアップを行う
+    pub async fn new() -> Result<Self, anyhow::Error> {
+        // 環境変数のセットアップ
         crate::setup().await;
-
         // MinIOの環境変数を明示的に設定
         std::env::set_var("MINIO_ENDPOINT", "http://localhost:9000");
 
@@ -96,11 +71,23 @@ impl TestApp {
         };
 
         // テスト用DBのセットアップ
-        let test_db = TestDb::new().await;
+        let test_db = TestDb::new().await?;
         let db = test_db.db.clone();
 
-        // 依存関係の初期化
-        let s3_client = Self::init_s3_client().await;
+        // S3Clientの初期化
+        let s3_config = match config::s3::init_s3_config().await {
+            Ok(client) => {
+                log::info!("Successfully initialized S3 (MinIO) client");
+                client
+            }
+            Err(e) => {
+                log::error!("S3 (MinIO) クライアントの初期化に失敗しました: {}", e);
+                return Err(anyhow::anyhow!(
+                    "S3 (MinIO) クライアントの初期化に失敗しました"
+                ));
+            }
+        };
+        let s3_client = Arc::new(clients::aws_s3::S3Client::new(s3_config.clone()));
 
         // ユースケースの初期化
         let auth_usecase = di::init_auth_usecase(&db, s3_client.clone());
@@ -119,15 +106,7 @@ impl TestApp {
         // テストユーザーの登録
         instance.register_test_user().await;
 
-        instance
-    }
-
-    /// S3クライアントの初期化
-    async fn init_s3_client() -> Arc<S3Client> {
-        let s3_config = s3::init_s3_config()
-            .await
-            .expect("Failed to initialize S3 config");
-        Arc::new(S3Client::new(s3_config))
+        Ok(instance)
     }
 
     /// テストユーザーの登録
@@ -187,6 +166,26 @@ impl TestApp {
         .await
     }
 
+    /// テストの実行
+    pub async fn run_test<F, Fut>(f: F)
+    where
+        F: FnOnce(TestContext) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        let context = TestContext::new().await;
+        f(context).await;
+    }
+
+    /// 認証付きテストの実行
+    pub async fn run_authenticated_test<F, Fut>(f: F)
+    where
+        F: FnOnce(TestContext) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        let context = TestContext::with_auth().await;
+        f(context).await;
+    }
+
     /// ログインしてトークンを保存
     pub async fn login(&mut self) {
         let payload = json!({
@@ -224,47 +223,5 @@ impl TestApp {
             self.refresh_token.is_some(),
             "リフレッシュトークンの取得に失敗しました"
         );
-    }
-
-    /// 認証付き共通リクエストを実行
-    pub async fn request<T: serde::de::DeserializeOwned>(
-        &mut self,
-        method: test::TestRequest,
-        endpoint: &str,
-        app: &impl actix_web::dev::Service<
-            actix_http::Request,
-            Response = actix_web::dev::ServiceResponse,
-            Error = actix_web::Error,
-        >,
-    ) -> Result<ApiResponse<T>, ApiError> {
-        if self.access_token.is_none() || self.refresh_token.is_none() {
-            panic!("未ログインです。先にlogin()を実行してください。");
-        }
-
-        let request = method.uri(endpoint).insert_header((
-            "Authorization",
-            format!("Bearer {}", self.access_token.as_ref().unwrap()),
-        ));
-
-        let response = test::call_service(app, request.to_request()).await;
-
-        let status = response.status();
-        let body = test::read_body(response).await;
-
-        if status.is_success() {
-            let body: T =
-                serde_json::from_slice(&body).expect("Failed to deserialize response body");
-            Ok(ApiResponse { status, body })
-        } else {
-            Err(ApiError { status, body })
-        }
-    }
-
-    pub fn db(&self) -> &Database {
-        &self.test_db.db
-    }
-
-    pub async fn cleanup(&mut self) -> mongodb::error::Result<()> {
-        self.test_db.cleanup().await
     }
 }
