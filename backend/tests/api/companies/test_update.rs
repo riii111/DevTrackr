@@ -1,5 +1,6 @@
 use crate::api::helper::validation::assert_validation_error_with_custom_error;
 use crate::common::test_app::TestApp;
+use crate::common::test_context::TestContext;
 use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
 use lazy_static::lazy_static;
@@ -31,12 +32,18 @@ lazy_static! {
     });
 }
 
-pub async fn create_test_company(test_app: &mut TestApp) -> String {
-    let app = test_app.build_test_app().await;
+const COMPANIES_ENDPOINT: &str = "/api/companies/";
 
-    let response = test_app
-        .request::<serde_json::Value>(
-            test::TestRequest::post().set_json(json!({
+pub async fn create_test_company(context: &TestContext) -> String {
+    let response = test::call_service(
+        context.service(),
+        test::TestRequest::post()
+            .uri(COMPANIES_ENDPOINT)
+            .insert_header((
+                "Authorization",
+                format!("Bearer {}", context.app.access_token.as_ref().unwrap()),
+            ))
+            .set_json(json!({
                 "company_name": "テスト企業",
                 "establishment_year": 2020,
                 "location": "東京都渋谷区",
@@ -57,14 +64,16 @@ pub async fn create_test_company(test_app: &mut TestApp) -> String {
                 "status": "Cancelled",
                 "affiliation_start_date": "2020-08-05",
                 "affiliation_end_date": "2021-08-04"
-            })),
-            "/api/companies/",
-            &app,
-        )
-        .await
-        .expect("Failed to create company");
+            }))
+            .to_request(),
+    )
+    .await;
 
-    response.body["id"].as_str().unwrap().to_string()
+    let body: serde_json::Value = test::read_body_json(response).await;
+    body["id"]
+        .as_str()
+        .expect("Company ID not found in response")
+        .to_string()
 }
 
 #[actix_web::test]
@@ -72,38 +81,34 @@ async fn test_update_company_success() {
     /*
     企業の更新が成功することを確認するテスト
      */
-    let mut test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_authenticated_test(|context| async move {
+        // テスト用の企業を作成
+        let company_id = create_test_company(&context).await;
 
-    // ログイン
-    test_app.login().await;
+        // 企業情報の更新
+        let update_response = context
+            .authenticated_request(
+                test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
+                &format!("{}{}/", COMPANIES_ENDPOINT, company_id),
+            )
+            .await;
 
-    // テスト用の企業を作成
-    let company_id = create_test_company(&mut test_app).await;
+        assert_eq!(update_response.status(), StatusCode::NO_CONTENT);
 
-    // 企業情報の更新
-    let update_response = test_app
-        .request::<serde_json::Value>(
-            test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
-            &format!("/api/companies/{}/", company_id),
-            &app,
-        )
-        .await
-        .expect("Failed to update company");
+        // 更新後の企業情報を取得して検証
+        let get_response = context
+            .authenticated_request(
+                test::TestRequest::get(),
+                &format!("{}{}/", COMPANIES_ENDPOINT, company_id),
+            )
+            .await;
 
-    assert_eq!(update_response.status, StatusCode::OK);
-
-    // 更新後の企業情報を取得して検証
-    let get_response = test_app
-        .request::<serde_json::Value>(
-            test::TestRequest::get(),
-            &format!("/api/companies/{}/", company_id),
-            &app,
-        )
-        .await
-        .expect("Failed to get updated company");
-
-    assert_eq!(get_response.body["company_name"], "更新後企業名");
+        // 正常に取得できることを確認
+        assert_eq!(get_response.status(), StatusCode::OK);
+        let get_body: serde_json::Value = test::read_body_json(get_response).await;
+        assert_eq!(get_body["company_name"], "更新後企業名");
+    })
+    .await;
 }
 
 #[actix_web::test]
@@ -111,20 +116,19 @@ async fn test_update_company_unauthorized() {
     /*
     認証なしでアクセスした場合は401エラーが返ることを確認するテスト
      */
-    let test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_test(|context| async move {
+        let response = test::call_service(
+            context.service(),
+            test::TestRequest::put()
+                .uri("/api/companies/123/")
+                .set_json(&*UPDATE_PAYLOAD)
+                .to_request(),
+        )
+        .await;
 
-    // 認証なしでリクエスト
-    let res = test::call_service(
-        &app,
-        test::TestRequest::put()
-            .uri("/api/companies/123/")
-            .set_json(&*UPDATE_PAYLOAD)
-            .to_request(),
-    )
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
     .await;
-
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[actix_web::test]
@@ -132,39 +136,28 @@ async fn test_update_company_not_found() {
     /*
     存在しない企業の更新を試みた場合、404エラーが返ることを確認するテスト
      */
-    let mut test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_authenticated_test(|context| async move {
+        let non_existent_id = ObjectId::new();
 
-    test_app.login().await;
+        let response = context
+            .authenticated_request(
+                test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
+                &format!("{}{}/", COMPANIES_ENDPOINT, non_existent_id),
+            )
+            .await;
 
-    // 存在しない企業ID
-    let non_existent_id = ObjectId::new();
-
-    let response = test_app
-        .request::<serde_json::Value>(
-            test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
-            &format!("/api/companies/{}/", non_existent_id),
-            &app,
-        )
-        .await;
-
-    match response {
-        Ok(_) => panic!("Expected not found error"),
-        Err(error) => {
-            assert_eq!(error.status(), StatusCode::NOT_FOUND);
-            let error_body: serde_json::Value =
-                error.json().await.expect("Failed to parse error response");
-
-            assert_eq!(
-                error_body,
-                json!({
-                    "error": "リソースが見つかりません",
-                    "message": "更新対象の企業が見つかりません",
-                    "code": "NOT_FOUND"
-                })
-            );
-        }
-    }
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let error_body: serde_json::Value = test::read_body_json(response).await;
+        assert_eq!(
+            error_body,
+            json!({
+                "error": "リソースが見つかりません",
+                "message": "更新対象の企業が見つかりません",
+                "code": "NOT_FOUND"
+            })
+        );
+    })
+    .await;
 }
 
 // バリデーションテスト用の構造体
@@ -191,7 +184,7 @@ struct ValidationTestCase {
             "affiliation_start_date": "2023-04-01"
         }),
         field: "company_name",
-        expected_message: "企業名は1文字以上である必要があります"
+        expected_message: "企業名は2〜100文字である必要があります"
     }
 )]
 #[case::end_date_before_start_date(
@@ -214,36 +207,26 @@ struct ValidationTestCase {
 )]
 #[actix_web::test]
 async fn test_update_company_validation(#[case] test_case: ValidationTestCase) {
-    let mut test_app = TestApp::new().await;
-    let app = test_app.build_test_app().await;
+    TestApp::run_authenticated_test(|context| async move {
+        // テスト用の企業を作成
+        let company_id = create_test_company(&context).await;
 
-    // ログイン
-    test_app.login().await;
+        // バリデーションエラーのテスト
+        let response = context
+            .authenticated_request(
+                test::TestRequest::put().set_json(&test_case.payload),
+                &format!("{}{}/", COMPANIES_ENDPOINT, company_id),
+            )
+            .await;
 
-    // テスト用の企業を作成
-    let company_id = create_test_company(&mut test_app).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let error_body: serde_json::Value = test::read_body_json(response).await;
 
-    // バリデーションエラーのテスト
-    let response = test_app
-        .request::<serde_json::Value>(
-            test::TestRequest::put().set_json(&test_case.payload),
-            &format!("/api/companies/{}/", company_id),
-            &app,
-        )
-        .await;
-
-    match response {
-        Ok(_) => panic!("Expected validation error"),
-        Err(error) => {
-            assert_eq!(error.status(), StatusCode::BAD_REQUEST);
-            let error_body: serde_json::Value =
-                error.json().await.expect("Failed to parse error response");
-
-            assert_validation_error_with_custom_error(
-                &error_body,
-                test_case.field,
-                test_case.expected_message,
-            );
-        }
-    }
+        assert_validation_error_with_custom_error(
+            &error_body,
+            test_case.field,
+            test_case.expected_message,
+        );
+    })
+    .await;
 }

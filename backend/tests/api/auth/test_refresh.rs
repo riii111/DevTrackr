@@ -11,7 +11,10 @@ const REFRESH_ENDPOINT: &str = "/api/auth/refresh/";
 /// テスト用ヘルパー関数. リフレッシュトークンを期限切れにする
 pub async fn expire_refresh_token(test_app: &TestApp, refresh_token: &str) {
     let expired_time = Utc::now() - Duration::days(1);
-    let collection = test_app.db().collection::<AuthTokenInDB>("auth_tokens");
+    let collection = test_app
+        .test_db
+        .db
+        .collection::<AuthTokenInDB>("auth_tokens");
 
     collection
         .update_one(
@@ -22,8 +25,6 @@ pub async fn expire_refresh_token(test_app: &TestApp, refresh_token: &str) {
         .await
         .expect("リフレッシュトークンの期限切れ設定に失敗しました");
 }
-
-// TODO: loginなどと同じ記述にする（Cookieの構造体を定義して検証）
 
 #[actix_web::test]
 async fn test_refresh_success() {
@@ -41,46 +42,58 @@ async fn test_refresh_success() {
         // 少し待機して時間差を作る
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
 
+        // リフレッシュトークンのCookieを適切に設定
+        let refresh_cookie = actix_web::cookie::Cookie::build("refresh_token", &refresh_token)
+            .path("/")
+            .http_only(true)
+            .secure(false)
+            .finish();
+
+        // リクエスト送信前にCookieの内容を確認
+        println!("Setting refresh cookie: {:?}", refresh_cookie);
+
         // リフレッシュを実行
         let res = test::call_service(
             context.service(),
             test::TestRequest::post()
                 .uri(REFRESH_ENDPOINT)
-                .cookie(
-                    actix_web::cookie::Cookie::build("refresh_token", &refresh_token)
-                        .path("/")
-                        .finish(),
-                )
+                .cookie(refresh_cookie)
                 .to_request(),
         )
         .await;
 
+        // レスポンス受信後にステータスとヘッダーを確認
+        println!("Response status: {}", res.status());
+        println!("Response headers: {:?}", res.headers());
+
         assert_eq!(res.status(), StatusCode::OK);
 
-        // Cookieの検証
+        // アクセストークンのCookieのみを検証
         let cookies: Vec<_> = res
             .headers()
             .get_all(actix_web::http::header::SET_COOKIE)
             .map(|v| v.to_str().unwrap())
             .collect();
 
-        // アクセストークンのCookieが存在することを確認
-        let new_access_token_cookie = cookies
+        // アクセストークンのCookieを検索
+        let access_token_cookie = cookies
             .iter()
             .find(|c| c.starts_with("access_token="))
             .expect("アクセストークンのCookieが見つかりません");
 
+        // アクセストークンのCookieの属性を検証
+        assert!(access_token_cookie.contains("Path=/"));
+        assert!(
+            !access_token_cookie.contains("HttpOnly"),
+            "アクセストークンのCookieはHttpOnlyであるべきではありません"
+        );
+
         // アクセストークンの値を抽出
-        let new_access_token = new_access_token_cookie
+        let new_access_token = access_token_cookie
             .split(';')
             .next()
             .unwrap()
             .trim_start_matches("access_token=");
-
-        // デバッグ出力を先に行う
-        println!("\n=== Token Comparison ===");
-        println!("Initial token: {}", initial_token);
-        println!("New token: {}", new_access_token);
 
         // トークンをデコードして中身を確認
         let jwt_secret = std::env::var("JWT_SECRET")
@@ -91,24 +104,17 @@ async fn test_refresh_success() {
         let decoded_new =
             jwt::verify_token(new_access_token, &jwt_secret).expect("Failed to decode new token");
 
-        println!("\n=== Decoded Claims ===");
-        println!("Original claims: {:?}", decoded_original);
-        println!("New claims: {:?}", decoded_new);
-        println!("=====================\n");
-
         assert_ne!(
             initial_token, new_access_token,
             "アクセストークンが更新されていません"
         );
 
-        assert!(new_access_token_cookie.contains("Path=/"));
-        assert!(
-            !new_access_token_cookie.contains("HttpOnly"),
-            "アクセストークンのCookieはHttpOnlyであるべきではありません"
-        );
-
         // アクセストークンが更新されていることをDBでも確認
-        let collection = context.app.db().collection::<AuthTokenInDB>("auth_tokens");
+        let collection = context
+            .app
+            .test_db
+            .db
+            .collection::<AuthTokenInDB>("auth_tokens");
         let updated_token = collection
             .find_one(doc! { "refresh_token": refresh_token }, None)
             .await
@@ -198,7 +204,6 @@ async fn test_refresh_with_expired_token() {
         // ログインを実行
         context.app.login().await;
 
-        let access_token = context.app.access_token.clone().unwrap();
         let refresh_token = context.app.refresh_token.clone().unwrap();
 
         // トークンを期限切れにする
@@ -208,11 +213,6 @@ async fn test_refresh_with_expired_token() {
             context.service(),
             test::TestRequest::post()
                 .uri(REFRESH_ENDPOINT)
-                .cookie(
-                    actix_web::cookie::Cookie::build("access_token", &access_token)
-                        .path("/")
-                        .finish(),
-                )
                 .cookie(
                     actix_web::cookie::Cookie::build("refresh_token", &refresh_token)
                         .path("/")
