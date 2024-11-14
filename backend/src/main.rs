@@ -1,10 +1,11 @@
+use crate::api::common::{health_check, index, not_found};
 use crate::config::api_doc::ApiDoc;
 use crate::config::di;
 use crate::errors::app_error::json_error_handler;
 use crate::utils::test_s3_upload;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
-use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db_index;
 use dotenvy::dotenv;
@@ -209,17 +210,4 @@ async fn main() -> Result<()> {
     ))?
     .run()
     .await
-}
-
-async fn not_found(_req: HttpRequest) -> impl Responder {
-    HttpResponse::NotFound().json("リソースが見つかりません")
-}
-
-pub async fn index(_req: HttpRequest) -> impl Responder {
-    HttpResponse::Ok().body("Hello, Actix Web!")
-}
-
-async fn health_check(_req: HttpRequest) -> impl Responder {
-    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
-    HttpResponse::Ok().body("Healthy")
 }

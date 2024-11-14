@@ -18,21 +18,27 @@ macro_rules! impl_work_logs_validation {
                 let now = BsonDateTime::now();
 
                 if self.start_time > now {
-                    return Err(ValidationError::new(
-                        "開始時間は現在時刻より前である必要があります",
-                    ));
+                    return Err(ValidationError {
+                        code: "time_validation".into(),
+                        message: Some("開始時間は現在時刻より前である必要があります".into()),
+                        params: Default::default(),
+                    });
                 }
 
                 if let Some(end_time) = self.end_time {
                     if end_time <= self.start_time {
-                        return Err(ValidationError::new(
-                            "終了時間は開始時間より後である必要があります",
-                        ));
+                        return Err(ValidationError {
+                            code: "time_validation".into(),
+                            message: Some("終了時間は開始時間より後である必要があります".into()),
+                            params: Default::default(),
+                        });
                     }
                     if end_time > now {
-                        return Err(ValidationError::new(
-                            "終了時間は現在時刻より前である必要があります",
-                        ));
+                        return Err(ValidationError {
+                            code: "time_validation".into(),
+                            message: Some("終了時間は現在時刻より前である必要があります".into()),
+                            params: Default::default(),
+                        });
                     }
                 }
 

@@ -23,15 +23,21 @@ macro_rules! impl_company_validation {
                     .date_naive();
 
                 if self.affiliation_start_date > today {
-                    return Err(ValidationError::new(
-                        "契約開始日は現在日付より前である必要があります",
-                    ));
+                    return Err(ValidationError {
+                        code: "date_validation".into(),
+                        message: Some("契約開始日は現在日付より前である必要があります".into()),
+                        params: Default::default(),
+                    });
                 }
                 if let Some(end_date) = self.affiliation_end_date {
                     if end_date <= self.affiliation_start_date {
-                        return Err(ValidationError::new(
-                            "契約終了日は契約開始日より後である必要があります",
-                        ));
+                        return Err(ValidationError {
+                            code: "date_validation".into(),
+                            message: Some(
+                                "契約終了日は契約開始日より後である必要があります".into(),
+                            ),
+                            params: Default::default(),
+                        });
                     }
                 }
                 Ok(())

@@ -25,10 +25,8 @@ impl<R: CompanyRepository> CompanyUseCase<R> {
         Ok(self.repository.find_all_with_projects().await?)
     }
 
-    pub async fn get_company_by_id(&self, id: &str) -> Result<Option<CompanyInDB>, AppError> {
-        let object_id = ObjectId::parse_str(id)
-            .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
-        Ok(self.repository.find_by_id(&object_id).await?)
+    pub async fn get_company_by_id(&self, id: &ObjectId) -> Result<Option<CompanyInDB>, AppError> {
+        Ok(self.repository.find_by_id(id).await?)
     }
 
     pub async fn create_company(&self, company: CompanyCreate) -> Result<ObjectId, AppError> {

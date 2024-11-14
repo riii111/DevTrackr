@@ -18,38 +18,49 @@
 //!    - 必要な機能のみを含む最小構成
 //!    - テスト実行時間の最適化
 
+use crate::common::test_context::TestContext;
 use crate::common::test_db::TestDb;
-use actix_web::{dev::ServiceResponse, test, web, App};
+use actix_web::{
+    test,
+    web::{self},
+    App,
+};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use devtrackr_api::{
-    api,
-    api::endpoints::auth::{login, logout, refresh, register},
-    clients::aws_s3::S3Client,
-    config::s3,
+    api::{
+        self,
+        common::not_found,
+        endpoints::auth::{login, logout, refresh, register},
+    },
+    clients::{self, aws_s3::S3Client},
+    config::{self, di},
     errors::app_error::json_error_handler,
     middleware::{csrf, jwt, security_headers::SecurityHeaders},
     models::users::UserCreate,
-    repositories::auth::MongoAuthRepository,
-    usecases::auth::AuthUseCase,
+    repositories::{auth::MongoAuthRepository, companies::MongoCompanyRepository},
+    usecases::{auth::AuthUseCase, companies::CompanyUseCase},
 };
-use mongodb::bson::doc;
 use serde_json::json;
+use std::future::Future;
 use std::sync::Arc;
 use uuid::Uuid;
 
+#[derive(Clone)]
 #[allow(dead_code)]
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
-    pub db: mongodb::Database,
+    pub company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
+    pub test_db: TestDb,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 impl TestApp {
-    pub async fn new() -> Self {
-        // 環境変数のセットアップを行う
+    pub async fn new() -> Result<Self, anyhow::Error> {
+        // 環境変数のセットアップ
         crate::setup().await;
-
         // MinIOの環境変数を明示的に設定
         std::env::set_var("MINIO_ENDPOINT", "http://localhost:9000");
 
@@ -62,55 +73,50 @@ impl TestApp {
         };
 
         // テスト用DBのセットアップ
-        let db = TestDb::new().await;
+        let test_db = TestDb::new().await?;
+        let db = test_db.db.clone();
 
-        // コレクションのセットアップ
-        let users_collection = db.db.collection::<mongodb::bson::Document>("users");
-        let _ = users_collection.drop(None).await;
-        let _ = users_collection
-            .create_index(
-                mongodb::IndexModel::builder()
-                    .keys(doc! { "email": 1 })
-                    .options(Some(
-                        mongodb::options::IndexOptions::builder()
-                            .unique(true)
-                            .build(),
-                    ))
-                    .build(),
-                None,
-            )
-            .await;
+        // S3Clientの初期化
+        let s3_config = match config::s3::init_s3_config().await {
+            Ok(client) => {
+                log::info!("Successfully initialized S3 (MinIO) client");
+                client
+            }
+            Err(e) => {
+                log::error!("S3 (MinIO) クライアントの初期化に失敗しました: {}", e);
+                return Err(anyhow::anyhow!(
+                    "S3 (MinIO) クライアントの初期化に失敗しました"
+                ));
+            }
+        };
+        let s3_client = Arc::new(clients::aws_s3::S3Client::new(s3_config.clone()));
 
-        // 依存関係の初期化
-        let s3_config = s3::init_s3_config()
-            .await
-            .expect("Failed to initialize S3 config");
-        let s3_client = Arc::new(S3Client::new(s3_config));
-        let auth_repository = Arc::new(MongoAuthRepository::new(&db.db));
-        let jwt_secret = std::env::var("JWT_SECRET")
-            .expect("JWT_SECRET must be set")
-            .into_bytes();
-        let auth_usecase = Arc::new(AuthUseCase::new(
-            auth_repository,
-            &jwt_secret,
-            s3_client.clone(),
-        ));
+        // ユースケースの初期化
+        let auth_usecase = di::init_auth_usecase(&db, s3_client.clone());
+        let company_usecase = di::init_company_usecase(&db);
 
         let instance = Self {
             auth_usecase,
-            db: db.db.clone(),
+            company_usecase,
+            test_db,
             s3_client,
             test_user,
+            access_token: None,
+            refresh_token: None,
         };
 
-        // インスタンス生成時にテストユーザーを登録
-        instance
-            .auth_usecase
-            .register(&web::Json(&instance.test_user))
+        // テストユーザーの登録
+        instance.register_test_user().await;
+
+        Ok(instance)
+    }
+
+    /// テストユーザーの登録
+    async fn register_test_user(&self) {
+        self.auth_usecase
+            .register(&web::Json(&self.test_user))
             .await
             .expect("Failed to register test user");
-
-        instance
     }
 
     pub async fn build_test_app(
@@ -131,10 +137,10 @@ impl TestApp {
 
         test::init_service(
             App::new()
-                // main.rsと同じ順序でセキュリティミドルウェアを適用
                 .wrap(csrf::csrf_middleware())
                 .wrap(SecurityHeaders)
                 .app_data(web::Data::new(self.auth_usecase.clone()))
+                .app_data(web::Data::new(self.company_usecase.clone()))
                 .app_data(json_error_handler())
                 .service(
                     web::scope("/api")
@@ -156,41 +162,53 @@ impl TestApp {
                                 .service(api::routes::projects_scope())
                                 .service(api::routes::work_logs_scope())
                                 .service(api::routes::companies_scope()),
-                        ),
+                        )
+                        .default_service(web::route().to(not_found)),
                 ),
         )
         .await
     }
 
-    pub async fn create_new_user(
-        &self,
-        email: &str,
-        password: &str,
-        username: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let new_user = UserCreate {
-            email: email.to_string(),
-            password: password.to_string(),
-            username: username.to_string(),
-        };
+    /// テストの実行
+    pub async fn run_test<F, Fut>(f: F)
+    where
+        F: FnOnce(TestContext) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        let context = TestContext::new().await;
+        f(context.clone()).await;
 
-        self.auth_usecase.register(&web::Json(&new_user)).await?;
-        Ok(())
+        // テスト終了時に明示的にDBを破棄
+        if let Err(e) = context.app.test_db.cleanup().await {
+            log::error!("Failed to cleanup test database: {}", e);
+        }
     }
 
-    /// ログインを実行し、認証済みのリクエストを作成する
-    pub async fn login_and_create_next_request(
-        &self,
-        method: test::TestRequest,
-    ) -> (ServiceResponse, test::TestRequest) {
+    /// 認証付きテストの実行
+    pub async fn run_authenticated_test<F, Fut>(f: F)
+    where
+        F: FnOnce(TestContext) -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        let context = TestContext::with_auth().await;
+        f(context.clone()).await;
+
+        // テスト終了時に明示的にDBを破棄
+        if let Err(e) = context.app.test_db.cleanup().await {
+            log::error!("Failed to cleanup test database: {}", e);
+        }
+    }
+
+    /// ログインしてトークンを保存
+    pub async fn login(&mut self) {
         let payload = json!({
             "email": self.test_user.email,
             "password": self.test_user.password
         });
 
-        // ログイン実行
+        let app = self.build_test_app().await;
         let login_response = test::call_service(
-            &self.build_test_app().await,
+            &app,
             test::TestRequest::post()
                 .uri("/api/auth/login/")
                 .set_json(&payload)
@@ -198,18 +216,25 @@ impl TestApp {
         )
         .await;
 
-        // レスポンスからアクセストークンを取得
-        let token = login_response
-            .response()
-            .cookies()
-            .find(|c| c.name() == "access_token")
-            .expect("アクセストークンが見つかりません")
-            .value()
-            .to_string();
+        let cookies: Vec<_> = login_response.response().cookies().collect();
 
-        // 次のリクエストにアクセストークンを挿入
-        let authenticated_request =
-            method.insert_header(("Authorization", format!("Bearer {}", token)));
-        (login_response, authenticated_request)
+        self.access_token = cookies
+            .iter()
+            .find(|c| c.name() == "access_token")
+            .map(|c| c.value().to_string());
+
+        self.refresh_token = cookies
+            .iter()
+            .find(|c| c.name() == "refresh_token")
+            .map(|c| c.value().to_string());
+
+        assert!(
+            self.access_token.is_some(),
+            "アクセストークンの取得に失敗しました"
+        );
+        assert!(
+            self.refresh_token.is_some(),
+            "リフレッシュトークンの取得に失敗しました"
+        );
     }
 }

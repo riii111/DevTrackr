@@ -33,6 +33,7 @@ env_logger = "0.11.5"
 futures = "0.3.30"
 image = { version = "0.25.0", default-features = false, features = ["jpeg", "png", "gif"] }
 jsonwebtoken = "9.3.0"
+lazy_static = "1.5.0"
 log = "0.4.22"
 mongodb = { version = "2.7.0", features = ["tokio-runtime"] }
 openssl = { version = "0.10.66", features = ["vendored"] }

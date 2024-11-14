@@ -45,7 +45,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
 
     pub async fn create_project(&self, project: ProjectCreate) -> Result<ObjectId, AppError> {
         self.company_usecase
-            .get_company_by_id(&project.company_id.to_string())
+            .get_company_by_id(&project.company_id)
             .await?
             .ok_or_else(|| {
                 AppError::NotFound("プロジェクトに関連する企業が見つかりません".to_string())
@@ -65,7 +65,7 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             ));
         }
         self.company_usecase
-            .get_company_by_id(&project.company_id.to_string())
+            .get_company_by_id(&project.company_id)
             .await?
             .ok_or_else(|| {
                 AppError::NotFound("プロジェクトに関連する企業が見つかりません".to_string())
