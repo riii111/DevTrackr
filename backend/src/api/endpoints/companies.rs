@@ -90,11 +90,14 @@ pub async fn get_all_companies_with_projects(
 #[get("/{id}/")]
 pub async fn get_company_by_id(
     usecase: web::Data<Arc<CompanyUseCase<MongoCompanyRepository>>>,
-    id: web::Path<String>,
+    path: web::Path<String>,
 ) -> Result<HttpResponse, AppError> {
     info!("called GET get_company_by_id!!");
 
-    let company = match usecase.get_company_by_id(&id).await {
+    let obj_id = ObjectId::parse_str(path.into_inner())
+        .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
+
+    let company = match usecase.get_company_by_id(&obj_id).await {
         Ok(Some(company)) => company,
         Ok(None) => return Err(AppError::NotFound("企業が見つかりません".to_string())),
         Err(e) => return Err(e), // AppErrorをそのまま返す
