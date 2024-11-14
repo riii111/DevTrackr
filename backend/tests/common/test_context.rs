@@ -46,18 +46,32 @@ impl TestContext {
     // 認証付きリクエストのヘルパーメソッド
     pub async fn authenticated_request(
         &self,
-        method: test::TestRequest,
+        req: test::TestRequest,
         uri: &str,
     ) -> ServiceResponse {
-        let request = method.uri(uri).insert_header((
-            "Authorization",
-            format!(
-                "Bearer {}",
-                self.app.access_token.as_ref().expect("Not logged in")
-            ),
-        ));
+        println!("Making authenticated request to: {}", uri);
+        println!("Access token: {}", self.app.access_token.as_ref().unwrap());
 
-        test::call_service(self.service(), request.to_request()).await
+        let request = req
+            .uri(uri)
+            .insert_header((
+                "Authorization",
+                format!("Bearer {}", self.app.access_token.as_ref().unwrap()),
+            ))
+            .to_request();
+
+        let response = test::call_service(self.service(), request).await;
+
+        // レスポンスの情報をログ出力
+        println!("Response status: {}", response.status());
+        println!("Response headers: {:?}", response.headers());
+
+        // レスポンスボディを取得してログ出力
+        if let Some(content_length) = response.headers().get("content-length") {
+            println!("Content length: {:?}", content_length);
+        }
+
+        response
     }
 
     // クッキーの検証ヘルパー
