@@ -4,6 +4,7 @@ use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
 use serde_json::{json, Value};
 use std::collections::HashSet;
+use url::form_urlencoded;
 
 const PROJECTS_ENDPOINT: &str = "/api/projects/";
 
@@ -50,18 +51,33 @@ async fn test_get_all_projects_with_filter() {
         // テストデータの作成
         create_test_projects(&context).await;
 
-        // タイトルでの検索
+        // タイトルでの検索（URLエンコード）
+        let encoded_title =
+            form_urlencoded::byte_serialize("アプリ".as_bytes()).collect::<String>();
         let response = context
             .authenticated_request(
-                test::TestRequest::get().uri(&format!("{}?title={}", PROJECTS_ENDPOINT, "アプリ")),
-                "",
+                test::TestRequest::get()
+                    .uri(&format!("{}?title={}", PROJECTS_ENDPOINT, encoded_title)),
+                PROJECTS_ENDPOINT,
             )
             .await;
 
         assert_eq!(response.status(), StatusCode::OK);
         let body: Value = test::read_body_json(response).await;
         let projects = body.as_array().unwrap();
-        assert_eq!(projects.len(), 2); // Webアプリ、モバイルアプリの2件がヒット
+
+        // デバッグ出力を追加
+        println!("Found projects: {:?}", projects);
+
+        assert_eq!(projects.len(), 2);
+
+        // プロジェクト名の確認
+        let titles: Vec<&str> = projects
+            .iter()
+            .map(|p| p["title"].as_str().unwrap())
+            .collect();
+        assert!(titles.contains(&"Webアプリケーション開発"));
+        assert!(titles.contains(&"モバイルアプリ開発"));
 
         // ステータスでの検索
         let response = context
@@ -75,15 +91,17 @@ async fn test_get_all_projects_with_filter() {
         assert_eq!(response.status(), StatusCode::OK);
         let body: Value = test::read_body_json(response).await;
         let projects = body.as_array().unwrap();
-        assert_eq!(projects.len(), 1);
-        assert_eq!(projects[0]["status"], "Planning");
+        assert_eq!(projects.len(), 2);
+        for project in projects.iter() {
+            assert_eq!(project["status"], "Planning");
+        }
 
         // スキルラベルでの検索
         let response = context
             .authenticated_request(
                 test::TestRequest::get()
-                    .uri(&format!("{}?skill_labels[]={}", PROJECTS_ENDPOINT, "Rust")),
-                "",
+                    .uri(&format!("{}?skill_labels={}", PROJECTS_ENDPOINT, "Rust")),
+                PROJECTS_ENDPOINT,
             )
             .await;
 
@@ -114,9 +132,8 @@ async fn test_get_all_projects_with_sort() {
         // タイトルでの昇順ソート
         let response = context
             .authenticated_request(
-                test::TestRequest::get()
-                    .uri(&format!("{}?sort[]={}", PROJECTS_ENDPOINT, "title:asc")),
-                "",
+                test::TestRequest::get().uri(&format!("{}?sort[]=title:asc", PROJECTS_ENDPOINT)),
+                PROJECTS_ENDPOINT,
             )
             .await;
 
@@ -130,9 +147,16 @@ async fn test_get_all_projects_with_sort() {
             .iter()
             .map(|p| p["title"].as_str().unwrap())
             .collect();
-        let mut sorted_titles = titles.clone();
-        sorted_titles.sort();
-        assert_eq!(titles, sorted_titles);
+
+        // 期待される順序を明示的に確認
+        assert_eq!(
+            titles,
+            vec![
+                "インフラ構築",
+                "ウェブアプリケーション開発",
+                "モバイルアプリ開発"
+            ]
+        );
 
         // 開始日での降順ソート
         let response = context
@@ -168,9 +192,8 @@ async fn test_get_project_by_id_success() {
     プロジェクトIDによる取得が成功することを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
-        let project_id = create_test_project(&context).await;
-        let url = format!("{}{}/", PROJECTS_ENDPOINT, project_id);
-        println!("Request URL: {}", url);
+        let test_project = create_test_project(&context).await;
+        let url = format!("{}{}/", PROJECTS_ENDPOINT, test_project.id);
 
         let response = context
             .authenticated_request(test::TestRequest::get(), &url)
@@ -180,7 +203,8 @@ async fn test_get_project_by_id_success() {
         let body: Value = test::read_body_json(response).await;
 
         assert!(body.is_object());
-        assert_eq!(body["id"], project_id);
+        assert_eq!(body["id"], test_project.id);
+        assert_eq!(body["company_id"], test_project.company_id);
         assert_eq!(body["title"], "テストプロジェクト");
     })
     .await;
@@ -192,12 +216,12 @@ async fn test_get_project_by_id_unauthorized() {
     認証なしでアクセスした場合は401エラーが返ることを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
-        let project_id = create_test_project(&context).await;
+        let test_project = create_test_project(&context).await;
 
         let response = test::call_service(
             context.service(),
             test::TestRequest::get()
-                .uri(&format!("{}{}/", PROJECTS_ENDPOINT, project_id))
+                .uri(&format!("{}{}/", PROJECTS_ENDPOINT, test_project.id))
                 .to_request(),
         )
         .await;

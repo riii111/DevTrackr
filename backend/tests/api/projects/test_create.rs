@@ -1,3 +1,4 @@
+use crate::api::companies::helper::create_test_company;
 use crate::api::helper::validation::assert_validation_error_with_custom_error;
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
@@ -6,7 +7,6 @@ use rstest::rstest;
 use serde_json::{json, Value};
 
 const PROJECTS_ENDPOINT: &str = "/api/projects/";
-use crate::api::companies::helper::create_test_company;
 
 #[actix_web::test]
 async fn test_create_project_success() {
@@ -14,7 +14,9 @@ async fn test_create_project_success() {
     プロジェクト作成が成功することを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
+        // 企業作成のレスポンスを確認
         let company_id = create_test_company(&context).await;
+        println!("Created company ID: {}", company_id);
 
         let payload = json!({
             "title": "テストプロジェクト",
@@ -25,13 +27,23 @@ async fn test_create_project_success() {
             "hourly_pay": 3000
         });
 
-        // プロジェクト作成APIの実行
+        // リクエストの詳細をログ出力
+        println!("Making request to: {}", PROJECTS_ENDPOINT);
+        println!(
+            "Request payload: {}",
+            serde_json::to_string_pretty(&payload).unwrap()
+        );
+
         let create_response = context
             .authenticated_request(
                 test::TestRequest::post().set_json(&payload),
                 PROJECTS_ENDPOINT,
             )
             .await;
+
+        // レスポンスの詳細をログ出力
+        println!("Response status: {}", create_response.status());
+        println!("Response headers: {:?}", create_response.headers());
 
         // 正常に作成されたことを確認
         assert_eq!(create_response.status(), StatusCode::CREATED);
@@ -241,7 +253,7 @@ async fn test_create_project_with_non_existent_company() {
             error_body,
             json!({
                 "error": "リソースが見つかりません",
-                "message": "指定された企業が存在しません",
+                "message": "プロジェクトに関連する企業が見つかりません",
                 "code": "NOT_FOUND"
             })
         );

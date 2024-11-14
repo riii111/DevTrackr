@@ -53,7 +53,8 @@ pub async fn create_test_companies(context: &TestContext) -> Vec<String> {
             "website_url": "https://example-a.com",
             "employee_count": 100,
             "contract_type": "Contract",
-            "status": "Active"
+            "status": "Contract",
+            "affiliation_start_date": "2023-04-01"
         }),
         json!({
             "company_name": "株式会社B",
@@ -62,7 +63,8 @@ pub async fn create_test_companies(context: &TestContext) -> Vec<String> {
             "website_url": "https://example-b.com",
             "employee_count": 200,
             "contract_type": "Contract",
-            "status": "Active"
+            "status": "Contract",
+            "affiliation_start_date": "2023-04-01"
         }),
         json!({
             "company_name": "株式会社C",
@@ -71,7 +73,8 @@ pub async fn create_test_companies(context: &TestContext) -> Vec<String> {
             "website_url": "https://example-c.com",
             "employee_count": 300,
             "contract_type": "Contract",
-            "status": "Active"
+            "status": "Contract",
+            "affiliation_start_date": "2023-04-01"
         }),
     ];
 

@@ -1,24 +1,13 @@
+use crate::api::companies::helper::create_test_company;
 use crate::api::helper::validation::assert_validation_error_with_custom_error;
-use crate::api::projects::helper::create_test_project;
+use crate::api::projects::helper::{create_test_project, DEFAULT_UPDATE_PAYLOAD};
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
-use lazy_static::lazy_static;
 use rstest::rstest;
 use serde_json::json;
 
 const PROJECTS_ENDPOINT: &str = "/api/projects/";
-
-lazy_static! {
-    static ref UPDATE_PAYLOAD: serde_json::Value = json!({
-        "title": "更新後プロジェクト",
-        "description": "更新後の説明文",
-        "status": "InProgress",
-        "skill_labels": ["Rust", "AWS", "Docker"],
-        "hourly_pay": 4000,
-        "total_working_time": 160
-    });
-}
 
 #[actix_web::test]
 async fn test_update_project_success() {
@@ -27,13 +16,20 @@ async fn test_update_project_success() {
      */
     TestApp::run_authenticated_test(|context| async move {
         // テスト用のプロジェクトを作成
-        let project_id = create_test_project(&context).await;
+        let test_project = create_test_project(&context).await;
+
+        let mut update_payload = DEFAULT_UPDATE_PAYLOAD.clone();
+        // company_idを追加
+        update_payload
+            .as_object_mut()
+            .unwrap()
+            .insert("company_id".to_string(), json!(test_project.company_id));
 
         // プロジェクト情報の更新
         let update_response = context
             .authenticated_request(
-                test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
-                &format!("{}{}/", PROJECTS_ENDPOINT, project_id),
+                test::TestRequest::put().set_json(&update_payload),
+                &format!("{}{}/", PROJECTS_ENDPOINT, test_project.id),
             )
             .await;
 
@@ -43,7 +39,7 @@ async fn test_update_project_success() {
         let get_response = context
             .authenticated_request(
                 test::TestRequest::get(),
-                &format!("{}{}/", PROJECTS_ENDPOINT, project_id),
+                &format!("{}{}/", PROJECTS_ENDPOINT, test_project.id),
             )
             .await;
 
@@ -51,6 +47,7 @@ async fn test_update_project_success() {
         let get_body: serde_json::Value = test::read_body_json(get_response).await;
         assert_eq!(get_body["title"], "更新後プロジェクト");
         assert_eq!(get_body["hourly_pay"], 4000);
+        assert_eq!(get_body["company_id"], test_project.company_id);
     })
     .await;
 }
@@ -65,7 +62,7 @@ async fn test_update_project_unauthorized() {
             context.service(),
             test::TestRequest::put()
                 .uri("/api/projects/123/")
-                .set_json(&*UPDATE_PAYLOAD)
+                .set_json(&*DEFAULT_UPDATE_PAYLOAD)
                 .to_request(),
         )
         .await;
@@ -81,11 +78,19 @@ async fn test_update_project_not_found() {
     存在しないプロジェクトの更新を試みた場合、404エラーが返ることを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
+        // テスト用の会社を作成してcompany_idを取得
+        let company_id = create_test_company(&context).await;
         let non_existent_id = ObjectId::new();
+
+        let mut update_payload = DEFAULT_UPDATE_PAYLOAD.clone();
+        update_payload
+            .as_object_mut()
+            .unwrap()
+            .insert("company_id".to_string(), json!(company_id));
 
         let response = context
             .authenticated_request(
-                test::TestRequest::put().set_json(&*UPDATE_PAYLOAD),
+                test::TestRequest::put().set_json(&update_payload),
                 &format!("{}{}/", PROJECTS_ENDPOINT, non_existent_id),
             )
             .await;
@@ -123,7 +128,6 @@ struct ValidationTestCase {
             "description": "プロジェクトの説明",
             "status": "InProgress",
             "skill_labels": ["Rust", "AWS"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000,
             "total_working_time": 160
         }),
@@ -224,13 +228,19 @@ async fn test_update_project_validation(#[case] test_case: ValidationTestCase) {
      */
     TestApp::run_authenticated_test(|context| async move {
         // テスト用のプロジェクトを作成
-        let project_id = create_test_project(&context).await;
+        let test_project = create_test_project(&context).await;
+
+        let mut validation_payload = test_case.payload.clone();
+        validation_payload
+            .as_object_mut()
+            .unwrap()
+            .insert("company_id".to_string(), json!(test_project.company_id));
 
         // バリデーションエラーのテスト
         let response = context
             .authenticated_request(
-                test::TestRequest::put().set_json(&test_case.payload),
-                &format!("{}{}/", PROJECTS_ENDPOINT, project_id),
+                test::TestRequest::put().set_json(&validation_payload),
+                &format!("{}{}/", PROJECTS_ENDPOINT, test_project.id),
             )
             .await;
 
