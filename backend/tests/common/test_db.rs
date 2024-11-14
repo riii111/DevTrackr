@@ -1,6 +1,10 @@
 use bson::Document;
+use chrono::Local;
 use futures::TryStreamExt;
+use log::{error, info};
 use mongodb::{Client, Collection, Database};
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -82,16 +86,74 @@ impl TestDb {
     async fn create_indexes(&self) -> mongodb::error::Result<()> {
         devtrackr_api::config::db_index::create_indexes(&self.db).await
     }
+
+    /// DBを明示的に破棄するメソッド
+    pub async fn cleanup(&self) -> mongodb::error::Result<()> {
+        let db_name = &self.db_name;
+
+        // ログファイルの設定
+        let log_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("test_db.log")
+            .expect("Failed to open log file");
+
+        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+
+        // クリーンアップ開始ログ
+        writeln!(
+            &log_file,
+            "[{}] Cleaning up test database: {}",
+            timestamp, db_name
+        )
+        .expect("Failed to write to log file");
+
+        info!("Cleaning up test database: {}", db_name);
+
+        // クリーンアップ実行
+        match self.client.database(db_name).drop(None).await {
+            Ok(_) => {
+                let success_msg =
+                    format!("[{}] Successfully dropped database: {}", timestamp, db_name);
+                writeln!(&log_file, "{}", success_msg).expect("Failed to write to log file");
+                info!("Successfully dropped database: {}", db_name);
+                Ok(())
+            }
+            Err(e) => {
+                let error_msg =
+                    format!("[{}] Failed to drop database {}: {}", timestamp, db_name, e);
+                writeln!(&log_file, "{}", error_msg).expect("Failed to write to log file");
+                error!("Failed to drop database {}: {}", db_name, e);
+                Err(e)
+            }
+        }
+    }
 }
 
 impl Drop for TestDb {
+    // cleanupメソッドでDBを削除できる想定だが、バックアップとしてDropも残しておく
     fn drop(&mut self) {
         let client = self.client.clone();
         let db_name = self.db_name.clone();
 
         tokio::spawn(async move {
             if let Err(e) = client.database(&db_name).drop(None).await {
-                eprintln!("Failed to drop database {}: {}", db_name, e);
+                let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+                let error_msg = format!(
+                    "[{}] Drop trait: Failed to drop database {}: {}",
+                    timestamp, db_name, e
+                );
+
+                error!("{}", error_msg);
+
+                // ファイルへのログ出力
+                if let Ok(mut file) = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open("test_db.log")
+                {
+                    let _ = writeln!(file, "{}", error_msg);
+                }
             }
         });
     }

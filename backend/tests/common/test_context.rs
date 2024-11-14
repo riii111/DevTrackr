@@ -4,6 +4,7 @@ use actix_web::dev::{Service, ServiceResponse};
 use actix_web::test;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use crate::common::test_app::TestApp;
@@ -22,13 +23,13 @@ type BoxedService = Pin<
 
 pub struct TestContext {
     pub app: TestApp,
-    service: TestServiceWrapper,
+    service: Arc<TestServiceWrapper>,
 }
 
 impl TestContext {
     pub async fn new() -> Self {
         let app = TestApp::new().await.expect("Failed to create TestApp");
-        let service = TestServiceWrapper::new(app.build_test_app().await);
+        let service = Arc::new(TestServiceWrapper::new(app.build_test_app().await));
 
         Self { app, service }
     }
@@ -89,10 +90,24 @@ impl TestContext {
     }
 }
 
+// Clone の実装を追加
+impl Clone for TestContext {
+    fn clone(&self) -> Self {
+        Self {
+            app: self.app.clone(),
+            service: self.service.clone(),
+        }
+    }
+}
+
 // サービスラッパー
 pub struct TestServiceWrapper {
     service: BoxedService,
 }
+
+// Send + Sync を明示的に実装
+unsafe impl Send for TestServiceWrapper {}
+unsafe impl Sync for TestServiceWrapper {}
 
 impl TestServiceWrapper {
     pub fn new<S>(service: S) -> Self

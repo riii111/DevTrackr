@@ -16,7 +16,7 @@ pub enum EngineerRole {
     ProjectManager,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Validate, Clone)]
 pub struct UserCreate {
     #[validate(email(message = "有効なメールアドレスを入力してください"))]
     #[schema(example = "user@example.com")]

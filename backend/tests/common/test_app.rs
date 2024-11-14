@@ -45,6 +45,7 @@ use std::future::Future;
 use std::sync::Arc;
 use uuid::Uuid;
 
+#[derive(Clone)]
 #[allow(dead_code)]
 pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
@@ -175,7 +176,12 @@ impl TestApp {
         Fut: Future<Output = ()>,
     {
         let context = TestContext::new().await;
-        f(context).await;
+        f(context.clone()).await;
+
+        // テスト終了時に明示的にDBを破棄
+        if let Err(e) = context.app.test_db.cleanup().await {
+            log::error!("Failed to cleanup test database: {}", e);
+        }
     }
 
     /// 認証付きテストの実行
@@ -185,7 +191,12 @@ impl TestApp {
         Fut: Future<Output = ()>,
     {
         let context = TestContext::with_auth().await;
-        f(context).await;
+        f(context.clone()).await;
+
+        // テスト終了時に明示的にDBを破棄
+        if let Err(e) = context.app.test_db.cleanup().await {
+            log::error!("Failed to cleanup test database: {}", e);
+        }
     }
 
     /// ログインしてトークンを保存
