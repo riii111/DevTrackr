@@ -1,3 +1,4 @@
+use crate::api::companies::helper::create_test_company;
 use crate::api::helper::validation::assert_validation_error_with_custom_error;
 use crate::common::test_app::TestApp;
 use crate::common::test_context::TestContext;
@@ -7,75 +8,7 @@ use lazy_static::lazy_static;
 use rstest::rstest;
 use serde_json::json;
 
-lazy_static! {
-    static ref UPDATE_PAYLOAD: serde_json::Value = json!({
-        "company_name": "更新後企業名",
-        "establishment_year": 2020,
-        "location": "東京都渋谷区",
-        "website_url": "https://example-updated.com",
-        "employee_count": 200,
-        "annual_sales": {
-            "amount": 200_000_000,
-            "fiscal_year": 2024
-        },
-        "contract_type": "Contract",
-        "major_clients": ["新規クライアントA", "新規クライアントB"],
-        "major_services": ["新規サービスA", "新規サービスB"],
-        "average_hourly_rate": 5000,
-        "bonus": {
-            "amount": 2_000_000,
-            "frequency": 2
-        },
-        "status": "Contract",
-        "affiliation_start_date": "2023-04-01",
-        "affiliation_end_date": "2024-03-31"
-    });
-}
-
 const COMPANIES_ENDPOINT: &str = "/api/companies/";
-
-pub async fn create_test_company(context: &TestContext) -> String {
-    let response = test::call_service(
-        context.service(),
-        test::TestRequest::post()
-            .uri(COMPANIES_ENDPOINT)
-            .insert_header((
-                "Authorization",
-                format!("Bearer {}", context.app.access_token.as_ref().unwrap()),
-            ))
-            .set_json(json!({
-                "company_name": "テスト企業",
-                "establishment_year": 2020,
-                "location": "東京都渋谷区",
-                "website_url": "https://example.com",
-                "employee_count": 100,
-                "annual_sales": {
-                    "amount": 100_000_000,
-                    "fiscal_year": 2024
-                },
-                "contract_type": "Contract",
-                "major_clients": ["新規クライアントC", "新規クライアントD"],
-                "major_services": ["新規サービスC", "新規サービスD"],
-                "average_hourly_rate": 5000,
-                "bonus": {
-                    "amount": 1_000_000,
-                    "frequency": 1
-                },
-                "status": "Cancelled",
-                "affiliation_start_date": "2020-08-05",
-                "affiliation_end_date": "2021-08-04"
-            }))
-            .to_request(),
-    )
-    .await;
-
-    let body: serde_json::Value = test::read_body_json(response).await;
-    body["id"]
-        .as_str()
-        .expect("Company ID not found in response")
-        .to_string()
-}
-
 #[actix_web::test]
 async fn test_update_company_success() {
     /*
