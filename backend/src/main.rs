@@ -5,7 +5,7 @@ use crate::errors::app_error::json_error_handler;
 use crate::utils::test_s3_upload;
 use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::cookie::{time::Duration as CookieDuration, Key};
-use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use config::db_index;
 use dotenvy::dotenv;
