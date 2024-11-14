@@ -15,7 +15,6 @@ lazy_static! {
         "description": "更新後の説明文",
         "status": "InProgress",
         "skill_labels": ["Rust", "AWS", "Docker"],
-        "company_id": ObjectId::new().to_string(),
         "hourly_pay": 4000,
         "total_working_time": 160
     });

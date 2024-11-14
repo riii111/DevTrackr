@@ -66,7 +66,8 @@ async fn test_get_all_projects_with_filter() {
         // ステータスでの検索
         let response = context
             .authenticated_request(
-                test::TestRequest::get().uri(&format!("{}?status={}", PROJECTS_ENDPOINT, "Active")),
+                test::TestRequest::get()
+                    .uri(&format!("{}?status={}", PROJECTS_ENDPOINT, "Planning")),
                 "",
             )
             .await;
@@ -75,7 +76,7 @@ async fn test_get_all_projects_with_filter() {
         let body: Value = test::read_body_json(response).await;
         let projects = body.as_array().unwrap();
         assert_eq!(projects.len(), 1);
-        assert_eq!(projects[0]["status"], "Active");
+        assert_eq!(projects[0]["status"], "Planning");
 
         // スキルラベルでの検索
         let response = context

@@ -2,29 +2,11 @@ use crate::api::helper::validation::assert_validation_error_with_custom_error;
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
-use lazy_static::lazy_static;
 use rstest::rstest;
 use serde_json::{json, Value};
 
 const PROJECTS_ENDPOINT: &str = "/api/projects/";
-
-lazy_static! {
-    static ref TEST_PAYLOAD: Value = json!({
-        "title": "テストプロジェクト",
-        "description": "これはテストプロジェクトです",
-        "status": "Active",
-        "start_date": "2024-01-01",
-        "end_date": "2024-12-31",
-        "skill_labels": ["Rust", "MongoDB"],
-        "company_id": ObjectId::new().to_string(),
-        "team_members": [
-            {
-                "name": "テストメンバー1",
-                "role": "Developer"
-            }
-        ]
-    });
-}
+use crate::api::companies::helper::create_test_company;
 
 #[actix_web::test]
 async fn test_create_project_success() {
@@ -32,10 +14,21 @@ async fn test_create_project_success() {
     プロジェクト作成が成功することを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
+        let company_id = create_test_company(&context).await;
+
+        let payload = json!({
+            "title": "テストプロジェクト",
+            "description": "これはテストプロジェクトです",
+            "status": "Planning",
+            "skill_labels": ["Rust", "MongoDB"],
+            "company_id": company_id,
+            "hourly_pay": 3000
+        });
+
         // プロジェクト作成APIの実行
         let create_response = context
             .authenticated_request(
-                test::TestRequest::post().set_json(&*TEST_PAYLOAD),
+                test::TestRequest::post().set_json(&payload),
                 PROJECTS_ENDPOINT,
             )
             .await;
@@ -82,7 +75,6 @@ struct ValidationTestCase {
             "description": "テストプロジェクトの説明",
             "status": "Planning",
             "skill_labels": ["Rust", "MongoDB"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000
         }),
         field: "title",
@@ -97,7 +89,6 @@ struct ValidationTestCase {
             "description": "テストプロジェクトの説明",
             "status": "Planning",
             "skill_labels": ["Rust", "MongoDB"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000
         }),
         field: "title",
@@ -113,7 +104,6 @@ struct ValidationTestCase {
             "description": "a".repeat(1001),
             "status": "Planning",
             "skill_labels": ["Rust", "MongoDB"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000
         }),
         field: "description",
@@ -132,7 +122,6 @@ struct ValidationTestCase {
                 "Rust", "MongoDB", "AWS", "Docker", "Kubernetes",
                 "React", "TypeScript", "Python", "Go", "Java", "C++"
             ],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000
         }),
         field: "skill_labels",
@@ -148,7 +137,6 @@ struct ValidationTestCase {
             "description": "テストプロジェクトの説明",
             "status": "Planning",
             "skill_labels": ["Rust", "MongoDB"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": -1
         }),
         field: "hourly_pay",
@@ -164,7 +152,6 @@ struct ValidationTestCase {
             "description": "テストプロジェクトの説明",
             "status": "InvalidStatus",
             "skill_labels": ["Rust", "MongoDB"],
-            "company_id": ObjectId::new().to_string(),
             "hourly_pay": 3000
         }),
         field: "unknown",
@@ -178,9 +165,18 @@ async fn test_create_project_validation(#[case] test_case: ValidationTestCase) {
     各バリデーションルールに違反するデータを送信し、適切なエラーメッセージが返されることを確認する
      */
     TestApp::run_authenticated_test(|context| async move {
+        // 先に企業を作成
+        let company_id = create_test_company(&context).await;
+
+        // ペイロードにcompany_idを追加
+        let mut payload = test_case.payload.clone();
+        if let Some(obj) = payload.as_object_mut() {
+            obj.insert("company_id".to_string(), json!(company_id));
+        }
+
         let response = context
             .authenticated_request(
-                test::TestRequest::post().set_json(&test_case.payload),
+                test::TestRequest::post().set_json(&payload),
                 PROJECTS_ENDPOINT,
             )
             .await;
@@ -212,6 +208,43 @@ async fn test_create_project_validation(#[case] test_case: ValidationTestCase) {
                 test_case.expected_message,
             );
         }
+    })
+    .await;
+}
+
+#[actix_web::test]
+async fn test_create_project_with_non_existent_company() {
+    /*
+    存在しない企業IDを指定してプロジェクト作成を試みた場合、404エラーが返されることを確認するテスト
+    （MongoDBである以上、外部キーの連携は実装必要なのでテストで担保）
+     */
+    TestApp::run_authenticated_test(|context| async move {
+        let payload = json!({
+            "title": "テストプロジェクト",
+            "description": "これはテストプロジェクトです",
+            "status": "Planning",
+            "skill_labels": ["Rust", "MongoDB"],
+            "company_id": ObjectId::new().to_string(),  // 存在しない企業ID
+            "hourly_pay": 3000
+        });
+
+        let response = context
+            .authenticated_request(
+                test::TestRequest::post().set_json(&payload),
+                PROJECTS_ENDPOINT,
+            )
+            .await;
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let error_body: Value = test::read_body_json(response).await;
+        assert_eq!(
+            error_body,
+            json!({
+                "error": "リソースが見つかりません",
+                "message": "指定された企業が存在しません",
+                "code": "NOT_FOUND"
+            })
+        );
     })
     .await;
 }
