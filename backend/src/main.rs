@@ -1,3 +1,4 @@
+use crate::api::common::{health_check, index, not_found};
 use crate::config::api_doc::ApiDoc;
 use crate::config::di;
 use crate::errors::app_error::json_error_handler;
@@ -209,17 +210,4 @@ async fn main() -> Result<()> {
     ))?
     .run()
     .await
-}
-
-async fn not_found(_req: HttpRequest) -> impl Responder {
-    HttpResponse::NotFound().json("リソースが見つかりません")
-}
-
-pub async fn index(_req: HttpRequest) -> impl Responder {
-    HttpResponse::Ok().body("Hello, Actix Web!")
-}
-
-async fn health_check(_req: HttpRequest) -> impl Responder {
-    log::info!("ヘルスチェックエンドポイントにアクセスがありました");
-    HttpResponse::Ok().body("Healthy")
 }

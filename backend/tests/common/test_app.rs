@@ -29,6 +29,7 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use devtrackr_api::{
     api::{
         self,
+        common::not_found,
         endpoints::auth::{login, logout, refresh, register},
     },
     clients::{self, aws_s3::S3Client},
@@ -160,7 +161,8 @@ impl TestApp {
                                 .service(api::routes::projects_scope())
                                 .service(api::routes::work_logs_scope())
                                 .service(api::routes::companies_scope()),
-                        ),
+                        )
+                        .default_service(web::route().to(not_found)),
                 ),
         )
         .await
