@@ -128,7 +128,7 @@ pub enum SortOrder {
     Desc,
 }
 
-#[derive(Deserialize, ToSchema, Validate)]
+#[derive(Deserialize, ToSchema, Validate, Clone)]
 pub struct ProjectQuery {
     /// プロジェクトのタイトル（部分一致）
     #[schema(example = "プロジェクトA")]
@@ -163,6 +163,48 @@ pub struct ProjectQuery {
     #[schema(example = json!(["title:asc", "created_at:desc"]), value_type = Vec<String>)]
     #[validate(custom(function = "validate_sort_params"))]
     pub sort: Option<Vec<String>>,
+}
+
+impl ProjectQuery {
+    /// QueryパラメータからProjectFilterへの変換を行う
+    pub fn into_filter(self) -> Option<ProjectFilter> {
+        let filter = ProjectFilter {
+            title: self.title,
+            status: self.status,
+            skill_labels: self.skill_labels,
+            company_id: self.company_id,
+        };
+
+        if filter.is_empty() {
+            None
+        } else {
+            Some(filter)
+        }
+    }
+
+    /// ソートパラメータを MongoDB 用の形式に変換する
+    pub fn parse_sort_params(&self) -> Option<Vec<(String, i8)>> {
+        self.sort.as_ref().map(|sort_params| {
+            sort_params
+                .iter()
+                .filter_map(|param| {
+                    let parts: Vec<&str> = param.split(':').collect();
+                    if parts.len() == 2 {
+                        Some((
+                            parts[0].to_string(),
+                            if parts[1].to_lowercase() == "asc" {
+                                1
+                            } else {
+                                -1
+                            },
+                        ))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        })
+    }
 }
 
 /// ソートパラメータのバリデーション

@@ -1,6 +1,6 @@
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::errors::app_error::AppError;
-use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectQuery, ProjectUpdate};
+use crate::models::projects::{ProjectCreate, ProjectQuery, ProjectUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
 use actix_web::{get, post, put, web, HttpResponse};
@@ -40,46 +40,13 @@ pub async fn get_projects(
     // バリデーションを実行
     query.validate().map_err(AppError::ValidationError)?;
 
-    // クエリパラメータを ProjectFilter にマッピング
-    let filter = ProjectFilter {
-        title: query.title.clone(),
-        status: query.status.clone(),
-        skill_labels: query.skill_labels.clone(),
-        company_id: query.company_id,
-    };
-
-    // ソート条件のパース
-    let sort = query.sort.as_ref().map(|sort_params| {
-        sort_params
-            .iter()
-            .filter_map(|param| {
-                let parts: Vec<&str> = param.split(':').collect();
-                if parts.len() == 2 {
-                    Some((
-                        parts[0].to_string(),
-                        if parts[1].to_lowercase() == "asc" {
-                            1
-                        } else {
-                            -1
-                        },
-                    ))
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<(String, i8)>>()
-    });
-
+    let query_inner = query.into_inner();
     let projects = usecase
         .search_projects(
-            if filter.is_empty() {
-                None
-            } else {
-                Some(filter)
-            },
-            query.limit,
-            query.offset,
-            sort,
+            query_inner.clone().into_filter(),
+            query_inner.limit,
+            query_inner.offset,
+            query_inner.parse_sort_params(),
         )
         .await?;
 
