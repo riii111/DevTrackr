@@ -1,4 +1,4 @@
-use crate::utils::deserializer::deserialize_skill_labels;
+use crate::utils::deserializer::{deserialize_skill_labels, deserialize_sort_params};
 use bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DefaultOnNull};
@@ -121,13 +121,6 @@ impl ProjectFilter {
     }
 }
 
-#[derive(Debug, Deserialize, Validate, ToSchema)]
-#[serde(rename_all = "lowercase")]
-pub struct SortParam {
-    #[validate(custom(function = "validate_sort_order"))]
-    pub order: SortOrder,
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrder {
@@ -135,13 +128,7 @@ pub enum SortOrder {
     Desc,
 }
 
-pub fn validate_sort_order(order: &SortOrder) -> Result<(), ValidationError> {
-    match order {
-        SortOrder::Asc | SortOrder::Desc => Ok(()),
-    }
-}
-
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, ToSchema, Validate)]
 pub struct ProjectQuery {
     /// プロジェクトのタイトル（部分一致）
     #[schema(example = "プロジェクトA")]
@@ -153,10 +140,8 @@ pub struct ProjectQuery {
 
     /// スキルラベルの一覧
     #[serde(default, deserialize_with = "deserialize_skill_labels")]
-    #[schema(
-        example = json!(["C++", "Rust"]),
-        value_type = Vec<String>
-    )]
+    #[schema(example = json!(["C++", "Rust"]), value_type = Vec<String>)]
+    #[validate(length(max = 10, message = "スキルラベルは最大10個まで指定できます"))]
     pub skill_labels: Option<Vec<String>>,
 
     /// 企業ID
@@ -165,13 +150,64 @@ pub struct ProjectQuery {
 
     /// 取得するドキュメント数の制限
     #[schema(example = 10)]
+    #[validate(range(min = 1, max = 100, message = "limitは1から100の間で指定してください"))]
     pub limit: Option<i64>,
 
     /// 取得を開始する位置
     #[schema(example = 0)]
+    #[validate(range(min = 0, message = "offsetは0以上で指定してください"))]
     pub offset: Option<u64>,
 
     /// ソート条件（例: "name:asc", "created_at:desc"）
-    #[schema(example = "name:asc")]
+    #[serde(default, deserialize_with = "deserialize_sort_params")]
+    #[schema(example = json!(["title:asc", "created_at:desc"]), value_type = Vec<String>)]
+    #[validate(custom(function = "validate_sort_params"))]
     pub sort: Option<Vec<String>>,
+}
+
+/// ソートパラメータのバリデーション
+///
+/// # バリデーションルール
+/// - ソートキーは許可されたフィールドのみ
+/// - ソート順は "asc" または "desc" のみ
+///
+/// # エラー処理方針
+/// クライアントサイドのバグを早期に検出するため、無効な値は400エラーを返す。
+/// これにより、APIの正しい使用方法を強制し、予期せぬ動作を防ぐ。
+fn validate_sort_params(sort: &[String]) -> Result<(), ValidationError> {
+    // 許可されたソートフィールド
+    const ALLOWED_FIELDS: [&str; 4] = ["title", "status", "created_at", "updated_at"];
+
+    for param in sort {
+        let parts: Vec<&str> = param.split(':').collect();
+        if parts.len() != 2 {
+            let mut err = ValidationError::new("sort_format");
+            err.message = Some("Invalid sort format. Expected 'field:order'".into());
+            return Err(err);
+        }
+
+        let field = parts[0];
+        let order = parts[1].to_lowercase();
+
+        // フィールドの検証
+        if !ALLOWED_FIELDS.contains(&field) {
+            let mut err = ValidationError::new("sort_field");
+            err.message = Some(
+                format!(
+                    "Invalid sort field: {}. Allowed fields are: {:?}",
+                    field, ALLOWED_FIELDS
+                )
+                .into(),
+            );
+            return Err(err);
+        }
+
+        // ソート順の検証
+        if order != "asc" && order != "desc" {
+            let mut err = ValidationError::new("sort_order");
+            err.message = Some("Sort order must be either 'asc' or 'desc'".into());
+            return Err(err);
+        }
+    }
+    Ok(())
 }

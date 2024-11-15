@@ -37,6 +37,9 @@ pub async fn get_projects(
 ) -> Result<HttpResponse, AppError> {
     info!("called GET search_projects!!");
 
+    // バリデーションを実行
+    query.validate().map_err(AppError::ValidationError)?;
+
     // クエリパラメータを ProjectFilter にマッピング
     let filter = ProjectFilter {
         title: query.title.clone(),
@@ -46,33 +49,26 @@ pub async fn get_projects(
     };
 
     // ソート条件のパース
-    let sort = if let Some(sort_params) = &query.sort {
-        let parsed_sort = sort_params
+    let sort = query.sort.as_ref().map(|sort_params| {
+        sort_params
             .iter()
-            .filter_map(|s| {
-                let parts: Vec<&str> = s.split(':').collect();
+            .filter_map(|param| {
+                let parts: Vec<&str> = param.split(':').collect();
                 if parts.len() == 2 {
-                    let key = parts[0].to_string();
-                    let order = match parts[1].to_lowercase().as_str() {
-                        "asc" => 1,
-                        "desc" => -1,
-                        _ => return None,
-                    };
-                    Some((key, order))
+                    Some((
+                        parts[0].to_string(),
+                        if parts[1].to_lowercase() == "asc" {
+                            1
+                        } else {
+                            -1
+                        },
+                    ))
                 } else {
                     None
                 }
             })
-            .collect::<Vec<(String, i8)>>();
-
-        if parsed_sort.is_empty() {
-            None
-        } else {
-            Some(parsed_sort)
-        }
-    } else {
-        None
-    };
+            .collect::<Vec<(String, i8)>>()
+    });
 
     let projects = usecase
         .search_projects(
