@@ -81,34 +81,3 @@ where
         Ok(None)
     }
 }
-
-pub fn deserialize_string_array<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    struct StringArrayVisitor;
-
-    impl<'de> de::Visitor<'de> for StringArrayVisitor {
-        type Value = Vec<String>;
-
-        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-            formatter.write_str("string or array of strings")
-        }
-
-        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            Ok(vec![value.to_string()])
-        }
-
-        fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: de::SeqAccess<'de>,
-        {
-            de::Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))
-        }
-    }
-
-    deserializer.deserialize_any(StringArrayVisitor)
-}
