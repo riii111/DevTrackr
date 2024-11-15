@@ -82,6 +82,7 @@ impl TestDb {
 
     /// DBを明示的に破棄するメソッド
     pub async fn cleanup(&self) -> mongodb::error::Result<()> {
+        // TODO: エラー発生時はDBが残るっぽい
         info!("Cleaning up test database: {}", self.db_name);
         self.client.database(&self.db_name).drop(None).await
     }

@@ -1,50 +1,10 @@
+use crate::api::companies::helper::{create_test_companies, create_test_company};
 use crate::common::test_app::TestApp;
-use crate::common::test_context::TestContext;
 use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
 use serde_json::{json, Value};
 
 const COMPANIES_ENDPOINT: &str = "/api/companies/";
-
-pub async fn create_test_company(context: &TestContext) -> String {
-    let payload = json!({
-        "company_name": "テスト企業",
-        "establishment_year": 2020,
-        "location": "東京都渋谷区",
-        "website_url": "https://example.com",
-        "employee_count": 100,
-        "annual_sales": {
-            "amount": 100_000_000,
-            "fiscal_year": 2024
-        },
-        "contract_type": "Contract",
-        "major_clients": ["新規クライアントC", "新規クライアントD"],
-        "major_services": ["新規サービスC", "新規サービスD"],
-        "average_hourly_rate": 5000,
-        "bonus": {
-            "amount": 1_000_000,
-            "frequency": 1
-        },
-        "status": "Cancelled",
-        "affiliation_start_date": "2020-08-05",
-        "affiliation_end_date": "2021-08-04"
-    });
-
-    let response = context
-        .authenticated_request(
-            test::TestRequest::post().set_json(&payload),
-            COMPANIES_ENDPOINT,
-        )
-        .await;
-
-    assert_eq!(response.status(), StatusCode::CREATED);
-    let body: Value = test::read_body_json(response).await;
-    println!("Created Company ID: {}", body["id"]);
-    body["id"]
-        .as_str()
-        .expect("Company ID not found in response")
-        .to_string()
-}
 
 #[actix_web::test]
 async fn test_get_all_companies_success() {
@@ -52,6 +12,9 @@ async fn test_get_all_companies_success() {
     企業一覧取得が成功することを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
+        // テスト用の複数企業を作成
+        let company_ids = create_test_companies(&context).await;
+
         let response = context
             .authenticated_request(test::TestRequest::get(), COMPANIES_ENDPOINT)
             .await;
@@ -59,6 +22,19 @@ async fn test_get_all_companies_success() {
         assert_eq!(response.status(), StatusCode::OK);
         let body: Value = test::read_body_json(response).await;
         assert!(body.is_array());
+
+        // 作成した企業数分のデータが取得できていることを確認
+        let companies = body.as_array().unwrap();
+        assert!(companies.len() >= company_ids.len());
+
+        // 作成した企業のIDが含まれていることを確認
+        let response_ids: Vec<String> = companies
+            .iter()
+            .map(|company| company["id"].as_str().unwrap().to_string())
+            .collect();
+        for id in company_ids {
+            assert!(response_ids.contains(&id));
+        }
     })
     .await;
 }
@@ -90,6 +66,9 @@ async fn test_get_all_companies_with_projects_success() {
     企業とプロジェクト一覧の取得が成功することを確認するテスト
      */
     TestApp::run_authenticated_test(|context| async move {
+        // テスト用の複数企業を作成
+        let company_ids = create_test_companies(&context).await;
+
         let response = context
             .authenticated_request(test::TestRequest::get(), COMPANIES_WITH_PROJECTS_ENDPOINT)
             .await;
@@ -100,7 +79,18 @@ async fn test_get_all_companies_with_projects_success() {
         assert!(body.is_object());
         assert!(body.get("companies").is_some());
         assert!(body.get("total").is_some());
-        assert!(body.get("companies").unwrap().is_array());
+
+        let companies = body["companies"].as_array().unwrap();
+        assert!(companies.len() >= company_ids.len());
+
+        // 作成した企業のIDが含まれていることを確認
+        let response_ids: Vec<String> = companies
+            .iter()
+            .map(|company| company["id"].as_str().unwrap().to_string())
+            .collect();
+        for id in company_ids {
+            assert!(response_ids.contains(&id));
+        }
     })
     .await;
 }

@@ -1,6 +1,6 @@
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::errors::app_error::AppError;
-use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectQuery, ProjectUpdate};
+use crate::models::projects::{ProjectCreate, ProjectQuery, ProjectUpdate};
 use crate::repositories::projects::MongoProjectRepository;
 use crate::usecases::projects::ProjectUseCase;
 use actix_web::{get, post, put, web, HttpResponse};
@@ -37,53 +37,16 @@ pub async fn get_projects(
 ) -> Result<HttpResponse, AppError> {
     info!("called GET search_projects!!");
 
-    // クエリパラメータを ProjectFilter にマッピング
-    let filter = ProjectFilter {
-        title: query.title.clone(),
-        status: query.status.clone(),
-        skill_labels: query.skill_labels.clone(),
-        company_id: query.company_id,
-    };
+    // バリデーションを実行
+    query.validate().map_err(AppError::ValidationError)?;
 
-    // ソート条件のパース
-    let sort = if let Some(sort_params) = &query.sort {
-        let parsed_sort = sort_params
-            .iter()
-            .filter_map(|s| {
-                let parts: Vec<&str> = s.split(':').collect();
-                if parts.len() == 2 {
-                    let key = parts[0].to_string();
-                    let order = match parts[1].to_lowercase().as_str() {
-                        "asc" => 1,
-                        "desc" => -1,
-                        _ => return None,
-                    };
-                    Some((key, order))
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<(String, i8)>>();
-
-        if parsed_sort.is_empty() {
-            None
-        } else {
-            Some(parsed_sort)
-        }
-    } else {
-        None
-    };
-
+    let query_inner = query.into_inner();
     let projects = usecase
         .search_projects(
-            if filter.is_empty() {
-                None
-            } else {
-                Some(filter)
-            },
-            query.limit,
-            query.offset,
-            sort,
+            query_inner.clone().into_filter(),
+            query_inner.limit,
+            query_inner.offset,
+            query_inner.parse_sort_params(),
         )
         .await?;
 

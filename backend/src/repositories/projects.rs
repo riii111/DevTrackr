@@ -1,7 +1,7 @@
 use crate::errors::repositories_error::RepositoryError;
 use crate::models::projects::{ProjectCreate, ProjectFilter, ProjectInDB, ProjectUpdate};
 use async_trait::async_trait;
-use bson::{doc, oid::ObjectId, DateTime as BsonDateTime, Document};
+use bson::{doc, oid::ObjectId, Bson, DateTime as BsonDateTime, Document};
 use futures::TryStreamExt;
 use mongodb::{
     error::Error as MongoError, options::FindOptions, results::InsertOneResult, Collection,
@@ -81,14 +81,27 @@ impl ProjectRepository for MongoProjectRepository {
             find_options.skip = Some(offset);
         }
         if let Some(sort_params) = sort {
-            let sort_doc: Document = sort_params
-                .into_iter()
-                .map(|(k, v)| (k, bson::Bson::Int32(v as i32)))
-                .collect();
+            // ASCII(英数字)→ひらがな→カタカナ→漢字の順でソート
+            find_options.collation = Some(
+                mongodb::options::Collation::builder()
+                    .locale("ja") // 日本語ロケール
+                    .strength(mongodb::options::CollationStrength::Secondary) // アクセント記号や大文字小文字を区別しない
+                    .case_level(false) // 大文字小文字の区別をしない
+                    .numeric_ordering(true) // 数値の自然な順序付け
+                    .build(),
+            );
+
+            // ソート条件をDocumentに変換
+            let sort_doc = Document::from_iter(
+                sort_params
+                    .into_iter()
+                    .map(|(field, order)| (field, Bson::Int32(order as i32))),
+            );
+
             find_options.sort = Some(sort_doc);
         }
 
-        // findメソッドの呼び出し
+        // クエリの実行
         let mut cursor = self
             .collection
             .find(query, find_options)
