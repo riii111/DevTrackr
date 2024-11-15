@@ -1,5 +1,5 @@
 use crate::api::helper::validation::{
-    assert_validation_error, assert_validation_error_with_custom_error,
+    assert_validation_error, assert_validation_error_with_custom_error, ValidationTestCase,
 };
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
@@ -132,14 +132,6 @@ async fn test_register_duplicate_email() {
     .await;
 }
 
-// バリデーションテスト用の構造体
-#[derive(Debug)]
-struct ValidationTestCase {
-    name: &'static str,
-    payload: serde_json::Value,
-    expected_message: &'static str,
-}
-
 #[rstest]
 // メールアドレスのバリデーション
 #[case::invalid_email(
@@ -150,6 +142,7 @@ struct ValidationTestCase {
             "password": "ValidPass123!",
             "username": "testuser"
         }),
+        field: "email",
         expected_message: "有効なメールアドレスを入力してください"
     }
 )]
@@ -161,6 +154,7 @@ struct ValidationTestCase {
             "password": "ValidPass123!",
             "username": "testuser"
         }),
+        field: "email",
         expected_message: "有効なメールアドレスを入力してください"
     }
 )]
@@ -173,6 +167,7 @@ struct ValidationTestCase {
             "password": "short",
             "username": "testuser"
         }),
+        field: "password",
         expected_message: "パスワードは8文字以上である必要があります"
     }
 )]
@@ -184,6 +179,7 @@ struct ValidationTestCase {
             "password": "",
             "username": "testuser"
         }),
+        field: "password",
         expected_message: "パスワードは8文字以上である必要があります"
     }
 )]
@@ -196,6 +192,7 @@ struct ValidationTestCase {
             "password": "ValidPass123!",
             "username": ""
         }),
+        field: "username",
         expected_message: "名前は1文字以上である必要があります"
     }
 )]
@@ -207,6 +204,7 @@ struct ValidationTestCase {
             "password": "ValidPass123!",
             "username": "testuser"
         }),
+        field: "email",
         expected_message: "必須項目です"
     }
 )]
@@ -217,6 +215,7 @@ struct ValidationTestCase {
             "email": "test@example.com",
             "username": "testuser"
         }),
+        field: "password",
         expected_message: "必須項目です"
     }
 )]
@@ -227,6 +226,7 @@ struct ValidationTestCase {
             "email": "test@example.com",
             "password": "ValidPass123!"
         }),
+        field: "username",
         expected_message: "必須項目です"
     }
 )]
@@ -253,20 +253,13 @@ async fn test_register_invalid_input(#[case] test_case: ValidationTestCase) {
         );
 
         let body: serde_json::Value = test::read_body_json(resp).await;
-        let field_name = if test_case.name.contains("メールアドレス") {
-            "email"
-        } else if test_case.name.contains("パスワード") {
-            "password"
-        } else {
-            "username"
-        };
 
         if test_case.name.contains("欠落") {
-            assert_validation_error(&body, field_name, "必須項目です");
+            assert_validation_error(&body, test_case.field, "必須項目です");
         } else {
             assert_validation_error_with_custom_error(
                 &body,
-                field_name,
+                test_case.field,
                 test_case.expected_message,
             );
         }

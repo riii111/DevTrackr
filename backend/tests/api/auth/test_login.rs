@@ -1,5 +1,5 @@
 use crate::api::helper::validation::{
-    assert_validation_error, assert_validation_error_with_custom_error,
+    assert_validation_error, assert_validation_error_with_custom_error, ValidationTestCase,
 };
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
@@ -100,14 +100,6 @@ async fn test_login_invalid_credentials() {
     .await;
 }
 
-// バリデーションテスト用の構造体
-#[derive(Debug)]
-struct ValidationTestCase {
-    name: &'static str,
-    payload: serde_json::Value,
-    expected_message: &'static str,
-}
-
 #[rstest]
 // メールアドレスのバリデーション
 #[case::invalid_email(
@@ -117,6 +109,7 @@ struct ValidationTestCase {
             "email": "invalid-email",
             "password": "ValidPass123!"
         }),
+        field: "email",
         expected_message: "有効なメールアドレスを入力してください"
     }
 )]
@@ -127,6 +120,7 @@ struct ValidationTestCase {
             "email": "",
             "password": "ValidPass123!"
         }),
+        field: "email",
         expected_message: "有効なメールアドレスを入力してください"
     }
 )]
@@ -138,6 +132,7 @@ struct ValidationTestCase {
             "email": "test@example.com",
             "password": "short"
         }),
+        field: "password",
         expected_message: "パスワードは8文字以上である必要があります"
     }
 )]
@@ -148,6 +143,7 @@ struct ValidationTestCase {
             "email": "test@example.com",
             "password": ""
         }),
+        field: "password",
         expected_message: "パスワードは8文字以上である必要があります"
     }
 )]
@@ -158,6 +154,7 @@ struct ValidationTestCase {
         payload: json!({
             "password": "ValidPass123!"
         }),
+        field: "email",
         expected_message: "必須項目です"
     }
 )]
@@ -167,6 +164,7 @@ struct ValidationTestCase {
         payload: json!({
             "email": "test@example.com"
         }),
+        field: "password",
         expected_message: "必須項目です"
     }
 )]
@@ -194,18 +192,13 @@ async fn test_login_invalid_input(#[case] test_case: ValidationTestCase) {
         );
 
         let body: serde_json::Value = test::read_body_json(resp).await;
-        let field_name = if test_case.name.contains("メールアドレス") {
-            "email"
-        } else {
-            "password"
-        };
 
         if test_case.name.contains("欠落") {
-            assert_validation_error(&body, field_name, "必須項目です");
+            assert_validation_error(&body, test_case.field, "必須項目です");
         } else {
             assert_validation_error_with_custom_error(
                 &body,
-                field_name,
+                test_case.field,
                 test_case.expected_message,
             );
         }

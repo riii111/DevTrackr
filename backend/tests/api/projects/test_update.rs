@@ -1,5 +1,7 @@
 use crate::api::companies::helper::create_test_company;
-use crate::api::helper::validation::assert_validation_error_with_custom_error;
+use crate::api::helper::validation::{
+    assert_validation_error_with_custom_error, ValidationTestCase,
+};
 use crate::api::projects::helper::{create_test_project, DEFAULT_UPDATE_PAYLOAD};
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
@@ -107,15 +109,6 @@ async fn test_update_project_not_found() {
         );
     })
     .await;
-}
-
-// バリデーションテスト用の構造体
-#[derive(Debug)]
-struct ValidationTestCase {
-    name: &'static str,
-    payload: serde_json::Value,
-    field: &'static str,
-    expected_message: &'static str,
 }
 
 #[rstest]

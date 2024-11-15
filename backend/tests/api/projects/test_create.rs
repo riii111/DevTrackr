@@ -1,5 +1,7 @@
 use crate::api::companies::helper::create_test_company;
-use crate::api::helper::validation::assert_validation_error_with_custom_error;
+use crate::api::helper::validation::{
+    assert_validation_error_with_custom_error, ValidationTestCase,
+};
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
 use bson::oid::ObjectId;
@@ -66,15 +68,6 @@ async fn test_create_project_success() {
         assert_eq!(get_body["title"], "テストプロジェクト");
     })
     .await;
-}
-
-// バリデーションテスト用の構造体
-#[derive(Debug)]
-struct ValidationTestCase {
-    name: &'static str,
-    payload: serde_json::Value,
-    field: &'static str,
-    expected_message: &'static str,
 }
 
 #[rstest]
