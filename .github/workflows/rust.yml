@@ -253,7 +253,7 @@ jobs:
         ports:
           - 27018:27017
       minio:
-        image: minio/minio
+        image: minio/minio:latest
         ports:
           - 9000:9000
           - 9001:9001
@@ -261,11 +261,12 @@ jobs:
           MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         options: >-
-          --name minio
-          --health-cmd "curl -f http://localhost:9000/minio/health/ready || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --name=minio
+          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --entrypoint server /data
     steps:
       - uses: actions/checkout@v4
 
@@ -302,15 +303,13 @@ jobs:
 
       - name: Wait for MinIO
         run: |
-          timeout 60s bash -c 'until curl -sf http://localhost:9000/minio/health/ready; do sleep 1; done'
+          timeout 60s bash -c 'until curl -sf http://localhost:9000/minio/health/live; do sleep 1; done'
 
       - name: Setup MinIO
         run: |
-          wget https://dl.min.io/client/mc/release/linux-amd64/mc
+          curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o mc
           chmod +x mc
-          ./mc alias set local http://localhost:9000 ${{ secrets.MINIO_ROOT_USER }} ${{ secrets.MINIO_ROOT_PASSWORD }}
-          ./mc mb local/devtrackr-test || true
-          ./mc policy set public local/devtrackr-test
+          ./mc alias set local http://localhost:9000 ${{ secrets.MINIO_ROOT_USER }}
 
       - name: Run tests
         run: cargo test --verbose -- --test-threads=1
