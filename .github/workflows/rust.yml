@@ -240,10 +240,14 @@ jobs:
           - 9000:9000
           - 9001:9001
         env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        options: --name minio --health-cmd "curl -f http://localhost:9000/minio/health/live"
-
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+        options: >-
+          --name minio
+          --health-cmd "curl -f http://localhost:9000/minio/health/ready || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -269,17 +273,26 @@ jobs:
       - name: Create test env file
         run: |
           cat << EOF > .env.test
-          TEST_DATABASE_URL=mongodb://localhost:27018
+          TEST_DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}
           MINIO_ENDPOINT=http://localhost:9000
-          S3_REGION=us-east-1
-          JWT_SECRET=test_secret_key_for_jwt_token_generation
+          S3_REGION=${{ secrets.S3_REGION }}
+          S3_BUCKET_NAME=devtrackr-test
+          MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
+          JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}
           EOF
 
-      - name: Configure MinIO
+      - name: Wait for MinIO
         run: |
-          cargo install --version 0.7.7 mc
-          mc alias set myminio http://localhost:9000 minioadmin minioadmin
-          mc mb myminio/test-bucket || true
+          timeout 60s bash -c 'until curl -sf http://localhost:9000/minio/health/ready; do sleep 1; done'
+
+      - name: Setup MinIO
+        run: |
+          wget https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
+          ./mc alias set local http://localhost:9000 ${{ secrets.MINIO_ROOT_USER }} ${{ secrets.MINIO_ROOT_PASSWORD }}
+          ./mc mb local/devtrackr-test || true
+          ./mc policy set public local/devtrackr-test
 
       - name: Run tests
         run: cargo test --verbose -- --test-threads=1
