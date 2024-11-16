@@ -11,6 +11,11 @@ path = "tests/lib.rs"
 rstest = "0.18.2"
 url = "2.5.3"
 
+
+[profile.dev]
+opt-level = 0 # 開発時は最適化レベルを下げる
+incremental = true # インクリメンタルコンパイルを有効にする
+
 [dependencies]
 actix-cors = "0.7.0"
 actix-csrf = "0.7.0"
