@@ -65,7 +65,10 @@ pub async fn get_work_logs_by_id(
 ) -> Result<HttpResponse, AppError> {
     info!("called GET get_work_logs_by_id!!");
 
-    let work_logs = match usecase.get_work_logs_by_id(&id).await {
+    let obj_id = ObjectId::parse_str(id.into_inner())
+        .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
+
+    let work_logs = match usecase.get_work_logs_by_id(&obj_id).await {
         Ok(Some(work_logs)) => work_logs,
         Ok(None) => return Err(AppError::NotFound("勤怠が見つかりません".to_string())),
         Err(e) => return Err(e),

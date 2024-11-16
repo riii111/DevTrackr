@@ -37,10 +37,8 @@ impl<R: ProjectRepository> ProjectUseCase<R> {
             .await?)
     }
 
-    pub async fn get_project_by_id(&self, id: &str) -> Result<Option<ProjectInDB>, AppError> {
-        let object_id = ObjectId::parse_str(id)
-            .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
-        Ok(self.repository.find_by_id(&object_id).await?)
+    pub async fn get_project_by_id(&self, id: &ObjectId) -> Result<Option<ProjectInDB>, AppError> {
+        Ok(self.repository.find_by_id(id).await?)
     }
 
     pub async fn create_project(&self, project: ProjectCreate) -> Result<ObjectId, AppError> {
