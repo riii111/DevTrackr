@@ -122,10 +122,12 @@ pub struct WorkLogUpdate {
 
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 30)]
+    #[validate(range(min = 0, message = "休憩時間は0以上である必要があります"))]
     pub break_time: Option<i32>,
 
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 120)]
+    #[validate(range(min = 0, message = "実労働時間は0以上である必要があります"))]
     pub actual_work_minutes: Option<i32>,
 
     #[serde(default)]
