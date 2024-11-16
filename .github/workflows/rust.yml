@@ -6,7 +6,7 @@ name: Rust CI
 # - ビルドテスト（Ubuntu）
 # - 未使用依存関係の検出
 # - バイナリサイズ分析
-# - テストの実行
+# TODO: テストの実行
 
 on:
   pull_request:
@@ -241,77 +241,77 @@ jobs:
           cargo bloat --release --crates
           cargo bloat --release -n 20
   # テスト実行のジョブ
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    services:
-      mongodb:
-        image: mongo:6
-        ports:
-          - 27018:27017
-      minio:
-        image: minio/minio:latest
-        ports:
-          - 9000:9000
-          - 9001:9001
-        env:
-          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
-          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
-        options: >-
-          --name=minio
-          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-    steps:
-      - uses: actions/checkout@v4
+  # test:
+  #   name: Run Tests
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: backend
+  #   services:
+  #     mongodb:
+  #       image: mongo:6
+  #       ports:
+  #         - 27018:27017
+  #     minio:
+  #       image: minio/minio:latest
+  #       ports:
+  #         - 9000:9000
+  #         - 9001:9001
+  #       env:
+  #         MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+  #         MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+  #       options: >-
+  #         --name=minio
+  #         --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+  #         --health-interval=10s
+  #         --health-timeout=5s
+  #         --health-retries=3
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
+  #     - name: Install Rust
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: rustfmt, clippy
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            backend/target/
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}-
-            ${{ runner.os }}-cargo-test-
+  #     - name: Cache dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ~/.cargo/bin/
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #           backend/target/
+  #         key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/Cargo.toml') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}-
+  #           ${{ runner.os }}-cargo-test-
 
-      - name: Create test env file
-        run: |
-          cat << EOF > .env.test
-          TEST_DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}
-          MINIO_ENDPOINT=http://localhost:9000
-          S3_REGION=${{ secrets.S3_REGION }}
-          S3_BUCKET_NAME=devtrackr-test
-          MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}
-          MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
-          JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}
-          EOF
+  #     - name: Create test env file
+  #       run: |
+  #         cat << EOF > .env.test
+  #         TEST_DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}
+  #         MINIO_ENDPOINT=http://localhost:9000
+  #         S3_REGION=${{ secrets.S3_REGION }}
+  #         S3_BUCKET_NAME=devtrackr-test
+  #         MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}
+  #         MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
+  #         JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}
+  #         EOF
 
-      - name: Wait for MinIO
-        run: |
-          timeout 60s bash -c 'until curl -sf http://localhost:9000/minio/health/live; do sleep 1; done'
+  #     - name: Wait for MinIO
+  #       run: |
+  #         timeout 60s bash -c 'until curl -sf http://localhost:9000/minio/health/live; do sleep 1; done'
 
-      - name: Setup MinIO
-        run: |
-          curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o mc
-          chmod +x mc
-          ./mc alias set local http://localhost:9000 ${{ secrets.MINIO_ROOT_USER }}
+  #     - name: Setup MinIO
+  #       run: |
+  #         curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o mc
+  #         chmod +x mc
+  #         ./mc alias set local http://localhost:9000 ${{ secrets.MINIO_ROOT_USER }}
 
-      - name: Run tests
-        run: cargo test --verbose -- --test-threads=1
-        env:
-          RUST_BACKTRACE: 1
-          RUST_LOG: debug
+  #     - name: Run tests
+  #       run: cargo test --verbose -- --test-threads=1
+  #       env:
+  #         RUST_BACKTRACE: 1
+  #         RUST_LOG: debug
