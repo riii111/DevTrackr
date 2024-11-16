@@ -75,71 +75,97 @@ macro_rules! impl_work_logs_validation {
 }
 
 // マクロを使用してバリデーションロジックを実装
-impl_work_logs_validation!(WorkLogsCreate);
-impl_work_logs_validation!(WorkLogsUpdate);
+impl_work_logs_validation!(WorkLogCreate);
+impl_work_logs_validation!(WorkLogUpdate);
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, Validate)]
-pub struct WorkLogsCreate {
+pub struct WorkLogCreate {
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
     pub project_id: ObjectId,
+
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     #[schema(value_type = String, example = "2023-04-13T10:34:56Z")]
     pub start_time: BsonDateTime,
+
     #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
+
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 30)]
+    #[validate(range(min = 0, message = "休憩時間は0以上である必要があります"))]
     pub break_time: Option<i32>,
+
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 120)]
+    #[validate(range(min = 0, message = "実労働時間は0以上である必要があります"))]
     pub actual_work_minutes: Option<i32>,
+
+    #[serde(default)]
     #[validate(length(min = 0, max = 1000, message = "メモは0〜1000文字である必要があります"))]
     #[schema(example = "今日はプロジェクトのキックオフミーティングを行いました。")]
     pub memo: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, Validate)]
-pub struct WorkLogsUpdate {
+pub struct WorkLogUpdate {
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
     pub project_id: ObjectId,
+
     #[serde(deserialize_with = "deserialize_bson_date_time")]
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub start_time: BsonDateTime,
+
     #[serde(default, deserialize_with = "deserialize_option_bson_date_time")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
+
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 30)]
     pub break_time: Option<i32>,
+
     #[serde(default)]
     #[schema(value_type = Option<i32>, example = 120)]
     pub actual_work_minutes: Option<i32>,
+
+    #[serde(default)]
     #[validate(length(min = 0, max = 1000, message = "メモは0〜1000文字である必要があります"))]
     #[schema(example = "今日はプロジェクトのキックオフミーティングを行いました。")]
     pub memo: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct WorkLogsInDB {
+pub struct WorkLogInDB {
     // app側では"id"として参照できるように
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>, // DB側にID生成させるので任意
     #[schema(value_type = String, example = "60a7e3e0f1c1b2a3b4c5d6e7")]
     pub project_id: ObjectId,
+
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub start_time: BsonDateTime,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub end_time: Option<BsonDateTime>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = "今日はプロジェクトのキックオフミーティングを行いました。")]
     pub memo: Option<String>,
+
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<i32>, example = 30)]
     pub break_time: Option<i32>,
+
+    // #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<i32>, example = 120)]
     pub actual_work_minutes: Option<i32>,
 }

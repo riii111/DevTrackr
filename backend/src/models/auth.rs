@@ -19,18 +19,25 @@ pub struct AuthTokenInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>,
+
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub user_id: ObjectId,
+
     #[schema(value_type = String, example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")]
     pub access_token: String,
+
     #[schema(value_type = String, example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")]
     pub refresh_token: String,
+
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub expires_at: BsonDateTime,
+
     #[schema(value_type = String, example = "2023-04-20T12:34:56Z")]
     pub refresh_expires_at: BsonDateTime,
+
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
+
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
 }

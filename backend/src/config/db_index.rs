@@ -4,7 +4,7 @@ use mongodb::{bson::doc, error::Result, options::IndexOptions, Client, Database}
 use crate::models::auth::AuthTokenInDB;
 use crate::models::projects::ProjectInDB;
 use crate::models::users::UserInDB;
-use crate::models::work_logs::WorkLogsInDB;
+use crate::models::work_logs::WorkLogInDB;
 
 pub async fn init_db() -> Result<Database> {
     dotenv().ok();
@@ -141,7 +141,7 @@ async fn create_projects_indexes(db: &Database) -> Result<()> {
 
 /// work_logsコレクションのインデックス作成
 async fn create_work_logs_indexes(db: &Database) -> Result<()> {
-    let collection = db.collection::<WorkLogsInDB>("work_logs");
+    let collection = db.collection::<WorkLogInDB>("work_logs");
 
     // project_idフィールドにインデックスを作成
     let project_id_index = mongodb::IndexModel::builder()

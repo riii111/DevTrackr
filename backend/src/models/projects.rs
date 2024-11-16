@@ -36,14 +36,19 @@ pub struct ProjectCreate {
         message = "タイトルは1〜100文字である必要があります"
     ))]
     pub title: String,
+
     #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
+
     #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
+
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     pub company_id: ObjectId, // プロジェクトの企業ID
+
     #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
+
     pub status: ProjectStatus,
 }
 
@@ -55,15 +60,21 @@ pub struct ProjectUpdate {
         message = "タイトルは1〜100文字である必要があります"
     ))]
     pub title: String,
+
     #[validate(length(max = 1000, message = "説明は1000文字以内である必要があります"))]
     pub description: Option<String>,
+
     #[validate(length(max = 10, message = "スキルラベルは最大10個まで登録できます"))]
     pub skill_labels: Option<Vec<String>>,
+
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     pub company_id: ObjectId, // プロジェクトの企業ID
+
     #[validate(range(min = 0, message = "時給は0以上である必要があります"))]
     pub hourly_pay: Option<i32>,
+
     pub status: ProjectStatus,
+
     #[validate(range(min = 0, message = "総作業時間は0以上である必要があります"))]
     pub total_working_time: i64,
 }
@@ -74,17 +85,26 @@ pub struct ProjectInDB {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     #[schema(value_type = String, example = "507f1f77bcf86cd799439011")]
     pub id: Option<ObjectId>,
-    pub title: String,                     // プロジェクトのタイトル
-    pub description: Option<String>,       // プロジェクトの説明
+
+    pub title: String, // プロジェクトのタイトル
+
+    pub description: Option<String>, // プロジェクトの説明
+
     pub skill_labels: Option<Vec<String>>, // プロジェクトの採用技術
+
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     pub company_id: ObjectId, // プロジェクトの企業ID
-    pub hourly_pay: Option<i32>,           // プロジェクトの時給
+
+    pub hourly_pay: Option<i32>, // プロジェクトの時給
+
     #[serde_as(as = "DefaultOnNull")]
     pub status: ProjectStatus, // プロジェクトの状況
-    pub total_working_time: i64,           // 総作業時間
+
+    pub total_working_time: i64, // 総作業時間
+
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime, // 作成日時
+
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
 }
@@ -106,8 +126,11 @@ impl From<ProjectInDB> for ProjectUpdate {
 #[derive(Debug, Deserialize, Default)]
 pub struct ProjectFilter {
     pub title: Option<String>,
+
     pub status: Option<String>,
+
     pub skill_labels: Option<Vec<String>>,
+
     pub company_id: Option<ObjectId>,
 }
 

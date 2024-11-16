@@ -5,7 +5,7 @@ use crate::dto::responses::companies::{
 };
 use crate::dto::responses::projects::{ProjectCreatedResponse, ProjectResponse};
 use crate::dto::responses::users::UserResponse;
-use crate::dto::responses::work_logs::{WorkLogsCreatedResponse, WorkLogsResponse};
+use crate::dto::responses::work_logs::{WorkLogCreatedResponse, WorkLogResponse};
 use crate::errors::app_error::FieldError;
 use crate::errors::app_error::{AppError, ErrorResponse};
 use crate::models::auth::{AuthTokenInDB, AuthTokenLogin};
@@ -14,7 +14,7 @@ use crate::models::companies::{
 };
 use crate::models::projects::{ProjectCreate, ProjectStatus, ProjectUpdate};
 use crate::models::users::{EngineerRole, UserCreate, UserUpdate};
-use crate::models::work_logs::{WorkLogsCreate, WorkLogsUpdate};
+use crate::models::work_logs::{WorkLogCreate, WorkLogUpdate};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -49,10 +49,10 @@ use utoipa::OpenApi;
             ProjectStatus,
             ErrorResponse,
             AppError,
-            WorkLogsResponse,
-            WorkLogsCreate,
-            WorkLogsCreatedResponse,
-            WorkLogsUpdate,
+            WorkLogResponse,
+            WorkLogCreate,
+            WorkLogCreatedResponse,
+            WorkLogUpdate,
             CompanyResponse,
             CompaniesWithProjects,
             CompaniesWithProjectsResponse,
