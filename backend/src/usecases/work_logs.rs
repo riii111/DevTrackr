@@ -1,19 +1,19 @@
 use crate::errors::app_error::AppError;
 use crate::models::projects::ProjectUpdate;
-use crate::models::work_logs::{WorkLogsCreate, WorkLogsInDB, WorkLogsUpdate};
+use crate::models::work_logs::{WorkLogCreate, WorkLogInDB, WorkLogUpdate};
 use crate::repositories::projects::MongoProjectRepository;
-use crate::repositories::work_logs::WorkLogsRepository;
+use crate::repositories::work_logs::WorkLogRepository;
 use crate::usecases::projects::ProjectUseCase;
 use bson::oid::ObjectId;
 use std::sync::Arc;
 use tokio::try_join;
 
-pub struct WorkLogsUseCase<R: WorkLogsRepository> {
+pub struct WorkLogUseCase<R: WorkLogRepository> {
     repository: Arc<R>,
     project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
 }
 
-impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
+impl<R: WorkLogRepository> WorkLogUseCase<R> {
     pub fn new(
         repository: Arc<R>,
         project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
@@ -24,22 +24,22 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
         }
     }
 
-    pub async fn get_all_work_logs(&self) -> Result<Vec<WorkLogsInDB>, AppError> {
+    pub async fn get_all_work_logs(&self) -> Result<Vec<WorkLogInDB>, AppError> {
         Ok(self.repository.find_all().await?)
     }
 
-    pub async fn get_work_logs_by_id(&self, id: &str) -> Result<Option<WorkLogsInDB>, AppError> {
-        let object_id = ObjectId::parse_str(id)
-            .map_err(|_| AppError::BadRequest("無効なIDです".to_string()))?;
-
-        Ok(self.repository.find_by_id(&object_id).await?)
+    pub async fn get_work_logs_by_id(
+        &self,
+        id: &ObjectId,
+    ) -> Result<Option<WorkLogInDB>, AppError> {
+        Ok(self.repository.find_by_id(id).await?)
     }
 
-    pub async fn create_work_logs(&self, work_logs: &WorkLogsCreate) -> Result<ObjectId, AppError> {
-        let project_id_str = work_logs.project_id.to_string();
+    pub async fn create_work_logs(&self, work_logs: &WorkLogCreate) -> Result<ObjectId, AppError> {
         // プロジェクトの取得と勤怠時間の作成を並行して実行
         let (project, inserted_id) = try_join!(
-            self.project_usecase.get_project_by_id(&project_id_str),
+            self.project_usecase
+                .get_project_by_id(&work_logs.project_id),
             async { Ok(self.repository.insert_one(work_logs).await?) }
         )?;
 
@@ -66,15 +66,19 @@ impl<R: WorkLogsRepository> WorkLogsUseCase<R> {
     pub async fn update_work_logs(
         &self,
         id: &ObjectId,
-        work_logs: &WorkLogsUpdate,
+        work_logs: &WorkLogUpdate,
     ) -> Result<bool, AppError> {
-        let project_id_str = work_logs.project_id.to_string();
+        // 既存の勤怠ドキュメントが存在するか確認
+        if self.repository.find_by_id(id).await?.is_none() {
+            return Err(AppError::NotFound(
+                "更新対象の勤怠が見つかりません".to_string(),
+            ));
+        }
 
         // プロジェクトの取得と勤怠時間の更新を並行して実行
-        let (project, _) = try_join!(
-            self.project_usecase.get_project_by_id(&project_id_str),
-            async { Ok(self.repository.update_one(*id, work_logs).await?) }
-        )?;
+        let (project, _) = try_join!(self.project_usecase.get_project_by_id(id), async {
+            Ok(self.repository.update_one(*id, work_logs).await?)
+        })?;
 
         let associated_project = project.ok_or_else(|| {
             AppError::NotFound("勤怠に関連するプロジェクトが見つかりません".to_string())

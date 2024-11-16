@@ -70,6 +70,33 @@ async fn test_create_project_success() {
     .await;
 }
 
+#[actix_web::test]
+async fn test_create_project_unauthorized() {
+    /*
+    認証なしでアクセスした場合は401エラーが返ることを確認するテスト
+     */
+    TestApp::run_test(|context| async move {
+        let response = test::call_service(
+            context.service(),
+            test::TestRequest::post()
+                .uri(PROJECTS_ENDPOINT)
+                .set_json(json!({
+                    "title": "テストプロジェクト",
+                    "description": "これはテストプロジェクトです",
+                    "status": "Planning",
+                    "skill_labels": ["Rust", "MongoDB"],
+                    "company_id": ObjectId::new().to_string(),
+                    "hourly_pay": 3000
+                }))
+                .to_request(),
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
+    .await;
+}
+
 #[rstest]
 // タイトルのバリデーション
 #[case::title_too_short(

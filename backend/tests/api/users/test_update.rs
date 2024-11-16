@@ -1,5 +1,7 @@
+use crate::api::helper::validation::{
+    assert_validation_error_with_custom_error, ValidationTestCase,
+};
 use crate::common::test_app::TestApp;
-use crate::api::helper::validation::{assert_validation_error_with_custom_error, ValidationTestCase};
 use actix_web::{http::StatusCode, test};
 use lazy_static::lazy_static;
 use rstest::rstest;
@@ -47,7 +49,6 @@ async fn test_update_user_success() {
     .await;
 }
 
-
 #[actix_web::test]
 async fn test_update_user_with_optional_fields() {
     /*
@@ -79,7 +80,7 @@ async fn test_update_user_with_optional_fields() {
 
         assert_eq!(get_response.status(), StatusCode::OK);
         let body: serde_json::Value = test::read_body_json(get_response).await;
-        
+
         assert_eq!(body["email"], "updated@example.com");
         assert_eq!(body["username"], "Updated User");
         assert_eq!(body["role"], "BackEnd");
@@ -115,14 +116,13 @@ async fn test_update_user_without_optional_fields() {
 
         assert_eq!(get_response.status(), StatusCode::OK);
         let body: serde_json::Value = test::read_body_json(get_response).await;
-        
+
         assert_eq!(body["email"], "updated@example.com");
         assert_eq!(body["username"], "Updated User");
         // オプショナルフィールドは既存の値が維持されているはず
     })
     .await;
 }
-
 
 #[actix_web::test]
 async fn test_update_user_unauthorized() {

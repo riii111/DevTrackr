@@ -53,7 +53,10 @@ impl TryFrom<CompanyInDB> for CompanyResponse {
             annual_sales: db_company.common.annual_sales,
             affiliation_start_date: db_company.affiliation_start_date,
             affiliation_end_date: db_company.affiliation_end_date,
-            contract_type: db_company.common.contract_type,
+            contract_type: db_company
+                .common
+                .contract_type
+                .ok_or("契約タイプが存在しません")?,
             major_clients: db_company.common.major_clients,
             major_services: db_company.common.major_services,
             average_hourly_rate: db_company.common.average_hourly_rate,

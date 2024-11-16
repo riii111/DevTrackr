@@ -1,6 +1,6 @@
 use crate::common::test_app::TestApp;
 use actix_web::{http::StatusCode, test};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 const USERS_ENDPOINT: &str = "/api/users/me/";
 
