@@ -266,7 +266,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-          server /data
     steps:
       - uses: actions/checkout@v4
 
