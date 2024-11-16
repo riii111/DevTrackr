@@ -3,7 +3,6 @@ use crate::models::work_logs::{WorkLogCreate, WorkLogInDB, WorkLogUpdate};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, DateTime as BsonDateTime};
 use futures::stream::TryStreamExt;
-use log;
 use mongodb::{error::Error as MongoError, results::InsertOneResult, Collection, Database};
 
 #[async_trait]
@@ -92,49 +91,17 @@ impl WorkLogRepository for MongoWorkLogRepository {
         id: ObjectId,
         work_logs: &WorkLogUpdate,
     ) -> Result<bool, RepositoryError> {
-        // 既存のドキュメントを取得
-        let existing = self.find_by_id(&id).await?;
-        log::info!("Existing document: {:?}", existing);
-
-        // 必須フィールドの更新
-        let mut update_fields = doc! {
-            "project_id": &work_logs.project_id,
-            "start_time": &work_logs.start_time,
-            "updated_at": BsonDateTime::now()
-        };
-
-        // 任意フィールドは値がある場合のみ更新
-        if let Some(end_time) = work_logs.end_time {
-            update_fields.insert("end_time", end_time);
-        }
-        if let Some(break_time) = work_logs.break_time {
-            update_fields.insert("break_time", break_time);
-        }
-        if let Some(actual_work_minutes) = work_logs.actual_work_minutes {
-            update_fields.insert("actual_work_minutes", actual_work_minutes);
-        }
-        if let Some(memo) = &work_logs.memo {
-            update_fields.insert("memo", memo);
-        }
-
+        let mut update_doc = bson::to_document(&work_logs)
+            .map_err(|e| RepositoryError::DatabaseError(MongoError::custom(e)))?;
+        update_doc.insert("updated_at", BsonDateTime::now());
         let update = doc! {
-            "$set": update_fields
+            "$set": update_doc
         };
-
-        log::info!("Update operation: {:?}", update);
-
         let result = self
             .collection
             .update_one(doc! { "_id": id }, update, None)
             .await
             .map_err(RepositoryError::DatabaseError)?;
-
-        log::info!("Update result: {:?}", result);
-
-        // 更新後のドキュメントを確認
-        let updated = self.find_by_id(&id).await?;
-        log::info!("Updated document: {:?}", updated);
-
         Ok(result.modified_count > 0)
     }
 }
