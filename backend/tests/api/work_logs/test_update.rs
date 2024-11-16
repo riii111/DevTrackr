@@ -94,6 +94,30 @@ async fn test_update_work_logs_success() {
 }
 
 #[actix_web::test]
+async fn test_update_work_logs_unauthorized() {
+    /*
+    認証なしでアクセスした場合は401エラーが返ることを確認するテスト
+     */
+    TestApp::run_test(|context| async move {
+        let response = test::call_service(
+            context.service(),
+            test::TestRequest::put()
+                .uri(&format!("{}{}/", WORK_LOGS_ENDPOINT, ObjectId::new()))
+                .set_json(json!({
+                    "project_id": ObjectId::new().to_string(),
+                    "start_time": BsonDateTime::now().to_chrono().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+                    "memo": "テストメモ"
+                }))
+                .to_request(),
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    })
+    .await;
+}
+
+#[actix_web::test]
 async fn test_update_work_logs_not_found() {
     /*
     存在しない勤怠の更新を試みた場合、404エラーが返ることを確認するテスト
