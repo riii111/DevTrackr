@@ -39,9 +39,12 @@ use devtrackr_api::{
     models::users::UserCreate,
     repositories::{
         auth::MongoAuthRepository, companies::MongoCompanyRepository,
-        projects::MongoProjectRepository,
+        projects::MongoProjectRepository, work_logs::MongoWorkLogRepository,
     },
-    usecases::{auth::AuthUseCase, companies::CompanyUseCase, projects::ProjectUseCase},
+    usecases::{
+        auth::AuthUseCase, companies::CompanyUseCase, projects::ProjectUseCase,
+        work_logs::WorkLogUseCase,
+    },
 };
 use serde_json::json;
 use std::future::Future;
@@ -54,6 +57,7 @@ pub struct TestApp {
     pub auth_usecase: Arc<AuthUseCase<MongoAuthRepository>>,
     pub company_usecase: Arc<CompanyUseCase<MongoCompanyRepository>>,
     pub project_usecase: Arc<ProjectUseCase<MongoProjectRepository>>,
+    pub work_log_usecase: Arc<WorkLogUseCase<MongoWorkLogRepository>>,
     pub test_db: TestDb,
     pub s3_client: Arc<S3Client>,
     pub test_user: UserCreate,
@@ -100,11 +104,13 @@ impl TestApp {
         let company_usecase = di::init_company_usecase(&db);
         let company_usecase_clone = company_usecase.clone();
         let project_usecase = di::init_project_usecase(&db, company_usecase_clone);
-
+        let project_usecase_clone = project_usecase.clone();
+        let work_log_usecase = di::init_work_logs_usecase(&db, project_usecase_clone);
         let instance = Self {
             auth_usecase,
             company_usecase,
             project_usecase,
+            work_log_usecase,
             test_db,
             s3_client,
             test_user,
@@ -149,6 +155,7 @@ impl TestApp {
                 .app_data(web::Data::new(self.auth_usecase.clone()))
                 .app_data(web::Data::new(self.company_usecase.clone()))
                 .app_data(web::Data::new(self.project_usecase.clone()))
+                .app_data(web::Data::new(self.work_log_usecase.clone()))
                 .app_data(json_error_handler())
                 .service(
                     web::scope("/api")
