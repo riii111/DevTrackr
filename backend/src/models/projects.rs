@@ -88,13 +88,16 @@ pub struct ProjectInDB {
 
     pub title: String, // プロジェクトのタイトル
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>, // プロジェクトの説明
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub skill_labels: Option<Vec<String>>, // プロジェクトの採用技術
 
     #[schema(value_type = String, example = "70a6c1e9f0f7b9001234abcd")]
     pub company_id: ObjectId, // プロジェクトの企業ID
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub hourly_pay: Option<i32>, // プロジェクトの時給
 
     #[serde_as(as = "DefaultOnNull")]
@@ -105,6 +108,7 @@ pub struct ProjectInDB {
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime, // 作成日時
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
 }

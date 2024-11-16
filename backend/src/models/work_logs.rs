@@ -165,7 +165,7 @@ pub struct WorkLogInDB {
     #[schema(value_type = Option<i32>, example = 30)]
     pub break_time: Option<i32>,
 
-    // #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<i32>, example = 120)]
     pub actual_work_minutes: Option<i32>,
 }

@@ -148,11 +148,14 @@ pub struct CompanyCommon {
 
     pub annual_sales: Option<AnnualSales>, // 年間売上
 
-    pub contract_type: ContractType, // 契約タイプ
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contract_type: Option<ContractType>, // 契約タイプ
 
     #[validate(length(max = 10, message = "主要顧客は最大10件まで登録できます"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub major_clients: Option<Vec<String>>, // 主要顧客
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(length(max = 10, message = "主要サービスは最大10件まで登録できます"))]
     pub major_services: Option<Vec<String>>, // 主要サービス
 
@@ -164,6 +167,7 @@ pub struct CompanyCommon {
     #[schema(example = 4000)]
     pub average_hourly_rate: Option<i32>, // 平均時給
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = json!({"amount": 100000, "frequency": 1}))]
     pub bonus: Option<Bonus>, // ボーナス
 
@@ -183,12 +187,14 @@ pub struct CompanyInDB {
     #[schema(value_type = String, example = "2023-12-01")]
     pub affiliation_start_date: NaiveDate, // 契約開始日
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2024-09-30")]
     pub affiliation_end_date: Option<NaiveDate>, // 契約終了日
 
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime, // 作成日時
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>, // 更新日時
 }

@@ -81,13 +81,16 @@ pub struct UserInDB {
 
     pub username: String,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<EngineerRole>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
 
     #[schema(value_type = String, example = "2023-04-13T12:34:56Z")]
     pub created_at: BsonDateTime,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>, example = "2023-04-13T12:34:56Z")]
     pub updated_at: Option<BsonDateTime>,
 }
