@@ -108,8 +108,8 @@ jobs:
   build:
     needs: cache-dependencies
     name: Build
-    # developまたはmainブランチへのマージ時のみ実行
-    if: github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == 'main')
+    # developまたはmainブランチへのマージ時、もしくは手動実行時のみ実行
+    if: (github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == 'main')) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
