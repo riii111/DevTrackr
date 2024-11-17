@@ -2,6 +2,7 @@ use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::{HeaderName, HeaderValue};
 use actix_web::Error;
 use futures::future::{ok, Ready};
+use std::env;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -29,6 +30,10 @@ pub struct SecurityHeadersMiddleware<S> {
     service: S,
 }
 
+fn get_minio_domain() -> String {
+    env::var("MINIO_ENDPOINT").unwrap_or_else(|_| "http://minio:9000".to_string())
+}
+
 impl<S, B> Service<ServiceRequest> for SecurityHeadersMiddleware<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
@@ -50,6 +55,9 @@ where
     /// リクエストを処理し、レスポンスにセキュリティヘッダを追加
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let fut = self.service.call(req);
+        let minio_domain = get_minio_domain();
+        let next_public_url = env::var("NEXT_PUBLIC_MINIO_PUBLIC_URL")
+            .unwrap_or_else(|_| "http://localhost:9000".to_string());
 
         Box::pin(async move {
             let mut res = fut.await?;
@@ -57,8 +65,22 @@ where
             // スクリプトやスタイルのソースを制限. XSS攻撃対策
             res.headers_mut().insert(
                 HeaderName::from_static("content-security-policy"),
-                HeaderValue::from_static("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"),
+                HeaderValue::from_str(&format!(
+                    "default-src 'self'; \
+                     script-src 'self'; \
+                     style-src 'self'; \
+                     img-src 'self' data: {} {} /_next/image/*; \
+                     font-src 'self'; \
+                     object-src 'none'; \
+                     base-uri 'self'; \
+                     form-action 'self'; \
+                     frame-ancestors 'none'; \
+                     block-all-mixed-content;",
+                    minio_domain, next_public_url
+                ))
+                .unwrap(),
             );
+
             // 他のサイトで、フレームとして表示されることを防ぐ. クリックジャッキング攻撃を防止
             res.headers_mut().insert(
                 HeaderName::from_static("x-frame-options"),
