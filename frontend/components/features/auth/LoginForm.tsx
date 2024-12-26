@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import FormField from "@/components/core/FormField";
-import { loginAction, LoginActionResult } from "@/lib/actions/auth";
+import { loginAction } from "@/lib/actions/auth";
 
 const loginSchema = z.object({
     email: z.string({
@@ -32,6 +32,8 @@ const LoginForm: React.FC = () => {
         shouldValidate: "onBlur",
         shouldRevalidate: "onInput",
         onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault();// フォームのデフォルト送信操作とServer Actionの実行が競合するのを防ぐ
+
             const formData = new FormData(event.currentTarget);
             const submission = parseWithZod(formData, {
                 schema: loginSchema
@@ -41,19 +43,19 @@ const LoginForm: React.FC = () => {
                 return submission.reply();
             }
 
-            startTransition(() => {
-                void (async () => {
-                    const result: LoginActionResult = await loginAction(
+            startTransition(async () => {
+                try {
+                    await loginAction(
                         submission.value.email,
                         submission.value.password
                     );
-
-                    if (result && !result.success) {
-                        return submission.reply({
-                            formErrors: [result.error || "ログインに失敗しました。"]
+                } catch (error) {
+                    if (error instanceof Error && !error.message.includes('NEXT_REDIRECT')) {
+                        submission.reply({
+                            formErrors: ["予期せぬエラーが発生しました。"]
                         });
                     }
-                })();
+                }
             });
         }
     });
@@ -65,7 +67,11 @@ const LoginForm: React.FC = () => {
         Object.values({ email, password }).some(field => field.errors);
 
     return (
-        <form id={form.id} onSubmit={form.onSubmit} noValidate>
+        <form
+            id={form.id}
+            onSubmit={form.onSubmit}
+            noValidate
+        >
             {form.errors && (
                 <div className="text-red-500 mb-4">
                     {form.errors.map((error, i) => (

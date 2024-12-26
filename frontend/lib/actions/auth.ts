@@ -47,7 +47,7 @@ export async function loginAction(
     // レスポンスヘッダーからCookieを設定
     await proxyServerCookies(headers);
 
-    redirectFlag = true;
+    redirectFlag = true; // proxyServerCookiesの完了を待ってからリダイレクトするための制御フラグ
   } catch (error) {
     console.error("ログインに失敗しました: ", error);
     if (error instanceof z.ZodError) {
@@ -98,7 +98,7 @@ export async function registerAction(
     // レスポンスヘッダーからCookieを設定
     await proxyServerCookies(headers);
 
-    redirectFlag = true;
+    redirectFlag = true; // proxyServerCookiesの完了を待ってからリダイレクトするための制御フラグ
   } catch (error) {
     console.error("アカウント登録に失敗しました", error);
     if (error instanceof z.ZodError) {

@@ -36,6 +36,8 @@ const RegisterForm: React.FC = () => {
         shouldValidate: "onBlur",
         shouldRevalidate: "onInput",
         onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault(); // フォームのデフォルト送信操作とServer Actionの実行が競合するのを防ぐ
+
             const formData = new FormData(event.currentTarget);
             const submission = parseWithZod(formData, {
                 schema: registerSchema
@@ -45,23 +47,29 @@ const RegisterForm: React.FC = () => {
                 return submission.reply();
             }
 
-            startTransition(() => {
-                void (async () => {
-                    const result = await registerAction(
+            startTransition(async () => {
+                try {
+                    await registerAction(
                         submission.value.name,
                         submission.value.email,
                         submission.value.password
                     );
-
-                    if (result && !result.success) {
-                        return submission.reply({
-                            formErrors: [result.error || "アカウント登録に失敗しました。"]
+                } catch (error) {
+                    if (error instanceof Error && !error.message.includes('NEXT_REDIRECT')) {
+                        submission.reply({
+                            formErrors: [error.message || "アカウント登録に失敗しました。"]
                         });
                     }
-                })();
+                }
             });
         }
     });
+
+    const isSubmitDisabled =
+        isPending ||
+        !form.dirty ||
+        form.status === 'error' ||
+        Object.values({ name, email, password }).some(field => field.errors);
 
     return (
         <form id={form.id} onSubmit={form.onSubmit} noValidate>
@@ -102,7 +110,7 @@ const RegisterForm: React.FC = () => {
                 <Button
                     type="submit"
                     className="w-full hover:bg-secondary hover:text-accent"
-                    disabled={isPending || form.status === 'error'}
+                    disabled={isSubmitDisabled}
                 >
                     {isPending ? "登録処理中..." : "アカウント登録"}
                 </Button>
