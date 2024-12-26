@@ -25,9 +25,10 @@
 
 `cd frontend`
 
-`yarn build`
+`pnpm build`
 
-`yarn start`
+`pnpm start`
+
 ## アクセス先
 
 1. <http://localhost/docs/#/>

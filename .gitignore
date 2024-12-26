@@ -12,3 +12,7 @@ backend/.env.test
 
 .DS_Store
 
+# pnpm
+.pnpm-store/
+pnpm-lock.yaml
+
