@@ -1,120 +1,102 @@
 "use client";
-import { useState } from "react";
+import { useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { useTransition } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import FormField from "@/components/core/FormField";
 import { loginAction, LoginActionResult } from "@/lib/actions/auth";
 
 const loginSchema = z.object({
-    email: z.string().email("有効なメールアドレスを入力してください"),
-    password: z.string().min(8, "パスワードは8文字以上である必要があります"),
+    email: z.string({
+        required_error: "メールアドレスを入力してください",
+    }).email("有効なメールアドレスを入力してください"),
+    password: z.string({
+        required_error: "パスワードを入力してください",
+    }).min(8, "パスワードは8文字以上である必要があります"),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
-
 const LoginForm: React.FC = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState<LoginFormData>({ email: '', password: '' });
-    const [errors, setErrors] = useState<Partial<Record<keyof LoginFormData | 'form', string>>>({});
-    const [isFormValid, setIsFormValid] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const [form, { email, password }] = useForm({
+        id: "login-form",
+        defaultValue: {
+            email: "",
+            password: ""
+        },
+        onValidate: ({ formData }) => {
+            return parseWithZod(formData, {
+                schema: loginSchema
+            });
+        },
+        shouldValidate: "onBlur",
+        shouldRevalidate: "onInput",
+        onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
+            const formData = new FormData(event.currentTarget);
+            const submission = parseWithZod(formData, {
+                schema: loginSchema
+            });
 
-    const validateForm = (data: LoginFormData) => {
-        try {
-            loginSchema.parse(data);
-            setIsFormValid(true);
-        } catch (error) {
-            setIsFormValid(false);
-        }
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        const newFormData = { ...formData, [name]: value };
-        setFormData(newFormData);
-        validateForm(newFormData);
-    };
-
-    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        try {
-            if (name === 'email' || name === 'password') {
-                loginSchema.shape[name].parse(value);
+            if (submission.status !== "success") {
+                return submission.reply();
             }
-            setErrors(prev => ({ ...prev, [name]: undefined }));
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                setErrors(prev => ({ ...prev, [name]: error.errors[0].message }));
-            }
-        }
-        validateForm(formData);
-    };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setIsLoading(true);
-        setErrors({});
+            startTransition(() => {
+                void (async () => {
+                    const result: LoginActionResult = await loginAction(
+                        submission.value.email,
+                        submission.value.password
+                    );
 
-        try {
-            const validatedData = loginSchema.parse(formData);
-            const result: LoginActionResult = await loginAction(
-                validatedData.email,
-                validatedData.password
-            );
-
-            // リダイレクトの場合はresultが一瞬undefinedになる
-            if (result && !result.success) {
-                setErrors(prev => ({ ...prev, form: result.error || "ログインに失敗しました。" }));
-            }
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                const fieldErrors: Partial<Record<keyof LoginFormData, string>> = {};
-                error.errors.forEach(err => {
-                    if (err.path[0]) {
-                        fieldErrors[err.path[0] as keyof LoginFormData] = err.message;
+                    if (result && !result.success) {
+                        return submission.reply({
+                            formErrors: [result.error || "ログインに失敗しました。"]
+                        });
                     }
-                });
-                setErrors(prev => ({ ...prev, ...fieldErrors }));
-            } else {
-                setErrors(prev => ({ ...prev, form: "予期せぬエラーが発生しました。" }));
-            }
-        } finally {
-            setIsLoading(false);
+                })();
+            });
         }
-    };
+    });
+
+    const isSubmitDisabled =
+        isPending ||
+        !form.dirty ||
+        form.status === 'error' ||
+        Object.values({ email, password }).some(field => field.errors);
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
-            {errors.form && <div className="text-red-500 mb-4">{errors.form}</div>}
+        <form id={form.id} onSubmit={form.onSubmit} noValidate>
+            {form.errors && (
+                <div className="text-red-500 mb-4">
+                    {form.errors.map((error, i) => (
+                        <div key={i}>{error}</div>
+                    ))}
+                </div>
+            )}
             <div className="space-y-4">
                 <FormField
-                    id="email"
-                    name="email"
+                    id={email.id}
+                    name={email.name}
                     type="email"
                     label="メールアドレス"
                     placeholder="your@email.com"
                     required={true}
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    onBlur={handleInputBlur}
-                    error={errors.email}
+                    error={email.errors?.[0]}
                 />
                 <FormField
-                    id="password"
-                    name="password"
+                    id={password.id}
+                    name={password.name}
                     type="password"
                     label="パスワード"
                     required={true}
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    onBlur={handleInputBlur}
-                    error={errors.password}
+                    error={password.errors?.[0]}
                 />
                 <Button
                     type="submit"
                     className="w-full hover:text-accent"
-                    disabled={isLoading || !isFormValid}
+                    disabled={isSubmitDisabled}
                 >
-                    {isLoading ? "ログイン中..." : "ログイン"}
+                    {isPending ? "ログイン中..." : "ログイン"}
                 </Button>
             </div>
         </form>
